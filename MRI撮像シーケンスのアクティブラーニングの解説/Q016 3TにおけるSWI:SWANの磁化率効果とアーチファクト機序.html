@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q016 復習教材：3TにおけるSWI/SWANの磁化率効果とアーチファクト機序</title>
+<style>
+  :root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --primary-light: #e0f2fe;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-50: #f8fafc;
+    --card-border: #cbd5e1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--slate-100);
+    color: var(--slate-800);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    line-height: 1.65;
+    padding: 24px 16px;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* カード共通 */
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--slate-900);
+    border-bottom: 2px solid var(--slate-200);
+    padding-bottom: 8px;
+  }
+
+  /* 採点サマリー */
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+    margin: -24px -24px 20px -24px;
+  }
+  .score-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .score-num { font-size: 2.6rem; font-weight: 900; color: #38bdf8; line-height: 1; }
+  .score-max { font-size: 1.1rem; color: #94a3b8; }
+  .judge-tag {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+  }
+  .priority-tag {
+    background: #fee2e2;
+    color: #dc2626;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+  }
+
+  .answer-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 768px) {
+    .answer-comparison { grid-template-columns: 1fr; }
+  }
+  .ans-box {
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .ans-box.user {
+    background: var(--slate-50);
+    border-left: 4px solid var(--slate-600);
+  }
+  .ans-box.model {
+    background: var(--success-light);
+    border-left: 4px solid var(--success);
+  }
+  .ans-label { font-weight: bold; margin-bottom: 6px; font-size: 0.85rem; }
+
+  .feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .fb-item {
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+  .fb-item.good { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .fb-item.point { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .fb-item.concept { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .fb-title { font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+
+  /* 問題提示カード */
+  .q-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .tag {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .tag-q { background: #0284c7; color: white; }
+  .tag-cat { background: #e2e8f0; color: #334155; }
+  .q-text { font-size: 1.15rem; font-weight: 700; color: var(--slate-900); margin-bottom: 10px; }
+  .q-hint { font-size: 0.88rem; color: var(--slate-600); background: var(--slate-50); padding: 8px 12px; border-radius: 6px; }
+
+  /* 数式ボックス */
+  .math-card {
+    background: #ffffff;
+    border-left: 4px solid var(--primary);
+  }
+  .math-display-container {
+    background: var(--slate-900);
+    color: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+    font-size: 1.15rem;
+    text-align: center;
+  }
+  .math-inline {
+    font-family: "Cambria Math", "Times New Roman", Georgia, serif;
+    font-style: italic;
+    padding: 0 3px;
+  }
+  .math-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.9rem;
+  }
+  .math-table th, .math-table td {
+    border: 1px solid var(--slate-200);
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .math-table th { background: var(--slate-100); font-weight: 700; }
+
+  /* インタラクティブアニメーション */
+  .interactive-container {
+    background: #0b1329;
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.05);
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+  .btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: var(--primary-dark); }
+  .btn.secondary { background: var(--slate-700); }
+  .btn.secondary:hover { background: var(--slate-600); }
+  .btn.active { background: #38bdf8; color: #0f172a; }
+  .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    margin-left: auto;
+  }
+  .slider-group input { cursor: pointer; }
+
+  .canvas-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .canvas-wrapper { grid-template-columns: 1fr; }
+  }
+  .canvas-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .canvas-box h4 { font-size: 0.9rem; margin-bottom: 8px; color: #94a3b8; }
+  .canvas-desc { font-size: 0.8rem; color: #cbd5e1; margin-top: 6px; }
+
+  /* 比較カード */
+  .dual-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 14px;
+  }
+  @media (max-width: 768px) {
+    .dual-column { grid-template-columns: 1fr; }
+  }
+  .benefit-card {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .drawback-card {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .sub-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+  }
+  .benefit-card .sub-title { color: #166534; }
+  .drawback-card .sub-title { color: #991b1b; }
+
+  /* 印刷用 */
+  @media print {
+    body { background: #ffffff; padding: 0; }
+    .card { box-shadow: none; border: 1px solid #94a3b8; margin-bottom: 16px; }
+    .btn, .sim-controls { display: none; }
+    .interactive-container { background: #ffffff; color: #000000; border: 1px solid #ccc; }
+    .canvas-box { background: #ffffff; border: 1px solid #ccc; }
+    .math-display-container { background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 8. 採点サマリーカード -->
+  <div class="card">
+    <div class="summary-header">
+      <div>
+        <span class="judge-tag">合格水準 (B+)</span>
+        <h2 style="font-size: 1.4rem; margin-top: 6px;">採点結果サマリー</h2>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="score-badge">
+          <span class="score-num">78</span>
+          <span class="score-max">/ 100点</span>
+        </div>
+        <span class="priority-tag">復習優先度：中</span>
+      </div>
+    </div>
+
+    <div class="answer-comparison">
+      <div class="ans-box user">
+        <div class="ans-label">📝 あなたの解答</div>
+        SWIやSWANのシーケンスはグラジエントエコー系のT2スターを得るためのシーケンスで、これは局所磁場不均一の影響を受けます。そのため、出血鉄沈着のような常磁性体による局所磁場不均一を検出する力を高めます。一方、体内の空気などがある部位では、静磁場不均一のため歪みや信号欠損も増える。
+      </div>
+      <div class="ans-box model">
+        <div class="ans-label">🎯 模範解答</div>
+        局所磁場差は主磁場強度に比例（ΔB = Δχ · B<sub>0</sub>）するため、3Tでは1.5Tに比べ局所磁場不均一が2倍に拡大する。常磁性体（ヘモジデリン等）部では急速な脱位相（T2*短縮）と大きな位相蓄積が生じ、ブルーミング効果と高感度位相コントラストにより検出能が向上する。一方、空気-組織境界（副鼻腔や頭蓋底）でも同様に巨視的磁場勾配が倍増するため、強いボクセル内位相分散による信号欠損と、読み取り方向の位置ずれによる幾何学的歪みが著しく増悪する。
+      </div>
+    </div>
+
+    <div class="feedback-grid">
+      <div class="fb-item good">
+        <div class="fb-title">✅ 正しく理解できている点</div>
+        GRE系におけるT2*減衰が局所磁場不均一の影響を受けること、常磁性体（出血・鉄沈着）による不均一検出能の向上、および空気境界での信号欠損・歪みのトレードオフを正確に把握できています。
+      </div>
+      <div class="fb-item point">
+        <div class="fb-title">⚠️ 最大の修正点（加点ポイント）</div>
+        設問の核である「<strong>なぜ3T（高磁場）になると</strong>それが顕著になるのか」という**磁場強度B<sub>0</sub>との比例関係（ΔB ∝ B<sub>0</sub>）**の言及が抜けています。3Tで不均一自体が2倍にスケールされる物理機序の明記が必要です。
+      </div>
+      <div class="fb-item concept">
+        <div class="fb-title">💡 根本的誤概念の解消</div>
+        「シーケンス自体の性質」だけでなく、「**物質の磁化率差 Δχ によって生じる磁場シフト ΔB は、印加する静磁場強度 B<sub>0</sub> に比例して強くなる**」という物理的因果関係を直接結びつけましょう。
+      </div>
+    </div>
+  </div>
+
+  <!-- 問題提示カード -->
+  <div class="card">
+    <div class="q-meta">
+      <span class="tag tag-q">Q016</span>
+      <span class="tag tag-cat">応用</span>
+      <span class="tag tag-cat">GRE ・ T2* ・ SWI/SWAN</span>
+    </div>
+    <div class="q-text">
+      3TでSWI/SWANの出血・鉄沈着検出能が上がりやすい一方、歪みや信号欠損も増えやすいのはなぜですか。
+    </div>
+    <div class="q-hint">
+      誘導ヒント：局所磁場差ΔBとT2*。
+    </div>
+  </div>
+
+  <!-- 4. 重要数式の解説カード -->
+  <div class="card math-card">
+    <div class="card-title">📐 物理原理と重要数式</div>
+    
+    <p>磁化率効果の磁場強度依存性は、以下の3つの数式が連鎖することで説明されます。</p>
+
+    <!-- 式1：局所磁場差 -->
+    <div class="math-display-container">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>B</mi>
+          <mo>=</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>χ</mi>
+          <mo>⋅</mo>
+          <msub>
+            <mi>B</mi>
+            <mn>0</mn>
+          </msub>
+        </mrow>
+      </math>
+    </div>
+
+    <!-- 式2：実効横緩和時間 T2* -->
+    <div class="math-display-container">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <msubsup>
+                <mi>T</mi>
+                <mn>2</mn>
+                <mo>*</mo>
+              </msubsup>
+            </mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <msub>
+                <mi>T</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+          <mo>+</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <msubsup>
+                <mi>T</mi>
+                <mn>2</mn>
+                <mo>′</mo>
+              </msubsup>
+            </mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <msub>
+                <mi>T</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+          <mo>+</mo>
+          <mi>γ</mi>
+          <mo>⋅</mo>
+          <msub>
+            <mrow>
+              <mi mathvariant="normal">Δ</mi>
+              <mi>B</mi>
+            </mrow>
+            <mtext>in-voxel</mtext>
+          </msub>
+        </mrow>
+      </math>
+    </div>
+
+    <!-- 式3：位相コントラスト -->
+    <div class="math-display-container">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>ϕ</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mi>γ</mi>
+          <mo>⋅</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>B</mi>
+          <mo>⋅</mo>
+          <mtext>TE</mtext>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mi>γ</mi>
+          <mo>⋅</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>χ</mi>
+          <mo>⋅</mo>
+          <msub>
+            <mi>B</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>⋅</mo>
+          <mtext>TE</mtext>
+        </mrow>
+      </math>
+    </div>
+
+    <table class="math-table">
+      <thead>
+        <tr>
+          <th>記号</th>
+          <th>物理的意味</th>
+          <th>単位</th>
+          <th>3Tにおける挙動（1.5T比）</th>
+          <th>臨床画像への影響</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="math-inline">B<sub>0</sub></span></td>
+          <td>主静磁場強度</td>
+          <td>T (テスラ)</td>
+          <td><strong>2.0倍</strong>（1.5T → 3.0T）</td>
+          <td>全ての磁化率現象のベースラインを倍増させる</td>
+        </tr>
+        <tr>
+          <td><span class="math-inline">Δχ</span></td>
+          <td>生体組織間の磁化率差</td>
+          <td>ppm / 無次元</td>
+          <td>物質固有値（不変）</td>
+          <td>ヘモジデリン：常磁性（+）／ 空気：反磁性（-）</td>
+        </tr>
+        <tr>
+          <td><span class="math-inline">ΔB</span></td>
+          <td>局所磁場シフト量</td>
+          <td>μT</td>
+          <td><strong>2.0倍に増大</strong>（比例）</td>
+          <td>スピンの歳差周波数差（Δω = γΔB）が2倍に拡大</td>
+        </tr>
+        <tr>
+          <td><span class="math-inline">T<sub>2</sub>*</span></td>
+          <td>実効横緩和時間</td>
+          <td>ms</td>
+          <td><strong>大幅に短縮</strong></td>
+          <td>ボクセル内脱位相が加速し、ブルーミング効果が増大</td>
+        </tr>
+        <tr>
+          <td><span class="math-inline">Δϕ</span></td>
+          <td>位相シフト蓄積量</td>
+          <td>rad</td>
+          <td><strong>2.0倍に増大</strong>（同一TE時）</td>
+          <td>SWIの位相マスクコントラストが倍増（高感度化）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5 & 6. インラインSVGとアニメーション -->
+  <div class="card">
+    <div class="card-title">🔬 インタラクティブ比較：スピン脱位相と信号減衰</div>
+    <p style="font-size: 0.9rem; margin-bottom: 12px;">
+      1.5Tと3.0Tにおけるボクセル内スピンの位相分散（Dephasing）の違いをシミュレーションします。
+    </p>
+
+    <div class="interactive-container">
+      <div class="sim-controls">
+        <button class="btn" id="btn-play">再生 / 一時停止</button>
+        <button class="btn secondary" id="btn-step">ステップ送り</button>
+        <button class="btn secondary" id="btn-reset">リセット</button>
+        <div class="slider-group">
+          <label for="time-slider">時間経過 (TE): </label>
+          <input type="range" id="time-slider" min="0" max="100" value="0" style="width: 140px;">
+          <span id="time-val" style="min-width: 45px;">0 ms</span>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <!-- 1.5T ボックス -->
+        <div class="canvas-box">
+          <h4 style="color: #38bdf8;">1.5T システム（局所磁場差 ΔB = 1.0×）</h4>
+          <svg id="svg-15t" viewBox="0 0 240 200" width="100%" height="180">
+            <!-- 座標軸 -->
+            <circle cx="120" cy="100" r="75" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+            <line x1="120" y1="15" x2="120" y2="185" stroke="#475569" stroke-width="1"/>
+            <line x1="35" y1="100" x2="205" y2="100" stroke="#475569" stroke-width="1"/>
+            <!-- スピン群（JS制御） -->
+            <g id="spins-15t"></g>
+            <!-- 合成磁化ベクトル -->
+            <line id="net-15t" x1="120" y1="100" x2="190" y2="100" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#arrow)"/>
+          </svg>
+          <div class="canvas-desc">合成横磁化 Mxy: <strong id="signal-15t" style="color: #38bdf8;">100%</strong></div>
+        </div>
+
+        <!-- 3.0T ボックス -->
+        <div class="canvas-box">
+          <h4 style="color: #f43f5e;">3.0T システム（局所磁場差 ΔB = 2.0×）</h4>
+          <svg id="svg-30t" viewBox="0 0 240 200" width="100%" height="180">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f43f5e" />
+              </marker>
+            </defs>
+            <!-- 座標軸 -->
+            <circle cx="120" cy="100" r="75" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+            <line x1="120" y1="15" x2="120" y2="185" stroke="#475569" stroke-width="1"/>
+            <line x1="35" y1="100" x2="205" y2="100" stroke="#475569" stroke-width="1"/>
+            <!-- スピン群（JS制御） -->
+            <g id="spins-30t"></g>
+            <!-- 合成磁化ベクトル -->
+            <line id="net-30t" x1="120" y1="100" x2="190" y2="100" stroke="#f43f5e" stroke-width="3.5" marker-end="url(#arrow-red)"/>
+          </svg>
+          <div class="canvas-desc">合成横磁化 Mxy: <strong id="signal-30t" style="color: #f43f5e;">100%</strong></div>
+        </div>
+      </div>
+      <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 10px;">
+        ※ 3.0Tでは位相の開き（位相分散）が2倍速く進行するため、短時間で横磁化の打ち消し合い（信号消失）が完了します。
+      </p>
+    </div>
+  </div>
+
+  <!-- メリット・デメリットの詳細機序カード -->
+  <div class="card">
+    <div class="card-title">⚖️ 3Tにおける臨床的トレードオフの深層機序</div>
+
+    <div class="dual-column">
+      <!-- 検出能向上の機序 -->
+      <div class="benefit-card">
+        <div class="sub-title">🔴 微小出血・鉄沈着の検出能が向上する理由</div>
+        <ul style="padding-left: 20px; font-size: 0.92rem;">
+          <li style="margin-bottom: 8px;">
+            <strong>ブルーミング効果（Blooming Effect）の拡大：</strong><br>
+            微小な出血巣（ヘモジデリン）やデオキシヘモグロビンは強い常磁性を示します。3Tでは周囲組織との局所磁場勾配（ΔB）が2倍になるため、ボクセル内位相分散が生じる領域が本来の病変サイズよりも大きく広がり、黒い低信号領域（磁化率アーチファクト）が拡大して肉眼視認性が劇的に高まります。
+          </li>
+          <li style="margin-bottom: 8px;">
+            <strong>位相コントラスト（Phase Mask）の急峻化：</strong><br>
+            SWIでは位相画像から高域通過フィルタ処理を経て位相マスクを作成し、マグニチュード画像に乗算します。Δϕ = -γ · Δχ · B<sub>0</sub> · TE であるため、同じTEであれば3Tで得られる位相差は1.5Tの<strong>ちょうど2倍</strong>に達し、微小静脈や微小出血のコントラスト雑音比（CNR）が跳ね上がります。
+          </li>
+        </ul>
+      </div>
+
+      <!-- 歪み・信号欠損の機序 -->
+      <div class="drawback-card">
+        <div class="sub-title">⚠️ 歪み・信号欠損（アーチファクト）が悪化する理由</div>
+        <ul style="padding-left: 20px; font-size: 0.92rem;">
+          <li style="margin-bottom: 8px;">
+            <strong>空気-組織境界の巨視的脱位相（Signal Drop-out）：</strong><br>
+            空気（反磁性、χ ≈ +0.36 ppm）と生体軟部組織（χ ≈ -9.0 ppm）の間には約 9 ppm もの巨大な磁化率差が存在します。3Tではこの境界で生じる巨視的な磁場勾配が2倍に達するため、ボクセル内で極めて急峻な位相回転が生じ、完全な無信号（ブラックホール）化します（前頭蓋底や錐体骨周囲）。
+          </li>
+          <li style="margin-bottom: 8px;">
+            <strong>共鳴周波数シフトによる幾何学的歪み：</strong><br>
+            局所磁場差 ΔB は周波数変位 Δf = (γ/2π)ΔB を引き起こします。周波数エンコード傾斜磁場下でこの周波数シフトが生じると、システムは空間位置を誤認（Δx = Δf / (BW/pixel)）します。3Tでは同一バンド幅であれば<strong>位置ずれ量（歪みピクセル数）が2倍</strong>に拡大します。
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 臨床撮像パラメータ最適化 -->
+  <div class="card">
+    <div class="card-title">🛠️ 臨床現場でのパラメータ最適化戦略</div>
+    <table class="math-table">
+      <thead>
+        <tr>
+          <th>調整パラメータ</th>
+          <th>3Tにおける推奨操作</th>
+          <th>物理的メカニズムと狙い</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>エコー時間 (TE)</strong></td>
+          <td>1.5Tより短縮（約35ms → 約20〜25ms）</td>
+          <td>
+            T2*短縮に伴い、TEを短くしても十分な磁化率コントラストが得られる。TE短縮により広範な空気境界面での過度な信号欠損を防ぐ。
+          </td>
+        </tr>
+        <tr>
+          <td><strong>スライス厚 / ボクセル体積</strong></td>
+          <td>薄スライス化（3D高分解能化）</td>
+          <td>
+            ボクセルサイズを小さくすることで、単一ボクセル内の磁場不均一幅（ΔB<sub>in-voxel</sub>）を物理的に圧縮し、不要な脱位相を抑制する。
+          </td>
+        </tr>
+        <tr>
+          <td><strong>受信バンド幅 (Bandwidth)</strong></td>
+          <td>高バンド幅に設定</td>
+          <td>
+            1ピクセルあたりの周波数幅（Hz/pixel）を広げ、磁場不均一による周波数シフトが招くピクセル位置ずれ（幾何学的歪み）を最小化する。
+          </td>
+        </tr>
+        <tr>
+          <td><strong>B0 シミング</strong></td>
+          <td>高次シミング（Higher-Order Shimming）の徹底</td>
+          <td>
+            頭蓋底や前頭洞近傍の巨視的な一次〜二次磁場不均一成分を補正コイルで相殺する。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // スピン位相分散シミュレーション JS
+  (function() {
+    const numSpins = 16;
+    let isPlaying = false;
+    let animFrame = null;
+    let progress = 0; // 0 to 100
+    const maxTE = 40; // ms相当
+
+    const btnPlay = document.getElementById('btn-play');
+    const btnStep = document.getElementById('btn-step');
+    const btnReset = document.getElementById('btn-reset');
+    const slider = document.getElementById('time-slider');
+    const timeVal = document.getElementById('time-val');
+
+    const g15 = document.getElementById('spins-15t');
+    const g30 = document.getElementById('spins-30t');
+    const net15 = document.getElementById('net-15t');
+    const net30 = document.getElementById('net-30t');
+    const sig15 = document.getElementById('signal-15t');
+    const sig30 = document.getElementById('signal-30t');
+
+    // スピン要素の初期化
+    const spins15 = [];
+    const spins30 = [];
+
+    for (let i = 0; i < numSpins; i++) {
+      // 局所磁場偏差の分布 (-1 から +1)
+      const offset = (i - (numSpins - 1) / 2) / ((numSpins - 1) / 2);
+
+      // 1.5T用スピンライン
+      const l15 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l15.setAttribute('x1', '120');
+      l15.setAttribute('y1', '100');
+      l15.setAttribute('stroke', '#38bdf8');
+      l15.setAttribute('stroke-width', '1.5');
+      l15.setAttribute('opacity', '0.4');
+      g15.appendChild(l15);
+      spins15.push({ el: l15, offset: offset });
+
+      // 3.0T用スピンライン
+      const l30 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l30.setAttribute('x1', '120');
+      l30.setAttribute('y1', '100');
+      l30.setAttribute('stroke', '#f43f5e');
+      l30.setAttribute('stroke-width', '1.5');
+      l30.setAttribute('opacity', '0.4');
+      g30.appendChild(l30);
+      spins30.push({ el: l30, offset: offset });
+    }
+
+    function updateSimulation(val) {
+      progress = val;
+      slider.value = val;
+      const currentTE = ((val / 100) * maxTE).toFixed(1);
+      timeVal.innerText = `${currentTE} ms`;
+
+      const t = val / 100; // 正規化時間 0〜1
+      const radius = 70;
+
+      // 1.5T 計算 (基本角速度分散 k)
+      const k15 = 2.2;
+      let sumX15 = 0, sumY15 = 0;
+      spins15.forEach(s => {
+        const theta = s.offset * k15 * t;
+        const x2 = 120 + radius * Math.cos(theta);
+        const y2 = 100 - radius * Math.sin(theta);
+        s.el.setAttribute('x2', x2.toFixed(1));
+        s.el.setAttribute('y2', y2.toFixed(1));
+        sumX15 += Math.cos(theta);
+        sumY15 += Math.sin(theta);
+      });
+      const netMag15 = Math.sqrt(sumX15 * sumX15 + sumY15 * sumY15) / numSpins;
+      net15.setAttribute('x2', (120 + radius * netMag15).toFixed(1));
+      sig15.innerText = `${Math.round(netMag15 * 100)}%`;
+
+      // 3.0T 計算 (2倍の角速度分散 2*k)
+      const k30 = k15 * 2.0;
+      let sumX30 = 0, sumY30 = 0;
+      spins30.forEach(s => {
+        const theta = s.offset * k30 * t;
+        const x2 = 120 + radius * Math.cos(theta);
+        const y2 = 100 - radius * Math.sin(theta);
+        s.el.setAttribute('x2', x2.toFixed(1));
+        s.el.setAttribute('y2', y2.toFixed(1));
+        sumX30 += Math.cos(theta);
+        sumY30 += Math.sin(theta);
+      });
+      const netMag30 = Math.sqrt(sumX30 * sumX30 + sumY30 * sumY30) / numSpins;
+      net30.setAttribute('x2', (120 + radius * netMag30).toFixed(1));
+      sig30.innerText = `${Math.round(netMag30 * 100)}%`;
+    }
+
+    function tick() {
+      if (!isPlaying) return;
+      progress += 0.5;
+      if (progress > 100) {
+        progress = 100;
+        isPlaying = false;
+        btnPlay.innerText = '再生';
+      }
+      updateSimulation(progress);
+      if (isPlaying) {
+        animFrame = requestAnimationFrame(tick);
+      }
+    }
+
+    btnPlay.addEventListener('click', () => {
+      if (progress >= 100) progress = 0;
+      isPlaying = !isPlaying;
+      btnPlay.innerText = isPlaying ? '一時停止' : '再生';
+      if (isPlaying) animFrame = requestAnimationFrame(tick);
+    });
+
+    btnStep.addEventListener('click', () => {
+      isPlaying = false;
+      btnPlay.innerText = '再生';
+      cancelAnimationFrame(animFrame);
+      progress = Math.min(100, progress + 5);
+      updateSimulation(progress);
+    });
+
+    btnReset.addEventListener('click', () => {
+      isPlaying = false;
+      btnPlay.innerText = '再生';
+      cancelAnimationFrame(animFrame);
+      progress = 0;
+      updateSimulation(0);
+    });
+
+    slider.addEventListener('input', (e) => {
+      isPlaying = false;
+      btnPlay.innerText = '再生';
+      cancelAnimationFrame(animFrame);
+      updateSimulation(parseFloat(e.target.value));
+    });
+
+    // 初期描画
+    updateSimulation(0);
+  })();
+</script>
+
+</body>
+</html>

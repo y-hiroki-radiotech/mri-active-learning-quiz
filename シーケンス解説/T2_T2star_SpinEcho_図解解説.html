@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2 と T2* の違い — スピンエコーでなぜ T2* を打ち消せるのか</title>
+<style>
+  :root{
+    --bg:#f4f7fb; --paper:#ffffff; --ink:#172033; --muted:#5d6a7e;
+    --line:#dbe3ef; --accent:#1f5fbf; --accent2:#6e43c5; --ok:#198754;
+    --warn:#b7791f; --danger:#b33a3a; --soft:#eef4ff; --soft2:#f4efff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+       line-height:1.75}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 18px 64px}
+  .hero{background:linear-gradient(135deg,#0f3774,#6b3db1);color:#fff;border-radius:22px;padding:34px 34px 30px;box-shadow:0 18px 44px rgba(35,52,92,.18)}
+  .hero h1{font-size:clamp(28px,4vw,46px);line-height:1.22;margin:0 0 12px}
+  .hero p{margin:0;max-width:900px;font-size:17px;opacity:.95}
+  .pill{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:5px 10px;border-radius:999px;font-size:13px;margin-bottom:10px}
+
+  section{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:28px;margin-top:22px;box-shadow:0 5px 20px rgba(34,49,78,.05)}
+  h2{font-size:26px;line-height:1.35;margin:0 0 18px}
+  h3{font-size:20px;margin:24px 0 10px}
+  p{margin:10px 0}
+  .lead{font-size:18px}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+  .card.soft{background:var(--soft)}
+  .card.soft2{background:var(--soft2)}
+  .num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:white;font-weight:700;margin-right:8px}
+  .key{font-weight:800;color:#153e75}
+  .bad{font-weight:800;color:var(--danger)}
+  .good{font-weight:800;color:var(--ok)}
+  .muted{color:var(--muted)}
+  .note{border-left:5px solid var(--warn);background:#fff9ea;padding:13px 16px;border-radius:10px}
+  .answer{border-left:5px solid var(--ok);background:#eefaf3;padding:16px 18px;border-radius:10px}
+  .exam{border:2px solid #b9c7db;background:#fbfdff;border-radius:14px;padding:18px}
+  .mini{font-size:14px;color:var(--muted)}
+  .center{text-align:center}
+
+  .eqbox{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;background:#0f1e38;color:#fff;border-radius:18px;padding:22px;margin:16px 0 20px}
+  .eq{font-family:"Times New Roman","Cambria Math",serif;font-size:clamp(26px,4vw,42px);letter-spacing:.02em}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.05}
+  .frac .top{border-bottom:1.7px solid currentColor;padding:0 5px 4px}
+  .frac .bottom{padding-top:4px}
+  .plus{font-size:30px;opacity:.85}
+  .badge{font-size:13px;background:#eef3f8;padding:5px 8px;border-radius:999px;color:#486078}
+
+  svg{max-width:100%;height:auto}
+  .svgbox{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px}
+  .blue{background:#2f6fdd}.purple{background:#845ad6}.green{background:#29a26b}.orange{background:#d98324}
+
+  .timeline{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;margin:14px 0}
+  .bar{height:14px;border-radius:999px;background:linear-gradient(90deg,#3a78db 0 37%,#df8a2f 37% 63%,#2ca56d 63% 100%);position:relative}
+  .tick{position:absolute;top:-8px;width:2px;height:30px;background:#23324a}
+  .t0{left:0}.t180{left:50%}.tTE{right:0}
+  .labels{position:relative;height:25px;font-size:12px;color:var(--muted)}
+  .labels span{position:absolute;transform:translateX(-50%)} .labels .a{left:0;transform:none}.labels .b{left:50%}.labels .c{right:0;transform:none}
+
+  .flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .flow .node{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700}
+  .arrow{font-size:24px;color:#6a778a}
+
+  .interactive{background:#f8fbff;border:1px dashed #a9bfdc;border-radius:16px;padding:16px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+  button{border:1px solid #b9c9dc;background:white;border-radius:10px;padding:9px 12px;font-size:14px;cursor:pointer}
+  button.active{background:#163e76;color:#fff;border-color:#163e76}
+  .spinrow{display:flex;gap:28px;justify-content:center;align-items:center;min-height:170px;flex-wrap:wrap}
+  .spin{width:120px;height:120px;border:2px solid #c8d3e1;border-radius:50%;position:relative;background:radial-gradient(circle at center,#fff 0 62%,#f6f8fb 63%)}
+  .spin::before{content:"";position:absolute;left:50%;top:50%;width:42%;height:4px;background:#2f6fdd;transform-origin:0 50%;transform:rotate(var(--ang));border-radius:4px}
+  .spin::after{content:"";position:absolute;left:calc(50% + 42% * var(--cx));top:calc(50% + 42% * var(--cy));}
+  .slabel{text-align:center;font-size:13px;color:var(--muted);margin-top:6px}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:11px 12px;vertical-align:top}
+  th{background:#eef3f9;text-align:left}
+  .qa{border-top:1px dashed var(--line);padding-top:16px;margin-top:16px}
+  details{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+  summary{font-weight:700;cursor:pointer}
+
+  @media(max-width:800px){
+    .grid2,.grid3{grid-template-columns:1fr}
+    .timeline{grid-template-columns:1fr}
+    section{padding:20px}
+  }
+  @media print{
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .hero,section{box-shadow:none;border-radius:0}
+    .hero{break-after:page}
+    section{break-inside:avoid;margin-top:0;border-left:0;border-right:0}
+    button,.interactive .controls{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="pill">MRI 基礎｜T₂・T₂*・Spin Echo</div>
+    <h1>T₂ と T₂* の違いを、<br>「なぜ 180° パルスで戻せるのか」から理解する</h1>
+    <p>ポイントは、横磁化がバラバラになる原因が<strong>2種類</strong>あることです。静的な局所磁場差による“戻せるズレ”と、スピン同士の相互作用による“戻せないズレ”を分けて考えると、SEでT₂を取り出せる理由が一気に見通せます。</p>
+  </header>
+
+  <section>
+    <h2>まず結論：T₂* は「T₂ に、静磁場不均一の影響が上乗せされたもの」</h2>
+    <div class="eqbox">
+      <div class="eq">
+        <span class="frac"><span class="top">1</span><span class="bottom">T<sub>2</sub><sup>*</sup></span></span>
+        =
+        <span class="frac"><span class="top">1</span><span class="bottom">T<sub>2</sub></span></span>
+      </div>
+      <div class="plus">＋</div>
+      <div class="eq">γ ΔB</div>
+    </div>
+    <p class="lead center"><strong>減衰速度</strong> ＝ <span class="bad">戻せないT₂成分</span> ＋ <span class="good">戻せる静的な磁場不均一成分</span></p>
+
+    <div class="grid2">
+      <div class="card soft2">
+        <h3>① T₂：不可逆的な位相分散</h3>
+        <p><strong>スピン–スピン相互作用</strong>などで、各スピンが感じる局所磁場が時間的・微視的に変動します。</p>
+        <p>この変動は「いつ、どれだけ起きたか」がランダムなので、後から180°パルスをかけても、過去の履歴を正確に逆再生できません。</p>
+        <span class="badge">180°でも戻らない</span>
+      </div>
+      <div class="card soft">
+        <h3>② T₂'：可逆的な位相分散</h3>
+        <p>B₀不均一や磁化率差によって、場所ごとに共鳴周波数が少し違うために起こります。</p>
+        <p>あるスピンはずっと速く、別のスピンはずっと遅い、という<strong>静的な周波数差</strong>なら、180°パルスで位相の前後関係を反転させると再収束できます。</p>
+        <span class="badge">180°で戻せる</span>
+      </div>
+    </div>
+    <div class="note"><strong>式の見方：</strong> より一般的には <strong>1/T₂* = 1/T₂ + 1/T₂'</strong> と表し、ここで <strong>1/T₂' ≈ γΔB</strong> と考えると理解しやすいです。γΔB は「局所磁場差によって生じる追加の位相分散速度」を表す近似的な見方です。</div>
+  </section>
+
+  <section>
+    <h2>図1：90°パルス直後は、スピンの位相がそろっている</h2>
+    <div class="svgbox">
+      <svg viewBox="0 0 920 310" role="img" aria-label="90度パルス直後の位相がそろったスピン">
+        <defs>
+          <marker id="arrB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2f6fdd"/></marker>
+        </defs>
+        <text x="40" y="42" font-size="24" font-weight="700" fill="#172033">90° RF直後</text>
+        <text x="40" y="75" font-size="17" fill="#5d6a7e">横磁化 Mxy が最大。各スピンはほぼ同じ方向を向く。</text>
+        <circle cx="465" cy="170" r="95" fill="#fbfdff" stroke="#c9d5e4" stroke-width="2"/>
+        <line x1="465" y1="170" x2="555" y2="170" stroke="#2f6fdd" stroke-width="5" marker-end="url(#arrB)"/>
+        <line x1="465" y1="170" x2="548" y2="145" stroke="#2f6fdd" stroke-width="5" marker-end="url(#arrB)"/>
+        <line x1="465" y1="170" x2="548" y2="195" stroke="#2f6fdd" stroke-width="5" marker-end="url(#arrB)"/>
+        <line x1="465" y1="170" x2="540" y2="125" stroke="#2f6fdd" stroke-width="5" marker-end="url(#arrB)"/>
+        <line x1="465" y1="170" x2="540" y2="215" stroke="#2f6fdd" stroke-width="5" marker-end="url(#arrB)"/>
+        <text x="610" y="158" font-size="18" font-weight="700" fill="#153e75">位相がそろう</text>
+        <text x="610" y="188" font-size="16" fill="#5d6a7e">→ ベクトル和が大きい</text>
+        <text x="610" y="218" font-size="16" fill="#5d6a7e">→ MRI信号が強い</text>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>図2：時間がたつと、2種類の理由でバラバラになる</h2>
+    <div class="grid2">
+      <div class="svgbox">
+        <svg viewBox="0 0 450 300" role="img" aria-label="静的磁場不均一による位相分散">
+          <defs><marker id="ap" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#845ad6"/></marker></defs>
+          <text x="24" y="35" font-size="21" font-weight="700" fill="#172033">A. 静的 ΔB：戻せる</text>
+          <circle cx="220" cy="158" r="92" fill="#fbfdff" stroke="#c9d5e4" stroke-width="2"/>
+          <g stroke="#845ad6" stroke-width="4" marker-end="url(#ap)">
+            <line x1="220" y1="158" x2="302" y2="121"/>
+            <line x1="220" y1="158" x2="280" y2="208"/>
+            <line x1="220" y1="158" x2="238" y2="73"/>
+            <line x1="220" y1="158" x2="154" y2="102"/>
+            <line x1="220" y1="158" x2="132" y2="174"/>
+          </g>
+          <text x="34" y="275" font-size="15" fill="#5d6a7e">場所ごとに周波数が固定して違う → 位相差が規則的に拡大</text>
+        </svg>
+      </div>
+      <div class="svgbox">
+        <svg viewBox="0 0 450 300" role="img" aria-label="スピン相互作用による位相分散">
+          <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#b33a3a"/></marker></defs>
+          <text x="24" y="35" font-size="21" font-weight="700" fill="#172033">B. T₂相互作用：戻せない</text>
+          <circle cx="220" cy="158" r="92" fill="#fbfdff" stroke="#c9d5e4" stroke-width="2"/>
+          <g stroke="#b33a3a" stroke-width="4" marker-end="url(#ar)">
+            <line x1="220" y1="158" x2="289" y2="95"/>
+            <line x1="220" y1="158" x2="309" y2="171"/>
+            <line x1="220" y1="158" x2="251" y2="242"/>
+            <line x1="220" y1="158" x2="147" y2="217"/>
+            <line x1="220" y1="158" x2="150" y2="91"/>
+          </g>
+          <path d="M110 240 C145 220,145 265,180 245 S225 225,255 250 S320 260,340 232" fill="none" stroke="#b33a3a" stroke-width="2" stroke-dasharray="6 5"/>
+          <text x="34" y="275" font-size="15" fill="#5d6a7e">局所磁場が時間的に変動 → 位相履歴がランダム</text>
+        </svg>
+      </div>
+    </div>
+    <p class="center lead"><strong>T₂* は A + B の両方を含む</strong>ので、T₂より短くなります（通常 T₂* ≤ T₂）。</p>
+  </section>
+
+  <section>
+    <h2>いちばん大事：180°パルスは「速いスピンを遅くする」のではない</h2>
+    <div class="flow">
+      <div class="node">速いスピン：先行</div><div class="arrow">＋</div><div class="node">遅いスピン：遅延</div>
+      <div class="arrow">→</div><div class="node" style="background:#fff6e8">180°で位相関係を反転</div>
+      <div class="arrow">→</div><div class="node" style="background:#eefaf3">同じ周波数差のまま再会</div>
+    </div>
+
+    <div class="timeline">
+      <strong>Spin Echo</strong>
+      <div>
+        <div class="bar"><i class="tick t0"></i><i class="tick t180"></i><i class="tick tTE"></i></div>
+        <div class="labels"><span class="a">90°</span><span class="b">180° (TE/2)</span><span class="c">Echo (TE)</span></div>
+      </div>
+    </div>
+
+    <div class="interactive">
+      <strong>簡易インタラクティブ図：位相関係の変化</strong>
+      <div class="controls">
+        <button class="active" onclick="showPhase(0,this)">① 90°直後</button>
+        <button onclick="showPhase(1,this)">② TE/2直前</button>
+        <button onclick="showPhase(2,this)">③ 180°直後</button>
+        <button onclick="showPhase(3,this)">④ TEで再収束</button>
+      </div>
+      <div class="spinrow" id="spins"></div>
+      <div id="phaseText" class="center muted"></div>
+    </div>
+
+    <div class="note"><strong>正確なイメージ：</strong> 180°パルスは、横平面内の位相ベクトルの並びを“鏡映”させます。各スピン固有の周波数差そのものは変わりません。したがって、その後も速いスピンは速く、遅いスピンは遅いまま進み、<strong>TEで再び同じ位相に出会います</strong>。</div>
+  </section>
+
+  <section>
+    <h2>なぜ「静的な磁場不均一」だけが再収束できるのか</h2>
+    <div class="grid3">
+      <div class="card">
+        <div><span class="num">1</span><strong>周波数差が一定</strong></div>
+        <p>静的なΔBなら、ある場所のスピンは常に少し速い／遅いという関係が保たれます。</p>
+      </div>
+      <div class="card">
+        <div><span class="num">2</span><strong>180°で前後関係を反転</strong></div>
+        <p>先行していたスピンを位相上で後ろ側へ、遅れていたスピンを前側へ移します。</p>
+      </div>
+      <div class="card">
+        <div><span class="num">3</span><strong>同じ差で走るので再会</strong></div>
+        <p>周波数差がそのままなら、TE/2で生じた位相差を次のTE/2で打ち消せます。</p>
+      </div>
+    </div>
+
+    <h3>一方、T₂の位相分散は…</h3>
+    <div class="card soft2">
+      <p>分子運動やスピン–スピン相互作用により、局所磁場は時間的に変動します。つまり「前半で速かったスピンが、後半でも同じだけ速い」とは限りません。</p>
+      <p>そのため、180°パルスを入れても前半の履歴を後半で正確に帳消しにできず、<strong>真のT₂減衰は残ります</strong>。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>GRE と SE を比べると違いがはっきりする</h2>
+    <table>
+      <thead><tr><th>項目</th><th>GRE</th><th>SE</th></tr></thead>
+      <tbody>
+        <tr><td>180°再収束パルス</td><td>なし</td><td>あり</td></tr>
+        <tr><td>静的B₀不均一の位相分散</td><td class="bad">残る</td><td class="good">多くが再収束</td></tr>
+        <tr><td>スピン–スピン相互作用によるT₂減衰</td><td>残る</td><td>残る</td></tr>
+        <tr><td>主に反映する横緩和</td><td><strong>T₂*</strong></td><td><strong>T₂</strong></td></tr>
+        <tr><td>磁化率差・金属・空気境界への感度</td><td>高い</td><td>比較的低い</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>試験でそのまま使える説明</h2>
+    <div class="exam">
+      <p><strong>T₂*</strong>は、スピン–スピン相互作用による不可逆的なT₂減衰に加えて、B₀不均一や磁化率差による静的な局所磁場差ΔBに起因する可逆的な位相分散を含むため、T₂より短い。</p>
+      <p>減衰速度は概念的に
+        <strong>1/T₂* = 1/T₂ + γΔB</strong>
+        と表せる。</p>
+      <p>Spin Echo法ではTE/2に180°パルスを印加し、静的な周波数差によって生じたスピンの位相の前後関係を反転させる。静的な周波数差はその後も同じなので、TEで再収束し、この成分は打ち消される。</p>
+      <p>一方、スピン–スピン相互作用による局所磁場変動は時間的・ランダムであり、180°パルスでは過去の位相履歴を逆転できない。そのためSEのエコー強度には真の<strong>T₂減衰</strong>が残る。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>よくある誤解</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 class="bad">誤解1：180°で速いスピンが遅くなる</h3>
+        <p><strong>×</strong> 周波数そのものを入れ替えるわけではありません。</p>
+        <p><strong>○</strong> 位相上の前後関係を反転させます。</p>
+      </div>
+      <div class="card">
+        <h3 class="bad">誤解2：180°でT₂減衰そのものが回復する</h3>
+        <p><strong>×</strong> 真のT₂減衰は不可逆です。</p>
+        <p><strong>○</strong> 回復するのは主に静的B₀不均一による可逆的な位相分散です。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>30秒で思い出すための一枚まとめ</h2>
+    <div class="answer">
+      <strong>T₂* = T₂ + “静的な磁場ムラの上乗せ”</strong><br>
+      180°パルスは「時間を逆転」するのではなく、<strong>位相の並びを反転</strong>させる。<br>
+      静的な周波数差なら後半も同じ差で進むので<strong>TEで再会</strong>できる。<br>
+      ランダムなスピン–スピン相互作用は同じ履歴をたどらないため<strong>再収束できない</strong>。<br>
+      だから<strong>GRE → T₂*</strong>、<strong>SE → T₂</strong>を強く反映する。
+    </div>
+    <details class="qa">
+      <summary>確認問題：SEで打ち消せるのはどちら？</summary>
+      <p><strong>答え：</strong> B₀不均一や磁化率差などによる<strong>静的・可逆的な位相分散</strong>です。スピン–スピン相互作用によるT₂減衰は打ち消せません。</p>
+    </details>
+  </section>
+</div>
+
+<script>
+const phases = [
+  {a:[0,8,-7,4,-3], text:"90°直後：位相はほぼそろい、横磁化のベクトル和が大きい。"},
+  {a:[52,26,8,-22,-48], text:"TE/2直前：静的な周波数差により、速いスピンほど先へ進み、遅いスピンほど後ろへ。"},
+  {a:[-52,-26,-8,22,48], text:"180°直後：位相の前後関係が反転。周波数差そのものは変わらない。"},
+  {a:[0,4,-3,2,-2], text:"TE：静的な周波数差によるズレが再収束してエコーが形成される。ただしT₂減衰分だけ信号は低下している。"}
+];
+function showPhase(i,btn){
+  document.querySelectorAll(".controls button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  const box=document.getElementById("spins");
+  box.innerHTML="";
+  phases[i].a.forEach((ang,idx)=>{
+    const w=document.createElement("div");
+    const s=document.createElement("div");
+    s.className="spin";
+    s.style.setProperty("--ang",ang+"deg");
+    const l=document.createElement("div");
+    l.className="slabel";
+    l.textContent=["速い","やや速い","基準","やや遅い","遅い"][idx];
+    w.appendChild(s);w.appendChild(l);box.appendChild(w);
+  });
+  document.getElementById("phaseText").textContent=phases[i].text;
+}
+window.addEventListener("DOMContentLoaded",()=>showPhase(0,document.querySelector(".controls button")));
+</script>
+</body>
+</html>

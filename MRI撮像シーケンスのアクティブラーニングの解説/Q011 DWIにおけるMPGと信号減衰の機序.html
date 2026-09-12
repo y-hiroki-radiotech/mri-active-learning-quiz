@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材 - Q011: DWIにおけるMPGと信号減衰の機序</title>
+<style>
+  :root {
+    --bg-primary: #f4f6f9;
+    --bg-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #4b5563;
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --success: #059669;
+    --success-light: #ecfdf5;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --border: #e5e7eb;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --radius: 12px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    line-height: 1.65;
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* カード共通 */
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+  }
+
+  /* 採点サマリーヘッダー */
+  .score-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: #ffffff;
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.25);
+  }
+
+  .score-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .question-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    display: inline-block;
+  }
+
+  .score-box {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .score-number {
+    font-size: 3.25rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .score-total {
+    font-size: 1.25rem;
+    opacity: 0.85;
+  }
+
+  .grade-badge {
+    background: #10b981;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .summary-item {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(4px);
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .summary-item-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .summary-item-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  /* 解答比較テーブル・グリッド */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .answer-box {
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  .user-answer {
+    background: #f8fafc;
+    border-left: 4px solid var(--warning);
+  }
+
+  .model-answer {
+    background: var(--success-light);
+    border-left: 4px solid var(--success);
+  }
+
+  .box-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 数式セクション */
+  .math-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+  }
+
+  .formula-display {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+
+  math {
+    font-size: 1.25rem;
+    font-family: "Latin Modern Math", "Cambria Math", STIXGeneral, serif;
+  }
+
+  .math-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.9rem;
+  }
+
+  .math-table th, .math-table td {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .math-table th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+  }
+
+  /* SVG & アニメーション */
+  .vis-container {
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .svg-canvas {
+    width: 100%;
+    max-width: 780px;
+    height: auto;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+
+  .btn:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-secondary {
+    background: #4b5563;
+  }
+
+  .btn-secondary:hover {
+    background: #374151;
+  }
+
+  .step-desc {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 780px;
+    font-size: 0.92rem;
+    color: var(--text-main);
+  }
+
+  /* レスポンシブ */
+  @media (max-width: 768px) {
+    .comparison-grid {
+      grid-template-columns: 1fr;
+    }
+    .score-top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* 印刷/PDF設定 */
+  @media print {
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 0;
+    }
+    .container {
+      max-width: 100%;
+      gap: 16px;
+    }
+    .card, .score-header {
+      box-shadow: none;
+      border: 1px solid #999;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .score-header {
+      background: #f0f4f8 !important;
+      color: #000 !important;
+    }
+    .score-header * {
+      color: #000 !important;
+    }
+    .controls {
+      display: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 8. 採点サマリー -->
+  <section class="score-header card">
+    <div class="score-top">
+      <div>
+        <span class="question-badge">Q011 基礎 | DWI・ADC</span>
+        <h1 style="font-size: 1.4rem; margin-top: 8px; font-weight: 700;">DWIの一対のMPGにおけるスピン挙動と信号減衰</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="score-box">
+          <span class="score-number">88</span>
+          <span class="score-total">/ 100 点</span>
+        </div>
+        <span class="grade-badge">合格（概ね良好）</span>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-item-label">正しく理解できた点</div>
+        <div class="summary-item-value">静止スピンは位相が戻り、拡散スピンは位相がずれて信号が低下するという本質を的確に把握。</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-item-label">最大の修正点</div>
+        <div class="summary-item-value">単一スピンのズレだけでなく「ボクセル内位相分散（Intravoxel Dephasing）」による相殺まで言及すること。</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-item-label">根本的誤概念</div>
+        <div class="summary-item-value">「個々の水分子が信号を失う」のではなく「ランダムな向きのベクトルの打ち消し合い」で生じる現象である点。</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-item-label">学習優先度</div>
+        <div class="summary-item-value">中（Stejskal-Tannerの式とボクセル内総和の機序を整理すれば完璧）</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 問題と解答比較 -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>
+      問題・解答照合
+    </h2>
+    <div style="margin-bottom: 12px; font-weight: 600; color: #1e3a8a;">
+      【問題】DWIの一対のMPGで、静止スピンは信号を保ち、動いた水分子は信号を失うのはなぜですか。
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+      ヒント：1個目と2個目のMPGの間で「位置が変わるか」が鍵。
+    </div>
+
+    <div class="comparison-grid">
+      <div class="answer-box user-answer">
+        <div class="box-label" style="color: var(--warning);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          受講者の解答
+        </div>
+        <p>「Motion probing gradientは水分子のランダムな動きを検出するために、印加する一対の傾斜磁場のことで、静止している水分子は位相が戻って信号が維持されるが、拡散した水分子は位相がずれて信号が低下する。」</p>
+      </div>
+
+      <div class="answer-box model-answer">
+        <div class="box-label" style="color: var(--success);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          完全模範解答
+        </div>
+        <p>1つ目のMPGで位置に応じた位相シフトが付与された後、180°パルスを挟んで同極性の第2MPGが印加される。<strong>静止スピン</strong>は位置が変わらないため第2MPGで完全に逆位相が加わり位相変化が相殺（完全リフェーズ）され信号が維持される。一方、ブラウン運動で<strong>移動（拡散）した水分子</strong>は、第2MPG印加時の空間位置が異なるため位相が完全に戻らない。ボクセル内の多数の水分子がランダムな変位を持つことで<strong>ボクセル内位相分散（Intravoxel Dephasing）</strong>が生じ、巨視的横磁化ベクトルが互いに打ち消し合って信号が減衰する。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 数式解説（Stejskal-Tannerの理論） -->
+  <section class="card math-card">
+    <h2 class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      数式解説：Stejskal-Tannerの位相シフト式と信号減衰
+    </h2>
+
+    <p>MPGによって生じる個々のスピンの位相変化 <math><mo>Δ</mo><mi>ϕ</mi></math> と、ボクセル全体での巨視的信号減衰 <math><mi>S</mi></math> は以下の物理式で厳密に定式化されます。</p>
+
+    <!-- 独立数式 (MathML) -->
+    <div class="formula-display">
+      <div style="margin-bottom: 8px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">【個々のスピンの位相変化】</div>
+      <math display="block">
+        <mo>Δ</mo><mi>ϕ</mi>
+        <mo>=</mo>
+        <mi>γ</mi>
+        <mi>G</mi>
+        <mi>δ</mi>
+        <mo>(</mo>
+        <msub><mi>x</mi><mn>2</mn></msub>
+        <mo>−</mo>
+        <msub><mi>x</mi><mn>1</mn></msub>
+        <mo>)</mo>
+      </math>
+      <div style="margin: 16px 0 8px 0; font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">【巨視的信号減衰（Stejskal-Tannerの式）】</div>
+      <math display="block">
+        <mi>S</mi>
+        <mo>=</mo>
+        <msub><mi>S</mi><mn>0</mn></msub>
+        <mo>·</mo>
+        <mi>exp</mi>
+        <mo>(</mo>
+        <mo>−</mo>
+        <mi>b</mi>
+        <mo>·</mo>
+        <mi>D</mi>
+        <mo>)</mo>
+        <mspace width="1em"/>
+        <mtext>ただし</mtext>
+        <mspace width="0.5em"/>
+        <mi>b</mi>
+        <mo>=</mo>
+        <msup><mi>γ</mi><mn>2</mn></msup>
+        <msup><mi>G</mi><mn>2</mn></msup>
+        <msup><mi>δ</mi><mn>2</mn></msup>
+        <mo>(</mo>
+        <mo>Δ</mo>
+        <mo>−</mo>
+        <mfrac><mi>δ</mi><mn>3</mn></mfrac>
+        <mo>)</mo>
+      </math>
+    </div>
+
+    <!-- 記号・変数テーブル -->
+    <table class="math-table">
+      <thead>
+        <tr>
+          <th>記号</th>
+          <th>物理的意味</th>
+          <th>単位</th>
+          <th>変数増減による結果と問題との関係</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong><math><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><msub><mi>x</mi><mn>2</mn></msub></math></strong></td>
+          <td>第1、第2MPG印加時のスピン位置</td>
+          <td>m</td>
+          <td><strong>静止スピン:</strong> <math><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><msub><mi>x</mi><mn>2</mn></msub><mo>⇒</mo><mo>Δ</mo><mi>ϕ</mi><mo>=</mo><mn>0</mn></math>（位相ゼロ、信号最大）<br><strong>拡散スピン:</strong> <math><msub><mi>x</mi><mn>1</mn></msub><mo>≠</mo><msub><mi>x</mi><mn>2</mn></msub><mo>⇒</mo><mo>Δ</mo><mi>ϕ</mi><mo>≠</mo><mn>0</mn></math>（位置変位に応じた位相残り）</td>
+        </tr>
+        <tr>
+          <td><strong><math><mi>γ</mi></math></strong></td>
+          <td>磁気回転比 (Gyromagnetic ratio)</td>
+          <td>rad/(s·T)</td>
+          <td><sup>1</sup>H プロトンでは約 <math><mn>2.675</mn><mo>×</mo><msup><mn>10</mn><mn>8</mn></msup></math> rad/(s·T)。固定値。</td>
+        </tr>
+        <tr>
+          <td><strong><math><mi>G</mi></math></strong></td>
+          <td>MPGの傾斜磁場強度</td>
+          <td>mT/m</td>
+          <td>強くするほど <math><mi>b</mi></math> 値が2乗で急増し、わずかな移動でも位相差が拡大。</td>
+        </tr>
+        <tr>
+          <td><strong><math><mi>δ</mi></math></strong></td>
+          <td>MPGの印加時間（パルス幅）</td>
+          <td>ms</td>
+          <td>長くするほど位相エンコード量が増加し、拡散感度（<math><mi>b</mi></math> 値）が増大。</td>
+        </tr>
+        <tr>
+          <td><strong><math><mo>Δ</mo></math></strong></td>
+          <td>2つのMPGの印加間隔（拡散時間）</td>
+          <td>ms</td>
+          <td>分子が移動できる時間。<math><mo>Δ</mo></math> が長いほど水分子の移動距離が拡大。</td>
+        </tr>
+        <tr>
+          <td><strong><math><mi>D</mi></math></strong></td>
+          <td>見かけの拡散係数 (ADC)</td>
+          <td>mm<sup>2</sup>/s</td>
+          <td>拡散が活発（自由水など <math><mi>D</mi></math> が大）な領域ほど指数関数的に信号減衰（低信号）。細胞密度が高く拡散制限のある組織（脳梗塞急性期、高悪性度腫瘍）は信号減衰が小さく高信号を保つ。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5 & 6. 図解とアニメーション (Inline SVG + JS) -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+      原理シミュレーション：一対のMPGとスピン位相分散
+    </h2>
+
+    <div class="vis-container">
+      <svg class="svg-canvas" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+        <!-- 背景グリッド -->
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#2563eb"/>
+          </marker>
+          <marker id="arrow-red" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#dc2626"/>
+          </marker>
+        </defs>
+
+        <!-- 時間軸 & シーケンスダイアグラム -->
+        <text x="30" y="30" font-size="14" font-weight="700" fill="#1f2937">1. パルスシーケンス（Stejskal-Tanner法）</text>
+        <line x1="40" y1="90" x2="760" y2="90" stroke="#94a3b8" stroke-width="2"/>
+        <text x="765" y="95" font-size="12" fill="#64748b">時間 t</text>
+
+        <!-- 90° RF -->
+        <rect x="60" y="50" width="16" height="40" fill="#60a5fa" rx="2"/>
+        <text x="60" y="45" font-size="11" font-weight="600" fill="#1e40af">90°</text>
+
+        <!-- MPG 1 (Dephase) -->
+        <rect id="mpg1-box" x="140" y="40" width="70" height="50" fill="#93c5fd" stroke="#2563eb" stroke-width="2" rx="4"/>
+        <text x="155" y="70" font-size="12" font-weight="700" fill="#1e3a8a">MPG ①</text>
+        <text x="160" y="105" font-size="11" fill="#475569">幅 δ</text>
+
+        <!-- 180° RF -->
+        <rect x="340" y="30" width="20" height="60" fill="#3b82f6" rx="2"/>
+        <text x="336" y="24" font-size="11" font-weight="600" fill="#1e40af">180°</text>
+
+        <!-- MPG 2 (Rephase) -->
+        <rect id="mpg2-box" x="480" y="40" width="70" height="50" fill="#93c5fd" stroke="#2563eb" stroke-width="2" rx="4"/>
+        <text x="495" y="70" font-size="12" font-weight="700" fill="#1e3a8a">MPG ②</text>
+        <text x="500" y="105" font-size="11" fill="#475569">幅 δ</text>
+
+        <!-- 間隔 Δ -->
+        <line x1="175" y1="25" x2="515" y2="25" stroke="#475569" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="175" y1="20" x2="175" y2="30" stroke="#475569" stroke-width="1.5"/>
+        <line x1="515" y1="20" x2="515" y2="30" stroke="#475569" stroke-width="1.5"/>
+        <text x="325" y="18" font-size="11" font-weight="600" fill="#334155">拡散時間 Δ</text>
+
+        <!-- 進行インジケータ（現在時点の縦線） -->
+        <line id="timeline-cursor" x1="68" y1="20" x2="68" y2="390" stroke="#ef4444" stroke-width="2" stroke-dasharray="3"/>
+
+        <!-- 2. スピン挙動比較セクション -->
+        <line x1="30" y1="130" x2="770" y2="130" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="30" y="150" font-size="14" font-weight="700" fill="#1f2937">2. ボクセル内スピンの位相と合成磁化ベクトル</text>
+
+        <!-- 静止スピン群 -->
+        <g transform="translate(60, 170)">
+          <rect x="0" y="0" width="310" height="210" fill="#f8fafc" stroke="#cbd5e1" rx="8"/>
+          <text x="16" y="24" font-size="13" font-weight="700" fill="#047857">【静止水分子（拡散なし）】</text>
+          <text x="16" y="44" font-size="11" fill="#64748b">MPG①と②で全く同一の位置に留まる</text>
+
+          <!-- 位相ダイヤル -->
+          <circle cx="80" cy="120" r="45" fill="#fff" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="80" y1="75" x2="80" y2="165" stroke="#f1f5f9" stroke-width="1"/>
+          <line x1="35" y1="120" x2="125" y2="120" stroke="#f1f5f9" stroke-width="1"/>
+
+          <!-- スピンベクトル群（静止） -->
+          <line id="s-vec1" x1="80" y1="120" x2="120" y2="120" stroke="#059669" stroke-width="3" marker-end="url(#arrow)"/>
+          <line id="s-vec2" x1="80" y1="120" x2="120" y2="120" stroke="#059669" stroke-width="2" opacity="0.6"/>
+          <line id="s-vec3" x1="80" y1="120" x2="120" y2="120" stroke="#059669" stroke-width="2" opacity="0.6"/>
+          <text id="s-phase-text" x="50" y="185" font-size="12" font-weight="700" fill="#065f46">合成磁化: 100% (高信号)</text>
+
+          <!-- 状態説明 -->
+          <text id="s-status" x="150" y="95" font-size="11" fill="#334155">第1MPG: ディフェーズ</text>
+          <text id="s-substatus" x="150" y="115" font-size="11" fill="#334155">180°: 位相反転</text>
+          <text id="s-finalstatus" x="150" y="135" font-size="11" font-weight="700" fill="#047857">第2MPG: 完全リフェーズ</text>
+        </g>
+
+        <!-- 拡散スピン群 -->
+        <g transform="translate(410, 170)">
+          <rect x="0" y="0" width="330" height="210" fill="#fff5f5" stroke="#fecaca" rx="8"/>
+          <text x="16" y="24" font-size="13" font-weight="700" fill="#b91c1c">【動いた水分子（ブラウン運動・拡散）】</text>
+          <text x="16" y="44" font-size="11" fill="#64748b">MPG①と②の間にランダムに位置が変化</text>
+
+          <!-- 位相ダイヤル -->
+          <circle cx="80" cy="120" r="45" fill="#fff" stroke="#fca5a5" stroke-width="1.5"/>
+          <line x1="80" y1="75" x2="80" y2="165" stroke="#fef2f2" stroke-width="1"/>
+          <line x1="35" y1="120" x2="125" y2="120" stroke="#fef2f2" stroke-width="1"/>
+
+          <!-- スピンベクトル群（分散） -->
+          <line id="d-vec1" x1="80" y1="120" x2="120" y2="120" stroke="#dc2626" stroke-width="2.5"/>
+          <line id="d-vec2" x1="80" y1="120" x2="80" y2="80" stroke="#ea580c" stroke-width="2"/>
+          <line id="d-vec3" x1="80" y1="120" x2="80" y2="160" stroke="#d97706" stroke-width="2"/>
+          <line id="d-vec4" x1="80" y1="120" x2="45" y2="120" stroke="#e11d48" stroke-width="2"/>
+          <text id="d-phase-text" x="40" y="185" font-size="12" font-weight="700" fill="#991b1b">合成磁化: 大幅減衰 (低信号)</text>
+
+          <!-- 状態説明 -->
+          <text id="d-status" x="150" y="95" font-size="11" fill="#7f1d1d">第1MPG: 位置1で位相分散</text>
+          <text id="d-substatus" x="150" y="115" font-size="11" fill="#7f1d1d">移動Δx: スピン毎にバラバラ</text>
+          <text id="d-finalstatus" x="150" y="135" font-size="11" font-weight="700" fill="#b91c1c">第2MPG: 位相が揃わず相殺</text>
+        </g>
+      </svg>
+
+      <!-- 操作用UI -->
+      <div class="controls">
+        <button id="btn-play" class="btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          再生 / 一時停止
+        </button>
+        <button id="btn-step" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line></svg>
+          ステップ送り
+        </button>
+        <button id="btn-reset" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          リセット
+        </button>
+      </div>
+
+      <div id="step-description" class="step-desc">
+        <strong>ステップ 0:</strong> 初期状態（90°励起直後）。すべてのスピンが同位相で揃っており、横磁化は最大です。
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 学習ポイント・臨床的意義 -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+      指導・臨床深掘りポイント
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px;">
+        <strong style="color: #065f46;">なぜ「ボクセル内位相分散」という概念が重要か？</strong>
+        <p style="font-size: 0.92rem; margin-top: 4px; color: #1f2937;">
+          MRIの受信コイルが検出するのは、1つの分子の信号ではなく、1ボクセル（数ミリ立方）に含まれる<strong>約10<sup>19</sup>個の水分子プロトン横磁化ベクトルの総和</strong>です。個々のスピンは磁気モーメントを持ち続けていますが、向きが360度ランダムに散らばることで、ベクトル総和 <math><mo>∑</mo><msub><mover accent="true"><mi>m</mi><mo>→</mo></mover><mrow><mi>x</mi><mi>y</mi></mrow></msub><mo>≈</mo><mn>0</mn></math> となり、巨視的な信号が消失します。
+        </p>
+      </div>
+
+      <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 6px;">
+        <strong style="color: #1e40af;">臨床画像（脳梗塞や悪性腫瘍）との直結</strong>
+        <p style="font-size: 0.92rem; margin-top: 4px; color: #1f2937;">
+          超急性期脳梗塞では細胞傷害性浮腫により水分子が細胞内に閉じ込められ（拡散制限）、変位 <math><mo>Δ</mo><mi>x</mi></math> が小さくなります。その結果、MPGによる位相分散が抑制され、<strong>「信号低下が起こらない＝DWIで高信号」</strong>として病変が描出されます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // インタラクティブ・シミュレーション制御
+  const cursor = document.getElementById('timeline-cursor');
+  const stepText = document.getElementById('step-description');
+
+  // スピンベクトル要素
+  const sVec1 = document.getElementById('s-vec1');
+  const sVec2 = document.getElementById('s-vec2');
+  const sVec3 = document.getElementById('s-vec3');
+  const sPhaseText = document.getElementById('s-phase-text');
+
+  const dVec1 = document.getElementById('d-vec1');
+  const dVec2 = document.getElementById('d-vec2');
+  const dVec3 = document.getElementById('d-vec3');
+  const dVec4 = document.getElementById('d-vec4');
+  const dPhaseText = document.getElementById('d-phase-text');
+
+  let currentStep = 0;
+  let isPlaying = false;
+  let timer = null;
+
+  const steps = [
+    {
+      x: 68,
+      desc: "<strong>ステップ 0: 90°励起パルス直後</strong><br>すべての水分子スピンが横平面に倒れ、同位相（同方向）で揃っています。横磁化は最大（100%）です。",
+      sAngle: [0, 0, 0],
+      dAngle: [0, 0, 0, 0],
+      sSum: "合成磁化: 100%",
+      dSum: "合成磁化: 100%"
+    },
+    {
+      x: 175,
+      desc: "<strong>ステップ 1: 第1MPG印加（Dephase）</strong><br>空間位置 x に応じた磁場勾配によりスピンの回転速度が変化。位置に応じて位相分散（ディフェーズ）が生じます。",
+      sAngle: [60, 60, 60],
+      dAngle: [40, 80, 110, 140],
+      sSum: "位相進み（位置依存）",
+      dSum: "位置に応じ位相分散"
+    },
+    {
+      x: 350,
+      desc: "<strong>ステップ 2: 180°再収束パルス印加</strong><br>横磁化ベクトルの位相が180°反転（正負反転）します。この間（拡散時間Δ）、水分子はブラウン運動によって勝手に移動（変位）します。",
+      sAngle: [-60, -60, -60],
+      dAngle: [-40, -80, -110, -140],
+      sSum: "位相反転（-60°）",
+      dSum: "位相反転 ＋ ランダム変位"
+    },
+    {
+      x: 515,
+      desc: "<strong>ステップ 3: 第2MPG印加（Rephase）</strong><br>同一極性の第2MPGが印加されます（180°を挟むため実質的な逆位相パルスとして機能）。",
+      sAngle: [0, 0, 0],
+      dAngle: [15, -70, 135, -160],
+      sSum: "完全リフェーズ（位相0°）",
+      dSum: "不完全リフェーズ（位相バラバラ）"
+    },
+    {
+      x: 680,
+      desc: "<strong>ステップ 4: エコー収集（信号検出）</strong><br><strong>静止スピン:</strong> 位相が完全に一致し大きなエコーを形成（信号保持）。<br><strong>拡散スピン:</strong> ランダムな位相分散（Intravoxel Dephasing）により互いに打ち消し合い、信号が大きく低下します。",
+      sAngle: [0, 0, 0],
+      dAngle: [30, -65, 140, -150],
+      sSum: "合成磁化: 100% (高信号)",
+      dSum: "合成磁化: ほぼ0% (信号消失)"
+    }
+  ];
+
+  function renderStep(idx) {
+    const s = steps[idx];
+    cursor.setAttribute('x1', s.x);
+    cursor.setAttribute('x2', s.x);
+    stepText.innerHTML = s.desc;
+
+    // 静止スピンベクトル更新（cx:80, cy:120, r:40）
+    updateVector(sVec1, 80, 120, 40, s.sAngle[0]);
+    updateVector(sVec2, 80, 120, 40, s.sAngle[1]);
+    updateVector(sVec3, 80, 120, 40, s.sAngle[2]);
+    sPhaseText.textContent = s.sSum;
+
+    // 拡散スピンベクトル更新
+    updateVector(dVec1, 80, 120, 38, s.dAngle[0]);
+    updateVector(dVec2, 80, 120, 38, s.dAngle[1]);
+    updateVector(dVec3, 80, 120, 38, s.dAngle[2]);
+    updateVector(dVec4, 80, 120, 38, s.dAngle[3]);
+    dPhaseText.textContent = s.dSum;
+  }
+
+  function updateVector(lineElem, cx, cy, r, angleDeg) {
+    const rad = (angleDeg * Math.PI) / 180;
+    const x2 = cx + r * Math.cos(rad);
+    const y2 = cy - r * Math.sin(rad);
+    lineElem.setAttribute('x2', x2);
+    lineElem.setAttribute('y2', y2);
+  }
+
+  function nextStep() {
+    currentStep = (currentStep + 1) % steps.length;
+    renderStep(currentStep);
+  }
+
+  document.getElementById('btn-step').addEventListener('click', () => {
+    pause();
+    nextStep();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    pause();
+    currentStep = 0;
+    renderStep(currentStep);
+  });
+
+  document.getElementById('btn-play').addEventListener('click', () => {
+    if (isPlaying) {
+      pause();
+    } else {
+      play();
+    }
+  });
+
+  function play() {
+    isPlaying = true;
+    document.getElementById('btn-play').innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+      一時停止
+    `;
+    timer = setInterval(() => {
+      nextStep();
+    }, 2400);
+  }
+
+  function pause() {
+    isPlaying = false;
+    clearInterval(timer);
+    document.getElementById('btn-play').innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      再生
+    `;
+  }
+
+  // 初期描画
+  renderStep(0);
+</script>
+</body>
+</html>

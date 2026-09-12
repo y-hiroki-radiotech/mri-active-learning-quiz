@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材：Q008 CHESS脂肪抑制の原理と頸部・頭蓋底での抑制ムラ</title>
+<style>
+/* --- ベーススタイル（完全オフライン対応・外部依存なし） --- */
+:root {
+  --primary-color: #1e3a8a;
+  --primary-light: #eff6ff;
+  --primary-border: #93c5fd;
+  --success-color: #15803d;
+  --success-bg: #f0fdf4;
+  --success-border: #86efac;
+  --warning-color: #b45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger-color: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+  --card-bg: #ffffff;
+  --bg-page: #f8fafc;
+  --border-color: #e2e8f0;
+  --accent-blue: #0284c7;
+  --accent-purple: #7c3aed;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  line-height: 1.65;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  padding: 1.5rem 1rem;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* --- カード型コンテナ --- */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  border: 1px solid var(--primary-border);
+}
+
+/* --- 採点サマリー --- */
+.score-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.score-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.score-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #38bdf8;
+}
+
+.score-total {
+  font-size: 1.5rem;
+  color: #cbd5e1;
+}
+
+.verdict-badge {
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background-color: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.score-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.meta-box {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.meta-box-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.meta-box-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* --- 比較グリッド（正答 vs ユーザー解答） --- */
+.answer-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .answer-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.answer-box {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.answer-box.correct {
+  background-color: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.answer-box.user {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.answer-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.answer-title.correct { color: var(--success-color); }
+.answer-title.user { color: #334155; }
+
+.answer-content {
+  font-size: 0.9rem;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+/* --- 原理解説・箇条書き・強調カード --- */
+.feedback-card {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 5px solid;
+}
+
+.feedback-card.positive {
+  background-color: var(--success-bg);
+  border-left-color: var(--success-color);
+}
+
+.feedback-card.warning {
+  background-color: var(--warning-bg);
+  border-left-color: var(--warning-color);
+}
+
+.feedback-card.danger {
+  background-color: var(--danger-bg);
+  border-left-color: var(--danger-color);
+}
+
+.feedback-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.feedback-card.positive .feedback-card-title { color: var(--success-color); }
+.feedback-card.warning .feedback-card-title { color: var(--warning-color); }
+.feedback-card.danger .feedback-card-title { color: var(--danger-color); }
+
+/* --- 数式表示（完全オフライン対応・高品質MathML & CSS） --- */
+.math-block-container {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.math-display {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 1.15rem;
+}
+
+math {
+  font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", serif;
+}
+
+.math-legend-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.math-legend-table th, .math-legend-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 0.75rem;
+}
+
+.math-legend-table th {
+  background-color: #f1f5f9;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* --- SVG図表・ダイアグラム --- */
+.svg-diagram-container {
+  width: 100%;
+  margin: 1.25rem 0;
+  text-align: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.diagram-caption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+/* --- インタラクティブ・シミュレーター --- */
+.sim-container {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+
+.sim-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  background-color: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.sim-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: background-color 0.15s;
+}
+
+.btn:hover {
+  background-color: #1d4ed8;
+}
+
+.btn.secondary {
+  background-color: #64748b;
+}
+
+.btn.secondary:hover {
+  background-color: #475569;
+}
+
+.sim-status-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sim-status-item {
+  background-color: #ffffff;
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.sim-status-item span.label {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.75rem;
+}
+
+.sim-status-item span.val {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* --- 比較表 --- */
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.custom-table th, .custom-table td {
+  border: 1px solid #cbd5e1;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.custom-table th {
+  background-color: #f1f5f9;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.custom-table tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+/* --- 印刷用スタイル（@media print） --- */
+@media print {
+  body {
+    background-color: #ffffff;
+    padding: 0;
+    color: #000000;
+    font-size: 10pt;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #94a3b8;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .score-hero {
+    background: #f1f5f9 !important;
+    color: #000000 !important;
+    border: 2px solid #334155;
+    padding: 1rem;
+  }
+
+  .score-number {
+    color: #0f172a !important;
+  }
+
+  .verdict-badge {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    border: 1px solid #334155;
+  }
+
+  .btn, .sim-controls {
+    display: none !important;
+  }
+
+  .svg-diagram-container {
+    border: none;
+    padding: 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ==========================================
+       1. 採点サマリーカード
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">Q008 採点結果</span>
+      <h1 class="card-title">解答採点・学習診断サマリー</h1>
+    </div>
+
+    <div class="score-hero">
+      <div>
+        <div style="font-size: 0.9rem; color: #e2e8f0; font-weight: 600;">総合評価得点</div>
+        <div class="score-main">
+          <span class="score-number">82</span>
+          <span class="score-total">/ 100 点</span>
+        </div>
+      </div>
+      <div>
+        <div class="verdict-badge">判定：合格（概ね良好・要詳細補足）</div>
+      </div>
+    </div>
+
+    <!-- 原則8項目メタデータグリッド -->
+    <div class="score-meta-grid">
+      <div class="meta-box">
+        <div class="meta-box-label">正しく理解できた点</div>
+        <div class="meta-box-value" style="color: var(--success-color);">
+          ✓ 異種組織境界面での局所静磁場不均一発生<br>
+          ✓ 磁場乱れに伴うラーモア周波数シフトの機序
+        </div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-box-label">最大の修正点</div>
+        <div class="meta-box-value" style="color: var(--warning-color);">
+          周波数選択パルスの「飽和＋脱位相（スポイラー）」機構および**水信号の誤飽和（黒抜け）**の明記
+        </div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-box-label">根本的誤概念</div>
+        <div class="meta-box-value" style="color: var(--danger-color);">
+          「励起後に信号を取る」という誤解（CHESSパルスは先行印加し、横磁化を破棄する）
+        </div>
+      </div>
+      <div class="meta-box">
+        <div class="meta-box-label">学習優先度</div>
+        <div class="meta-box-value">
+          <strong>高</strong>（国家試験・臨床撮像パラメータ設定の必須理論）
+        </div>
+      </div>
+    </div>
+
+    <!-- 正答 vs ユーザー解答の比較 -->
+    <div class="answer-comparison-grid">
+      <div class="answer-box correct">
+        <div class="answer-title correct">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          模範解答（完全解）
+        </div>
+        <div class="answer-content">CHESS法は、水と脂肪の化学シフト差（約3.5 ppm；1.5Tで約220Hz、3Tで約440Hz）を利用し、脂肪の共鳴周波数を狙った狭帯域90°飽和RFパルスを印加後、直ちにスポイラー傾斜磁場で脂肪の横磁化を脱位相させて信号を消去する。
+しかし、頸部や頭蓋底は骨・含気腔（空気）・軟部組織が複雑に隣接し、磁化率差（Δχ）によって強い局所静磁場不均一（ΔB0）が生じる。
+ラーモアの法則（Δf = γ/2π · ΔB0）に従って局所共鳴周波数がシフトすると、①脂肪の周波数がパルス帯域から外れて抑制不良（高信号残存）となり、②水の周波数が照射帯域に入ると水信号が誤って飽和・消去（低信号化）されるため、激しい脂肪抑制ムラが発生する。</div>
+      </div>
+
+      <div class="answer-box user">
+        <div class="answer-title user">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke="width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          ユーザー解答（提出内容）
+        </div>
+        <div class="answer-content">chess法は脂肪の周波数に対して事前に励起パルスを照射し、その後に信号を取る。
+頸部や頭蓋底などは骨や空気と軟部組織が存在して静磁場不均一が起こりやすい。
+そのため脂肪組織の局所磁場が乱れておりラーモア周波数も異なる。
+結果として、脂肪抑制の効果が小さくなりムラになりやすい。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       2. 詳細講評と改善ポイント
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">詳細講評</span>
+      <h2 class="card-title">思考プロセスの診断とステップアップ指導</h2>
+    </div>
+
+    <div class="feedback-card positive">
+      <div class="feedback-card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        秀でている点（Good）
+      </div>
+      <p style="font-size: 0.9rem;">
+        頸部・頭蓋底という解剖学的特徴として「骨・空気・軟部組織」の混在を挙げ、それが「静磁場不均一（ΔB0）」を誘発し、さらにラーモアの法則に基づいて「共鳴周波数の乱れ」へ波及するという<strong>因果関係の鎖が論理的に構築されています</strong>。MRI物理現象の全体像は的確に捉えられています。
+      </p>
+    </div>
+
+    <div class="feedback-card danger">
+      <div class="feedback-card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        誤概念の修正：パルスの目的と信号取得のタイミング
+      </div>
+      <p style="font-size: 0.9rem;">
+        解答文中の<strong>「事前に励起パルスを照射し、その後に信号を取る」</strong>という表現は、CHESSパルスの役割についての誤解を招く恐れがあります。<br>
+        CHESSパルスは本撮像の励起パルス（SE法の90°パルスやGRE法のαパルス）に先立って印加される<strong>「プレ飽和（Pre-saturation）パルス」</strong>です。照射された脂肪の横磁化は、直後に印加される強力な<strong>スポイラー傾斜磁場（Dephaser）</strong>によって完全に分散・消去され、本スキャン時には「最初から縦磁化ゼロ＝信号が出ない状態」にします。CHESSパルス自身から生じるFID信号を収集するわけではありません。
+      </p>
+    </div>
+
+    <div class="feedback-card warning">
+      <div class="feedback-card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        臨床的に致命的な見落とし：「水信号の誤飽和（Water Saturation）」
+      </div>
+      <p style="font-size: 0.9rem;">
+        臨床画像でみられるCHESSの「ムラ」とは、単に脂肪が白く残る（脂肪抑制不良）だけでなく、<strong>「本来残すべき軟部組織や病変の水信号が真っ黒に抜け落ちてしまう（逆説的水飽和）」</strong>現象が同時に起こることを意味します。局所磁場が約3.5 ppmずれると、水が脂肪の周波数に一致してしまい、水が消去されます。この双方向の現象を記述できると満点レベルになります。
+      </p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       3. 物理原理と数式解説カード
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">重要数式</span>
+      <h2 class="card-title">物理原理と定量的定式化</h2>
+    </div>
+
+    <p style="font-size: 0.95rem; margin-bottom: 1rem;">
+      CHESS法の成否は、水と脂肪の<strong>「化学シフト周波数差（Δf）」</strong>と、磁化率差に起因する<strong>「局所磁場不均一（ΔB0）」</strong>の力関係によって厳密に決定されます。
+    </p>
+
+    <!-- 数式1: ラーモアの式と化学シフト差 -->
+    <div class="math-block-container">
+      <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary-color); margin-bottom: 0.5rem;">
+        【式1】ラーモア周波数と水・脂肪の化学シフト周波数差
+      </div>
+      <div class="math-display">
+        <math display="block">
+          <mrow>
+            <mi>f</mi>
+            <mo>=</mo>
+            <mfrac>
+              <mi>γ</mi>
+              <mrow>
+                <mn>2</mn>
+                <mi>π</mi>
+              </mrow>
+            </mfrac>
+            <mi>B</mi>
+          </mrow>
+          <mspace width="2em"/>
+          <mrow>
+            <mi>Δ</mi>
+            <mi>f</mi>
+            <mo>=</mo>
+            <msub>
+              <mi>f</mi>
+              <mtext>water</mtext>
+            </msub>
+            <mo>−</mo>
+            <msub>
+              <mi>f</mi>
+              <mtext>fat</mtext>
+            </msub>
+            <mo>=</mo>
+            <mfrac>
+              <mi>γ</mi>
+              <mrow>
+                <mn>2</mn>
+                <mi>π</mi>
+              </mrow>
+            </mfrac>
+            <msub>
+              <mi>B</mi>
+              <mn>0</mn>
+            </msub>
+            <mo>⋅</mo>
+            <mi>δ</mi>
+          </mrow>
+        </math>
+      </div>
+
+      <!-- 数式記号の解説テーブル -->
+      <table class="math-legend-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理的意味</th>
+            <th>代表値・単位</th>
+            <th>比例 / 反比例・臨床的影響</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>γ / 2π</strong></td>
+            <td>プロトン（<sup>1</sup>H）の磁気回転比</td>
+            <td>42.58 MHz / T</td>
+            <td>核種固有の定数。磁場から周波数への換算係数。</td>
+          </tr>
+          <tr>
+            <td><strong>B₀</strong></td>
+            <td>主静磁場強度</td>
+            <td>1.5 T または 3.0 T</td>
+            <td>静磁場強度に<strong>完全比例</strong>して周波数差 Δf が拡大する。</td>
+          </tr>
+          <tr>
+            <td><strong>δ</strong></td>
+            <td>水と脂肪（-CH₂-）の遮蔽定数差</td>
+            <td>約 3.5 ppm (3.5 × 10⁻⁶)</td>
+            <td>電子雲の遮蔽効果の差。温度や分子構造により微小変化。</td>
+          </tr>
+          <tr>
+            <td><strong>Δf</strong></td>
+            <td>共鳴周波数差</td>
+            <td>1.5T: <strong>約 220 Hz</strong><br>3.0T: <strong>約 440 Hz</strong></td>
+            <td>高磁場ほど差が広がり周波数分離は容易になるが、ΔB0（Hz換算）も倍増する。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 数式2: 磁化率と局所磁場歪み -->
+    <div class="math-block-container">
+      <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary-color); margin-bottom: 0.5rem;">
+        【式2】物質境界における磁化率差と局所磁場変動（ラーモア周波数シフト）
+      </div>
+      <div class="math-display">
+        <math display="block">
+          <mrow>
+            <mi>Δ</mi>
+            <msub>
+              <mi>B</mi>
+              <mtext>local</mtext>
+            </msub>
+            <mo>∝</mo>
+            <mrow>
+              <mo>(</mo>
+              <msub>
+                <mi>χ</mi>
+                <mtext>tissue</mtext>
+              </msub>
+              <mo>−</mo>
+              <msub>
+                <mi>χ</mi>
+                <mtext>air</mtext>
+              </msub>
+              <mo>)</mo>
+            </mrow>
+            <mo>⋅</mo>
+            <msub>
+              <mi>B</mi>
+              <mn>0</mn>
+            </msub>
+          </mrow>
+          <mspace width="2em"/>
+          <mrow>
+            <mi>Δ</mi>
+            <msub>
+              <mi>f</mi>
+              <mtext>shift</mtext>
+            </msub>
+            <mo>=</mo>
+            <mfrac>
+              <mi>γ</mi>
+              <mrow>
+                <mn>2</mn>
+                <mi>π</mi>
+              </mrow>
+            </mfrac>
+            <mi>Δ</mi>
+            <msub>
+              <mi>B</mi>
+              <mtext>local</mtext>
+            </msub>
+          </mrow>
+        </math>
+      </div>
+      <p style="font-size: 0.85rem; text-align: left; color: var(--text-muted); margin-top: 0.5rem;">
+        空気（常磁性寄り：約 +0.36 ppm）と生体軟部組織（反磁性：約 -9.0 ppm）の間には約 <strong>9.4 ppm</strong> という極めて大きな体積磁化率差（Δχ）が存在します。頸部（気道・咽頭）や頭蓋底（副鼻腔・乳突蜂巣・骨境界）では、この急峻な磁化率差により、最大で <strong>数ppm（数百Hz）以上</strong> の磁場歪み ΔB₀ が局所的に発生します。
+      </p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       4. インラインSVGによる原理・シーケンス図解
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">構造図解</span>
+      <h2 class="card-title">CHESSパルスシーケンスと磁化ベクトルの振る舞い</h2>
+    </div>
+
+    <div class="svg-diagram-container">
+      <!-- 完全自立型インラインSVG：CHESSシーケンスダイアグラム -->
+      <svg viewBox="0 0 800 280" width="100%" height="auto" style="max-height: 320px;">
+        <!-- 背景グリッド -->
+        <rect width="800" height="280" fill="#f8fafc" rx="8"/>
+        
+        <!-- タイムライン軸 -->
+        <line x1="50" y1="230" x2="760" y2="230" stroke="#64748b" stroke-width="2"/>
+        <polygon points="760,226 772,230 760,234" fill="#64748b"/>
+        <text x="765" y="248" font-size="12" fill="#64748b" font-weight="600">時間 t</text>
+
+        <!-- セクション境界点線 -->
+        <line x1="380" y1="20" x2="380" y2="230" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5,5"/>
+        <text x="215" y="30" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">① CHESS プレパレーション部</text>
+        <text x="570" y="30" font-size="14" font-weight="700" fill="#0369a1" text-anchor="middle">② 本撮像シーケンス（SE / FSE / GRE）</text>
+
+        <!-- RFチャンネル -->
+        <text x="30" y="80" font-size="13" font-weight="700" fill="#334155">RF</text>
+        <line x1="50" y1="80" x2="740" y2="80" stroke="#cbd5e1" stroke-width="1.5"/>
+        
+        <!-- CHESS RFパルス (Sinc波形・狭帯域) -->
+        <path d="M 120 80 Q 140 80, 150 72 Q 160 60, 170 80 Q 180 110, 190 20 Q 200 110, 210 80 Q 220 60, 230 72 Q 240 80, 260 80" fill="none" stroke="#2563eb" stroke-width="3"/>
+        <text x="190" y="15" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">脂肪選択的90°パルス</text>
+        <text x="190" y="98" font-size="10" fill="#64748b" text-anchor="middle">狭帯域 (BW ≈ 120Hz)</text>
+
+        <!-- 本撮像励起パルス -->
+        <path d="M 440 80 Q 455 80, 465 30 Q 475 80, 490 80" fill="none" stroke="#0891b2" stroke-width="2.5"/>
+        <text x="465" y="25" font-size="11" font-weight="700" fill="#0891b2" text-anchor="middle">90° 励起</text>
+
+        <path d="M 580 80 Q 595 80, 605 15 Q 615 80, 630 80" fill="none" stroke="#0891b2" stroke-width="2.5"/>
+        <text x="605" y="12" font-size="11" font-weight="700" fill="#0891b2" text-anchor="middle">180° リフォーカス</text>
+
+        <!-- 傾斜磁場チャンネル G_spoiler -->
+        <text x="30" y="150" font-size="13" font-weight="700" fill="#334155">G</text>
+        <line x1="50" y1="150" x2="740" y2="150" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- スポイラー傾斜磁場 -->
+        <polygon points="280,150 295,105 340,105 355,150" fill="#f59e0b" fill-opacity="0.3" stroke="#d97706" stroke-width="2"/>
+        <text x="317" y="132" font-size="11" font-weight="700" fill="#b45309" text-anchor="middle">強力なスポイラー</text>
+        <text x="317" y="170" font-size="10" fill="#78350f" text-anchor="middle">（横磁化の脱位相）</text>
+
+        <!-- 磁化ベクトルの状態イラスト -->
+        <g transform="translate(100, 195)">
+          <rect x="0" y="0" width="80" height="28" rx="4" fill="#ffffff" stroke="#94a3b8"/>
+          <text x="40" y="18" font-size="10" text-anchor="middle" fill="#1e293b">脂肪縦磁化 Mz=1</text>
+        </g>
+        <g transform="translate(205, 195)">
+          <rect x="0" y="0" width="85" height="28" rx="4" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="42" y="18" font-size="10" text-anchor="middle" fill="#991b1b">脂肪横磁化 Mxy=1</text>
+        </g>
+        <g transform="translate(305, 195)">
+          <rect x="0" y="0" width="85" height="28" rx="4" fill="#dcfce7" stroke="#22c55e"/>
+          <text x="42" y="18" font-size="10" text-anchor="middle" fill="#166534">脱位相: Mxy=0</text>
+        </g>
+        <g transform="translate(425, 195)">
+          <rect x="0" y="0" width="100" height="28" rx="4" fill="#e0f2fe" stroke="#38bdf8"/>
+          <text x="50" y="18" font-size="10" text-anchor="middle" fill="#0369a1">水のみ励起される</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">図1：CHESSパルスの印加タイムライン。脂肪の共鳴周波数を90°励起後、スポイラー傾斜磁場でバラバラに脱位相（ディフェーズ）させる。</div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       5. インタラクティブ・スペクトルシミュレーター
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">動的理解</span>
+      <h2 class="card-title">局所磁場不均一シミュレーター（周波数シフトと信号変化）</h2>
+    </div>
+
+    <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+      スライダーを動かして、頸部や頭蓋底で発生する局所磁場変動（ΔB0）を模擬してください。静磁場が乱れた際に、なぜ「脂肪抑制不良」と「水信号の消失（黒抜け）」が起きるのかをリアルタイムに確認できます。
+    </p>
+
+    <div class="sim-container">
+      <div class="sim-controls">
+        <div class="sim-slider-group">
+          <div class="slider-label-row">
+            <span>局所磁場変動量（ΔB₀）:</span>
+            <span id="shift-val-display" style="color: var(--primary-color);">0.0 ppm (0 Hz @ 1.5T)</span>
+          </div>
+          <input type="range" id="shift-slider" min="-5.0" max="5.0" step="0.1" value="0.0">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b;">
+            <span>-5.0 ppm (水側へ過度シフト)</span>
+            <span>0.0 ppm (理想均一磁場)</span>
+            <span>+5.0 ppm (逆方向シフト)</span>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button type="button" class="btn" id="btn-play">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            自動変動
+          </button>
+          <button type="button" class="btn secondary" id="btn-reset">リセット</button>
+        </div>
+      </div>
+
+      <!-- スペクトルSVG描画領域 -->
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem;">
+        <svg id="spectrum-svg" viewBox="0 0 700 240" width="100%" height="auto">
+          <!-- 軸 -->
+          <line x1="50" y1="200" x2="660" y2="200" stroke="#475569" stroke-width="2"/>
+          <text x="350" y="230" font-size="12" fill="#475569" text-anchor="middle" font-weight="600">共鳴周波数 f (Hz / ppm)</text>
+          
+          <!-- CHESS照射帯域固定枠（脂肪共鳴中心: 0Hzとする） -->
+          <rect x="150" y="30" width="100" height="170" fill="#fef3c7" fill-opacity="0.6" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4"/>
+          <text x="200" y="45" font-size="11" font-weight="700" fill="#b45309" text-anchor="middle">CHESS照射帯域</text>
+          <text x="200" y="60" font-size="9" fill="#b45309" text-anchor="middle">(BW ≈ 120Hz)</text>
+
+          <!-- スペクトルカーブ動的描画コンテナ -->
+          <g id="dynamic-spectrum-group">
+            <!-- JSで動的更新 -->
+          </g>
+        </svg>
+      </div>
+
+      <!-- シミュレーション結果表示 -->
+      <div class="sim-status-box">
+        <div class="sim-status-item">
+          <span class="label">脂肪抑制の状態</span>
+          <span class="val" id="fat-status" style="color: var(--success-color);">良好（完全抑制）</span>
+        </div>
+        <div class="sim-status-item">
+          <span class="label">水信号の状態</span>
+          <span class="val" id="water-status" style="color: var(--success-color);">正常保持（信号100%）</span>
+        </div>
+        <div class="sim-status-item">
+          <span class="label">臨床画像への影響</span>
+          <span class="val" id="image-status" style="color: var(--text-main);">ムラなし・均一</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       6. 臨床的対策と代替撮像技術の比較表
+       ========================================== -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-badge">臨床実践</span>
+      <h2 class="card-title">頸部・頭蓋底における脂肪抑制不良への対抗策</h2>
+    </div>
+
+    <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+      CHESS法で抑制ムラが生じる部位（頸部・頭蓋底・肩関節・胸壁など）に対して、臨床現場で放射線技師が選択すべき技術的アプローチと特徴の比較です。
+    </p>
+
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>手法名</th>
+          <th>抑制原理</th>
+          <th>磁化率不均一への耐性</th>
+          <th>主な長所・短所（臨床的留意点）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>局所シミング<br>(Voxel/Localized Shim)</strong></td>
+          <td>CHESS法のまま、撮像領域（関心部位）にシムボリュームを限定してΔB0を微調整</td>
+          <td>小〜中（改善は限定的）</td>
+          <td><strong>長所:</strong> シーケンスを変更せずコントラストを維持。<br><strong>短所:</strong> 含気腔境界が近接していると完全に補正しきれない。</td>
+        </tr>
+        <tr>
+          <td><strong>STIR法<br>(Short TI Inversion Recovery)</strong></td>
+          <td>T1値の差を利用（反転回復パルス印加後、脂肪の縦磁化がゼロ点を通るTIで励起）</td>
+          <td><strong>極めて高い</strong><br>（B0不均一に非依存）</td>
+          <td><strong>長所:</strong> 磁場がどれだけ乱れても確実に脂肪を均一消去。<br><strong>短所:</strong> SNRが低下、造影T1強調像で使用不可（Gd造影病変もT1短縮で消える）。</td>
+        </tr>
+        <tr>
+          <td><strong>Dixon法 / IDEAL / Flex<br>(水脂肪位相分離法)</strong></td>
+          <td>水と脂肪のケミカルシフトによるエコー時間（TE）ごとの位相差（同位相・逆位相）から計算分離</td>
+          <td><strong>極めて高い</strong><br>（磁場マップで不均一を補正）</td>
+          <td><strong>長所:</strong> 1回の撮像で水・脂肪・In/Out-phaseの4画像を取得。高SNR。<br><strong>短所:</strong> 計算処理時間が必要。極端な不均一領域で水・脂肪の反転（Water-Fat Swap）リスク。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<!-- ==========================================
+     JavaScript: 完全オフライン・ネイティブ対話スクリプト
+     ========================================== -->
+<script>
+(function() {
+  const slider = document.getElementById('shift-slider');
+  const shiftDisplay = document.getElementById('shift-val-display');
+  const dynamicGroup = document.getElementById('dynamic-spectrum-group');
+  const fatStatus = document.getElementById('fat-status');
+  const waterStatus = document.getElementById('water-status');
+  const imageStatus = document.getElementById('image-status');
+  const btnPlay = document.getElementById('btn-play');
+  const btnReset = document.getElementById('btn-reset');
+
+  let isPlaying = false;
+  let playDirection = 1;
+  let animId = null;
+
+  // 1.5T基準：中心周波数 64MHz, 3.5ppm = 約224Hz
+  // SVG座標系: X=200 を「脂肪の正規位置(0Hz)」、X=450 を「水の正規位置(+220Hz/3.5ppm)」とする
+  const FAT_ORIGIN_X = 200;
+  const WATER_ORIGIN_X = 460;
+  const CHESS_MIN_X = 150;
+  const CHESS_MAX_X = 250;
+
+  function updateSimulation(ppmVal) {
+    // 1ppmあたりのピクセル移動量: (460 - 200) / 3.5 ≈ 74.3 px
+    const pxPerPpm = (WATER_ORIGIN_X - FAT_ORIGIN_X) / 3.5;
+    const shiftPx = ppmVal * pxPerPpm;
+    const hzVal = Math.round(ppmVal * 63.8); // 1.5TでのHz換算
+
+    shiftDisplay.textContent = `${ppmVal > 0 ? '+' : ''}${ppmVal.toFixed(1)} ppm (${hzVal > 0 ? '+' : ''}${hzVal} Hz @ 1.5T)`;
+
+    const fatCurrentX = FAT_ORIGIN_X + shiftPx;
+    const waterCurrentX = WATER_ORIGIN_X + shiftPx;
+
+    // ガウス曲線パスの作成
+    function createPeakPath(centerX, height, width, color, fillOpacity) {
+      let pathD = `M ${centerX - width * 2} 200 `;
+      for (let x = -width * 2; x <= width * 2; x += 4) {
+        const y = 200 - height * Math.exp(- (x * x) / (2 * (width / 2.35) * (width / 2.35)));
+        pathD += `L ${centerX + x} ${y} `;
+      }
+      pathD += `L ${centerX + width * 2} 200 Z`;
+      return `<path d="${pathD}" fill="${color}" fill-opacity="${fillOpacity}" stroke="${color}" stroke-width="2.5"/>`;
+    }
+
+    // SVG内要素の更新
+    let html = '';
+    // 脂肪ピーク（オレンジ）
+    html += createPeakPath(fatCurrentX, 110, 40, '#ea580c', 0.4);
+    html += `<text x="${fatCurrentX}" y="${200 - 120}" font-size="12" font-weight="700" fill="#ea580c" text-anchor="middle">脂肪 (-CH₂-)</text>`;
+
+    // 水ピーク（ブルー）
+    html += createPeakPath(waterCurrentX, 140, 40, '#0284c7', 0.4);
+    html += `<text x="${waterCurrentX}" y="${200 - 150}" font-size="12" font-weight="700" fill="#0284c7" text-anchor="middle">水 (H₂O)</text>`;
+
+    dynamicGroup.innerHTML = html;
+
+    // 判定ロジック
+    // 1. 脂肪がCHESS帯域（150〜250）に入っている割合
+    const fatOverlap = Math.abs(fatCurrentX - 200) < 45;
+    // 2. 水がCHESS帯域に入ってしまったか
+    const waterOverlap = (waterCurrentX >= CHESS_MIN_X && waterCurrentX <= CHESS_MAX_X);
+
+    if (fatOverlap && !waterOverlap) {
+      fatStatus.textContent = '良好（完全抑制）';
+      fatStatus.style.color = 'var(--success-color)';
+      waterStatus.textContent = '正常保持（信号100%）';
+      waterStatus.style.color = 'var(--success-color)';
+      imageStatus.textContent = '均一なコントラスト（ムラなし）';
+      imageStatus.style.color = 'var(--text-main)';
+    } else if (!fatOverlap && !waterOverlap) {
+      fatStatus.textContent = '抑制不良（帯域外へ逸脱）';
+      fatStatus.style.color = 'var(--danger-color)';
+      waterStatus.textContent = '正常保持（信号100%）';
+      waterStatus.style.color = 'var(--success-color)';
+      imageStatus.textContent = '脂肪が高信号で白く残存（ムラ発生）';
+      imageStatus.style.color = 'var(--danger-color)';
+    } else if (waterOverlap) {
+      fatStatus.textContent = '抑制不良（脂肪は高信号化）';
+      fatStatus.style.color = 'var(--danger-color)';
+      waterStatus.textContent = '重大エラー：水信号の誤飽和！';
+      waterStatus.style.color = 'var(--danger-color)';
+      imageStatus.textContent = '組織・病変が真っ黒に消失（逆説的水飽和）';
+      imageStatus.style.color = 'var(--danger-color)';
+    }
+  }
+
+  // スライダーイベント
+  slider.addEventListener('input', function(e) {
+    if (isPlaying) stopAnimation();
+    updateSimulation(parseFloat(e.target.value));
+  });
+
+  // リセット
+  btnReset.addEventListener('click', function() {
+    if (isPlaying) stopAnimation();
+    slider.value = 0.0;
+    updateSimulation(0.0);
+  });
+
+  // 自動アニメーション
+  function animate() {
+    let cur = parseFloat(slider.value);
+    cur += 0.05 * playDirection;
+    if (cur >= 4.5) {
+      cur = 4.5;
+      playDirection = -1;
+    } else if (cur <= -4.5) {
+      cur = -4.5;
+      playDirection = 1;
+    }
+    slider.value = cur.toFixed(2);
+    updateSimulation(cur);
+    animId = requestAnimationFrame(animate);
+  }
+
+  function stopAnimation() {
+    isPlaying = false;
+    cancelAnimationFrame(animId);
+    btnPlay.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> 自動変動';
+    btnPlay.classList.remove('secondary');
+  }
+
+  btnPlay.addEventListener('click', function() {
+    if (!isPlaying) {
+      isPlaying = true;
+      btnPlay.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 一時停止';
+      btnPlay.classList.add('secondary');
+      animate();
+    } else {
+      stopAnimation();
+    }
+  });
+
+  // 初期化実行
+  updateSimulation(0.0);
+})();
+</script>
+</body>
+</html>

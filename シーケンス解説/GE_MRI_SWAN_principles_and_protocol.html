@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GE MRI SWAN（3D T2*-Weighted Angiography）実践・原理解説</title>
+<style>
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#172033; --muted:#5f6b7a;
+  --accent:#165dff; --accent2:#0f8b8d; --warn:#b45309; --danger:#b42318;
+  --line:#d9e2ef; --soft:#eef4ff; --soft2:#ecfdf8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN",
+  "Yu Gothic",Meiryo,sans-serif; line-height:1.8;
+}
+.container{max-width:1180px;margin:0 auto;padding:28px 22px 70px}
+.hero{
+  padding:34px 38px; border-radius:22px; color:white;
+  background:linear-gradient(135deg,#123a78,#165dff 55%,#0f8b8d);
+  box-shadow:0 12px 34px rgba(20,50,100,.16);
+}
+.hero h1{font-size:clamp(28px,4vw,48px);line-height:1.2;margin:0 0 12px}
+.hero p{margin:0;opacity:.95;font-size:17px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.badge{padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.17);font-size:13px}
+nav{
+  position:sticky; top:0; z-index:20; margin:18px 0 22px; padding:10px;
+  border:1px solid var(--line); background:rgba(255,255,255,.94); backdrop-filter:blur(10px);
+  border-radius:14px; overflow:auto; white-space:nowrap;
+}
+nav a{color:#234;text-decoration:none;margin-right:16px;font-size:14px}
+section{
+  background:var(--card); border:1px solid var(--line); border-radius:18px;
+  padding:28px; margin:20px 0; box-shadow:0 5px 18px rgba(35,55,80,.05);
+}
+h2{margin:0 0 18px;font-size:28px;border-left:6px solid var(--accent);padding-left:14px}
+h3{margin-top:28px;font-size:21px;color:#183b6b}
+h4{font-size:17px;margin:20px 0 8px}
+p{margin:10px 0}
+.small{font-size:13px;color:var(--muted)}
+.lead{font-size:17px}
+.callout{
+  border-left:5px solid var(--accent); background:var(--soft); padding:16px 18px;
+  border-radius:10px; margin:16px 0;
+}
+.callout.green{border-left-color:var(--accent2);background:var(--soft2)}
+.callout.warn{border-left-color:var(--warn);background:#fff8ed}
+.callout.danger{border-left-color:var(--danger);background:#fff1f1}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fbfdff}
+.card h4{margin-top:0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:10px 11px;vertical-align:top}
+th{background:#eef4fb;text-align:left}
+.eq{
+  overflow-x:auto; background:#0f172a;color:#eaf1ff;border-radius:12px;padding:14px 16px;
+  margin:12px 0;font-family:"Times New Roman",serif;font-size:18px;letter-spacing:.2px;
+}
+.eq .note{font-family:inherit;font-size:13px;color:#b8c5d9}
+.diagram{
+  border:1px dashed #a9b9cf;border-radius:14px;padding:18px;background:#fafcff;margin:16px 0;
+}
+.flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.flow span{padding:8px 10px;background:#eef4ff;border-radius:10px;border:1px solid #cddcf3}
+.arrow{color:var(--accent);font-weight:700}
+.steps{counter-reset:step}
+.step{counter-increment:step;padding:14px 14px 14px 54px;position:relative;border-bottom:1px solid #edf1f6}
+.step:last-child{border-bottom:0}
+.step:before{
+  content:counter(step);position:absolute;left:8px;top:14px;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;background:var(--accent);color:white;font-weight:700
+}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#edf3ff;color:#224c9a}
+.kpi{font-size:28px;font-weight:700;color:var(--accent)}
+.two-col{columns:2;column-gap:28px}
+li{margin:5px 0}
+footer{color:var(--muted);font-size:12px;padding:8px 4px}
+@media(max-width:800px){.grid,.grid3{grid-template-columns:1fr}.two-col{columns:1}.hero{padding:26px 24px}section{padding:22px 18px}}
+@media print{
+  body{background:white}.container{max-width:none;padding:0}.hero{box-shadow:none;border-radius:0}
+  nav{display:none}section{box-shadow:none;break-inside:avoid}.card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header class="hero">
+  <h1>GE MRI SWAN<br><span style="font-size:.58em;font-weight:600">3D T2*-Weighted Angiography</span></h1>
+  <p>原理・撮像手順・パラメータ・位置決め・MinIP・位相画像を、数式と実務視点でつなげて理解する資料</p>
+  <div class="badges">
+    <span class="badge">3D Multi-Echo GRE</span>
+    <span class="badge">T2* / Susceptibility</span>
+    <span class="badge">BOLD / Deoxyhemoglobin</span>
+    <span class="badge">Microbleeds / Venography</span>
+    <span class="badge">GE SWAN</span>
+  </div>
+</header>
+
+<nav>
+<a href="#overview">概要</a><a href="#physics">原理</a><a href="#multi">マルチエコー</a>
+<a href="#phase">位相・磁化率</a><a href="#parameters">パラメータ</a><a href="#position">位置決め</a>
+<a href="#workflow">撮像手順</a><a href="#post">後処理</a><a href="#tips">注意点</a><a href="#summary">まとめ</a>
+</nav>
+
+<section id="overview">
+<h2>1. SWANとは何をしている撮像か</h2>
+<p class="lead"><b>SWANは、3DのマルチエコーGREで得られるT2*減衰と磁化率差を利用し、静脈・微小出血・鉄沈着などを高感度に低信号として描出するGEの磁化率強調系撮像です。</b></p>
+
+<div class="grid">
+  <div class="card">
+    <h4>静脈が黒く見える主因</h4>
+    <p>静脈血中の<b>デオキシヘモグロビン</b>は常磁性を示し、周囲との磁化率差を作ります。その結果、局所磁場が乱れ、位相がばらつき、ボクセル内でスピンが打ち消し合って信号が低下します。</p>
+  </div>
+  <div class="card">
+    <h4>微小出血が黒く見える主因</h4>
+    <p>ヘモジデリン、フェリチン、デオキシヘモグロビン、メトヘモグロビンなどは局所磁場不均一を生じさせ、GREでは180°再収束パルスがないため、その不均一がT2*減衰として強く残ります。</p>
+  </div>
+</div>
+
+<div class="callout green">
+<b>要点：</b> SWANの「黒さ」は単なるT2減衰ではなく、<b>T2 + 静的な磁場不均一の影響を合わせたT2*</b>によって生じます。
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <span>デオキシHb / 鉄沈着</span><span class="arrow">→</span>
+    <span>局所磁化率差 Δχ</span><span class="arrow">→</span>
+    <span>局所磁場差 ΔB</span><span class="arrow">→</span>
+    <span>位相分散 Δφ</span><span class="arrow">→</span>
+    <span>ボクセル内信号相殺</span><span class="arrow">→</span>
+    <span><b>低信号</b></span>
+  </div>
+</div>
+</section>
+
+<section id="physics">
+<h2>2. T2*強調の原理を数式から理解する</h2>
+
+<h3>2-1. GREの基本信号式</h3>
+<p>単純化したspoiled GREの信号は、概念的には次のように書けます。</p>
+<div class="eq">
+S(TE,TR,α) ∝ ρ · sinα · (1 − e<sup>−TR/T1</sup>) / (1 − cosα · e<sup>−TR/T1</sup>) · e<sup>−TE/T2*</sup>
+<div class="note">ρ：プロトン密度、α：Flip Angle、TR：繰り返し時間、TE：エコー時間</div>
+</div>
+
+<p>SWANで特に重要なのは最後の <b>e<sup>−TE/T2*</sup></b> です。TEが長くなるほど、T2*の短い組織・血液・鉄沈着部位の信号は急速に落ちます。</p>
+
+<h3>2-2. T2とT2*の関係</h3>
+<div class="eq">
+1/T2* = 1/T2 + 1/T2′
+</div>
+<p><b>T2′</b>は、磁場不均一や磁化率差による追加の横緩和成分です。つまりT2*は、純粋なスピン-スピン緩和だけでなく、<b>B0不均一や局所磁化率差</b>まで含むため、常にT2以下になります。</p>
+
+<div class="callout">
+<b>Spin Echoとの違い：</b> SEでは180°パルスが静的な位相ずれを再収束させるため、磁化率差の影響をある程度打ち消します。一方GREには180°パルスがないため、局所磁場不均一がそのままT2*低下として現れます。
+</div>
+
+<h3>2-3. 磁化率差から局所磁場差へ</h3>
+<p>物質の磁化率をχ、主磁場をB<sub>0</sub>とすると、局所的な磁場変化は概念的に</p>
+<div class="eq">
+ΔB ∝ B<sub>0</sub> · Δχ
+</div>
+<p>と考えられます。したがって、同じ磁化率差でも<b>3Tの方が1.5Tより局所磁場差が大きくなりやすく、磁化率効果が強くなります。</b></p>
+
+<h3>2-4. 位相のずれ</h3>
+<div class="eq">
+Δφ = γ · ΔB · TE
+</div>
+<p>γはプロトンの磁気回転比です。この式から、位相ずれは<b>磁場差ΔB、磁場強度B0、TE</b>が大きいほど増えることが分かります。</p>
+
+<div class="grid3">
+  <div class="card"><span class="tag">TE ↑</span><h4>磁化率感度 ↑</h4><p>位相差が蓄積し、微小出血や静脈がより黒くなる。</p></div>
+  <div class="card"><span class="tag">B0 ↑</span><h4>3Tで効果 ↑</h4><p>同じΔχでもΔBが増え、T2*短縮が強くなりやすい。</p></div>
+  <div class="card"><span class="tag">Voxel ↓</span><h4>微細構造描出 ↑</h4><p>部分容積効果が減るが、SNRは低下する。</p></div>
+</div>
+</section>
+
+<section id="multi">
+<h2>3. なぜSWANは「マルチエコー」なのか</h2>
+<p>単一の長いTEだけで撮ると磁化率コントラストは強くなりますが、脳実質の信号が低下し、SNRも失われます。逆に短いTEだけではSNRは高いものの、静脈や微小出血のコントラストが弱くなります。</p>
+
+<table>
+<thead><tr><th>エコー</th><th>得意な情報</th><th>弱点</th></tr></thead>
+<tbody>
+<tr><td>短いTE</td><td>高SNR、脳実質の形態保持</td><td>磁化率強調が弱い</td></tr>
+<tr><td>中間TE</td><td>実質と静脈のバランス</td><td>単独では最適とは限らない</td></tr>
+<tr><td>長いTE</td><td>静脈・鉄・微小出血のT2*コントラスト</td><td>SNR低下、空気近傍artifact増加</td></tr>
+</tbody>
+</table>
+
+<h3>3-1. マルチエコー合成の概念</h3>
+<div class="eq">
+S<sub>combined</sub> = Σ w<sub>i</sub> · S(TE<sub>i</sub>)
+</div>
+<p>各エコーの信号を重み付けして統合することで、<b>短TEのSNRと長TEの磁化率コントラストを両立</b>させます。実際のGE実装では装置側の再構成アルゴリズムが使用され、単純加算そのものではありませんが、理解のためにはこの考え方が有用です。</p>
+
+<div class="callout warn">
+<b>実務上の重要点：</b> 「最長TEを長くすればよい」わけではありません。長すぎるTEは信号消失・歪み・副鼻腔や頭蓋底でのbloomingを増やします。1.5Tと3Tで推奨TEが異なるのは、3Tでは磁化率効果が強く、より短いTEでも十分なT2*コントラストが得られるためです。
+</div>
+</section>
+
+<section id="phase">
+<h2>4. 位相画像と磁化率：出血と石灰化をどう考えるか</h2>
+
+<h3>4-1. Magnitude画像だけでは符号が分からない</h3>
+<p>マグニチュード画像では、常磁性体でも反磁性体でも、局所磁場不均一が大きければ最終的には信号低下として見えます。そのため、<b>「黒い＝出血」ではありません。</b></p>
+
+<h3>4-2. 位相は磁化率の「向き」に関係する</h3>
+<p>位相画像では局所磁場変化の正負を利用できるため、石灰化と血液由来の鉄成分を区別できる可能性があります。ただし、<b>位相画像の白黒の向きはメーカー・再構成・Normal/Invert設定で変わります。</b></p>
+
+<div class="callout danger">
+<b>重要：</b> 「出血は必ず低信号、石灰化は必ず高信号」と固定的に覚えるのは危険です。GEのPhase ImageではNormal/Invert設定や位相表示規約を必ず確認してください。臨床診断ではCTとの対比も有用です。
+</div>
+
+<h3>4-3. 背景位相除去の意味</h3>
+<p>位相には病変由来の局所磁場だけでなく、B0不均一、頭部形状、空気-組織境界などによる大きなゆっくりした位相変化も含まれます。背景位相除去は、こうした低周波成分を抑え、局所磁化率変化を見やすくする処理です。</p>
+
+<div class="eq">
+φ<sub>measured</sub> = φ<sub>local</sub> + φ<sub>background</sub>
+</div>
+<p>背景除去処理は概念的には、φ<sub>background</sub>を推定して差し引く操作です。</p>
+</section>
+
+<section id="parameters">
+<h2>5. 参考撮像パラメータと「変えるとどうなるか」</h2>
+<table>
+<thead>
+<tr><th>項目</th><th>1.5T 参考</th><th>3.0T 参考</th><th>原理的な意味</th></tr>
+</thead>
+<tbody>
+<tr><td>Scan Plane</td><td>Oblique Axial</td><td>Oblique Axial</td><td>ルーチン画像との比較・MinIP作成が容易</td></tr>
+<tr><td>Imaging Options</td><td>FC, ZIP2</td><td>FC, ZIP2</td><td>FCは流れに伴う位相ずれを低減</td></tr>
+<tr><td>FOV / Phase FOV</td><td>24 cm / 0.90</td><td>24 cm / 0.90</td><td>頭部全体を確保しつつphase方向を短縮</td></tr>
+<tr><td>Slice Thickness</td><td>2.0 mm</td><td>2.0 mm</td><td>薄いほど小静脈・微小出血を描出しやすい</td></tr>
+<tr><td>Freq DIR</td><td>Unswap (A/P)</td><td>Unswap (A/P)</td><td>装置実装とartifact方向を考慮</td></tr>
+<tr><td>TR</td><td>Minimum</td><td>Minimum</td><td>3D GREの撮像時間を抑える</td></tr>
+<tr><td>Slabs</td><td>1</td><td>1</td><td>脳全体を1 slabで連続取得</td></tr>
+<tr><td># Echoes</td><td>4</td><td>4</td><td>短TE〜長TEを組み合わせる</td></tr>
+<tr><td>代表TE</td><td>約50 ms</td><td>約36 ms</td><td>磁化率コントラストを決定</td></tr>
+<tr><td>1st Echo TE</td><td>約38 ms</td><td>約26 ms</td><td>CV16で調整する運用例</td></tr>
+<tr><td>Flip Angle</td><td>15–20°</td><td>15–20°</td><td>SNR、T1混入、SARのバランス</td></tr>
+<tr><td>Matrix</td><td>384×256</td><td>384×256</td><td>高解像度ほど微小血管に有利</td></tr>
+<tr><td>RBW</td><td>31.25 kHz</td><td>41.67 kHz</td><td>高帯域は歪み低減、低帯域はSNR増加</td></tr>
+<tr><td>NEX</td><td>約0.7表示</td><td>約0.7表示</td><td>partial Kz等の3D acquisition由来</td></tr>
+</tbody>
+</table>
+
+<h3>5-1. TE</h3>
+<div class="grid">
+<div class="card"><h4>TEを長くする</h4><ul><li>磁化率感度↑</li><li>静脈・微小出血の低信号↑</li><li>blooming↑</li><li>SNR↓</li><li>空気近傍artifact↑</li></ul></div>
+<div class="card"><h4>TEを短くする</h4><ul><li>SNR↑</li><li>実質信号保持</li><li>磁化率コントラスト↓</li><li>微小病変の視認性が下がる可能性</li></ul></div>
+</div>
+
+<h3>5-2. Flip Angle</h3>
+<p>GREの定常状態信号はErnst角と関係します。</p>
+<div class="eq">
+α<sub>E</sub> = arccos(e<sup>−TR/T1</sup>)
+</div>
+<p>ただしSWANはT1強調を目的とするシーケンスではないため、実際には<b>短TR・SNR・T2*コントラスト・撮像時間</b>を含めて15–20°程度が用いられることがあります。</p>
+
+<h3>5-3. Voxel size</h3>
+<div class="eq">
+Voxel volume = Δx · Δy · Δz
+</div>
+<p>ボクセル体積を小さくすると細い静脈や微小出血の部分容積効果を減らせますが、概念的にSNRはボクセル体積に依存するため低下します。</p>
+<div class="eq">
+SNR ∝ Voxel volume · √NEX / √RBW
+</div>
+<p class="small">※実際のSNR依存性はコイル、parallel imaging、再構成、filter等でも変化します。</p>
+
+<h3>5-4. Receiver Bandwidth</h3>
+<p>RBWを上げると1 pixelあたりの読出し時間が短くなり、chemical shiftやsusceptibility由来の位置ずれを抑えやすくなります。一方で受信noise bandwidthが広がるためSNRは低下します。</p>
+
+<h3>5-5. Flow Compensation</h3>
+<p>一定速度で移動するスピンに生じる一次位相項をgradient moment nullingで補正する考え方です。</p>
+<div class="eq">
+φ ∝ γ (M<sub>0</sub>x + M<sub>1</sub>v + M<sub>2</sub>a + …)
+</div>
+<p>FCはM<sub>1</sub>を0に近づけることで、<b>一定速度の血流による位相ずれ</b>を抑えることを目指します。</p>
+</section>
+
+<section id="position">
+<h2>6. 位置決め：Axial SWANを安定させる</h2>
+
+<div class="steps">
+<div class="step"><b>頭部を左右対称に固定。</b> 回旋が大きいとMinIP・他シーケンス比較がしにくくなります。</div>
+<div class="step"><b>基準線をOMまたはAC-PCに合わせる。</b> 施設ルーチンとの整合を優先します。</div>
+<div class="step"><b>1 slabで脳全体を覆う。</b> 頭頂部から頭蓋底まで欠けがないか確認します。</div>
+<div class="step"><b>特に頭頂部のcoverageを確認。</b> Copy RX使用時でも、別シーケンスのcoverage不足をそのまま引き継がないよう注意します。</div>
+<div class="step"><b>頭蓋底のartifactを予測。</b> 副鼻腔・乳突蜂巣・歯科金属の影響が強い症例では、slab角度・shim・bandwidthを意識します。</div>
+</div>
+
+<div class="callout">
+<b>実務のコツ：</b> SWANは後処理で厚いMinIPを作るため、撮像断面が一定しているほど過去画像や左右比較がしやすくなります。施設内で基準線を統一しておくと再現性が上がります。
+</div>
+</section>
+
+<section id="workflow">
+<h2>7. 実際の撮像手順</h2>
+<div class="steps">
+<div class="step"><b>Localizer確認</b><br>頭部の傾き、回旋、coverageを確認。</div>
+<div class="step"><b>SWAN protocolを選択</b><br>3D multi-echo GRE、Axial obliqueを基本とする。</div>
+<div class="step"><b>FOV・slab・slice thickness設定</b><br>脳全体を1 slab、2 mm程度を基準に設定。</div>
+<div class="step"><b>TE / CV16確認</b><br>装置バージョン・protocolに従い1st echo TEとecho数を確認。</div>
+<div class="step"><b>Matrix / RBW / FC確認</b><br>解像度と撮像時間、artifactのバランスを確認。</div>
+<div class="step"><b>Phase Imageの要否確認</b><br>Normal / Invert / Noを目的に応じて設定。</div>
+<div class="step"><b>Shim・中心位置確認後に撮像</b><br>空気-組織境界や金属がある場合はartifact増大に注意。</div>
+<div class="step"><b>元画像確認</b><br>motion、signal dropout、coverage、静脈描出をチェック。</div>
+<div class="step"><b>MinIP作成</b><br>10–15 mm厚、5 mm程度のintervalを一例として作成。</div>
+</div>
+</section>
+
+<section id="post">
+<h2>8. 後処理：MinIPがなぜ有効か</h2>
+<p>MinIPは、一定厚のvolume内で最も低い信号値を投影する処理です。</p>
+<div class="eq">
+I<sub>MinIP</sub>(x,y) = min { I(x,y,z) | z ∈ slab }
+</div>
+<p>静脈や微小出血は低信号なので、複数sliceにまたがる細い低信号構造を連続的に見せるのに適しています。</p>
+
+<h3>推奨される実務フロー</h3>
+<table>
+<tr><th>操作</th><th>設定例</th><th>目的</th></tr>
+<tr><td>Reformat / MIP</td><td>Batch処理</td><td>全脳を一定条件で作成</td></tr>
+<tr><td>Mode</td><td>Min IP</td><td>低信号構造を強調</td></tr>
+<tr><td>Thickness</td><td>10–15 mm</td><td>静脈の連続性を見やすくする</td></tr>
+<tr><td>Spacing</td><td>約5 mm</td><td>厚slabを少しずつずらして全脳を観察</td></tr>
+</table>
+
+<div class="callout warn">
+<b>厚くしすぎると：</b> 低信号構造が重なり、細かい病変の位置が分かりにくくなります。元の薄い3D画像とMinIPを必ず併用して評価します。
+</div>
+</section>
+
+<section id="tips">
+<h2>9. 注意点・トラブルシューティング</h2>
+
+<table>
+<thead><tr><th>問題</th><th>主な原因</th><th>対処の考え方</th></tr></thead>
+<tbody>
+<tr><td>静脈が弱い</td><td>酸素化状態、TE短すぎ、SNR不足</td><td>TE・呼吸状態・再構成条件・motionを確認</td></tr>
+<tr><td>頭蓋底が真っ黒</td><td>空気-組織境界、長TE、B0不均一</td><td>TE、RBW、shim、断面角度を見直す</td></tr>
+<tr><td>微小出血が大きく見える</td><td>blooming</td><td>SWAN特有の性質として理解し、サイズ評価は他sequenceも併用</td></tr>
+<tr><td>石灰化か出血か不明</td><td>Magnitudeのみ</td><td>Phase、CT、既往画像と比較</td></tr>
+<tr><td>血管が途切れる</td><td>motion、flow phase、厚いMinIP</td><td>FC、motion、MinIP thicknessを確認</td></tr>
+<tr><td>3Tでartifactが強い</td><td>磁化率効果自体が強い</td><td>TE短縮、RBW、shim、位置決め最適化</td></tr>
+</tbody>
+</table>
+
+<h3>9-1. BOLD効果と呼吸</h3>
+<p>静脈血中のデオキシヘモグロビン量は酸素化状態に依存します。したがって静脈の見え方は、組織酸素消費、換気、血流、CO₂、薬剤などの影響を受けます。</p>
+<div class="eq">
+R2* = 1/T2* ≈ R2*<sub>0</sub> + k · [deoxy-Hb]
+</div>
+<p class="small">概念式。実際の関係は血管径、Hct、磁場強度、orientation等にも依存します。</p>
+
+<h3>9-2. カフェイン・鎮静など</h3>
+<p>カフェイン、鎮静、人工呼吸、肺疾患などは脳血流や酸素化状態を変える可能性があり、静脈コントラストに影響し得ます。臨床的には「静脈が弱い＝撮像失敗」と即断せず、生理状態も考慮します。</p>
+
+<h3>9-3. Axial以外</h3>
+<p>Coronal/Sagittalでも撮像できますが、3D volumeとしてのcoverageとFlow Compensationの効き方、読出し方向、空気-組織境界artifactの方向を意識します。</p>
+
+<h3>9-4. 時間短縮</h3>
+<ul class="two-col">
+<li>Matrixを384×256 → 320×192程度へ低減</li>
+<li>slice thicknessを2 → 2.5–3 mmへ</li>
+<li>phase FOVを適正範囲で短縮</li>
+<li>parallel imaging / acceleration利用</li>
+<li>coverageの過剰設定を避ける</li>
+<li>ただし微小血管・微小出血の描出能低下に注意</li>
+</ul>
+</section>
+
+<section id="summary">
+<h2>10. SWANを理解するための最重要ポイント</h2>
+<div class="grid3">
+<div class="card"><div class="kpi">①</div><h4>GREだから磁化率に敏感</h4><p>180°再収束パルスがないため、局所磁場不均一がT2*減衰として残る。</p></div>
+<div class="card"><div class="kpi">②</div><h4>長TEほど黒くなる</h4><p>位相差が蓄積し、静脈・鉄沈着・微小出血の信号低下が増える。</p></div>
+<div class="card"><div class="kpi">③</div><h4>マルチエコーで両立</h4><p>短TEのSNRと長TEの磁化率コントラストを統合する。</p></div>
+<div class="card"><div class="kpi">④</div><h4>3Tはより敏感</h4><p>ΔB ∝ B0Δχのため、同じ病変でも磁化率効果が強くなりやすい。</p></div>
+<div class="card"><div class="kpi">⑤</div><h4>MinIPで連続性を強調</h4><p>低信号構造の最小値を投影し、細静脈を見やすくする。</p></div>
+<div class="card"><div class="kpi">⑥</div><h4>「黒い＝出血」ではない</h4><p>石灰化、空気、金属、flow、artifactも低信号になり得る。PhaseやCTと対比する。</p></div>
+</div>
+
+<div class="callout green">
+<b>実務での結論：</b> SWANは「長いTEのGRE」ではなく、<b>3D・multi-echo・高空間分解能・磁化率・位相・MinIP</b>を組み合わせて、微小静脈や微小出血を強調する撮像法として理解すると、各パラメータの意味が整理しやすくなります。
+</div>
+</section>
+
+<section>
+<h2>11. 装置依存性について</h2>
+<p>本資料の1.5T/3Tパラメータ、CV16/CV22、Phase Image、ZIP2、FC等の名称・挙動は、GE装置のソフトウェアバージョン、機種、導入option、protocol設定によって異なる場合があります。</p>
+<div class="callout warn">
+<b>運用時は必ず、使用装置（例：SIGNA Artist / SIGNA Hero）の現行ソフトウェアと施設protocolを優先してください。</b> とくにCV値やPhase ImageのNormal/Invertの表示規約は、実機で確認してから臨床運用することを推奨します。
+</div>
+</section>
+
+<footer>
+作成目的：GE MRI SWANの教育・撮像手順整理用。本文中の数式は理解のために単純化した概念式を含みます。
+</footer>
+</div>
+</body>
+</html>

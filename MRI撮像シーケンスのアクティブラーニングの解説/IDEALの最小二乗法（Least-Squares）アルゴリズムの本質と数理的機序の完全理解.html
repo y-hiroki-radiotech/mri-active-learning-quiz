@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>復習教材：IDEALにおける最小二乗法（Least-Squares）アルゴリズムの完全理解</title>
+  <style>
+    /* ==========================================================================
+       1. 基本スタイル・変数定義（外部フォント・CDN非依存）
+       ========================================================================== */
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #131c2e;
+      --bg-card-inner: #0b111e;
+      --border-color: #24344d;
+      --border-focus: #38bdf8;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --color-accent: #38bdf8;
+      --color-correct: #10b981;
+      --color-correct-bg: rgba(16, 185, 129, 0.12);
+      --color-warn: #f59e0b;
+      --color-warn-bg: rgba(245, 158, 11, 0.12);
+      --color-error: #f43f5e;
+      --color-error-bg: rgba(244, 63, 94, 0.12);
+      --color-info: #6366f1;
+      --color-info-bg: rgba(99, 102, 241, 0.12);
+
+      --radius-lg: 14px;
+      --radius-md: 8px;
+      --radius-sm: 4px;
+      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ==========================================================================
+       2. カード・モジュールレイアウト
+       ========================================================================== */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-info { background: var(--color-info-bg); color: var(--color-info); border: 1px solid var(--color-info); }
+    .badge-correct { background: var(--color-correct-bg); color: var(--color-correct); border: 1px solid var(--color-correct); }
+    .badge-warn { background: var(--color-warn-bg); color: var(--color-warn); border: 1px solid var(--color-warn); }
+
+    /* ==========================================================================
+       3. 採点サマリー（仕様8）
+       ========================================================================== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .score-box {
+      background: var(--bg-card-inner);
+      border: 2px solid var(--color-info);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .score-val {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: var(--color-accent);
+      line-height: 1.1;
+      margin: 8px 0;
+    }
+
+    .score-badge {
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 3px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--color-info-bg);
+      color: var(--color-accent);
+    }
+
+    .summary-list {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      font-size: 0.9rem;
+      align-items: baseline;
+    }
+
+    .summary-row dt {
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .summary-row dd {
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       4. 数式表現（MathML用コンテナ & メタ情報テーブル）
+       ========================================================================== */
+    .formula-box {
+      background: var(--bg-card-inner);
+      border-left: 4px solid var(--color-accent);
+      padding: 18px 24px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+
+    math {
+      font-family: "Cambria Math", "Latin Modern Math", "STIXGeneral", serif;
+      font-size: 1.2rem;
+      color: #e0f2fe;
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 12px;
+    }
+
+    .meta-table th, .meta-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .meta-table th {
+      background-color: rgba(15, 23, 42, 0.7);
+      color: var(--color-accent);
+      font-weight: 600;
+      width: 25%;
+    }
+
+    .meta-table td {
+      background-color: var(--bg-card);
+    }
+
+    /* ==========================================================================
+       5. 構造化テキスト・コールアウト
+       ========================================================================== */
+    .callout {
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      font-size: 0.92rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .callout-info { background: var(--color-info-bg); border: 1px solid var(--color-info); color: #c7d2fe; }
+    .callout-correct { background: var(--color-correct-bg); border: 1px solid var(--color-correct); color: #a7f3d0; }
+    .callout-warn { background: var(--color-warn-bg); border: 1px solid var(--color-warn); color: #fde68a; }
+
+    /* ==========================================================================
+       6. インラインSVG図解 & アニメーションシミュレータ
+       ========================================================================== */
+    .figure-container {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .figure-caption {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .sim-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      width: 100%;
+    }
+
+    .btn {
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid #334155;
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn:hover { background: #334155; border-color: #475569; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #0284c7; border-color: #38bdf8; }
+    .btn-primary:hover { background: #0369a1; }
+
+    .readout {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: var(--color-accent);
+      font-weight: bold;
+    }
+
+    /* ==========================================================================
+       7. 印刷スタイル（仕様9）
+       ======================================================================== */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+      .container { max-width: 100% !important; gap: 14px; }
+      .card {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #a1a1aa !important;
+        box-shadow: none !important;
+        padding: 16px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .card-header, .summary-list, .score-box, .meta-table th, .meta-table td {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #d4d4d8 !important;
+      }
+      .score-val { color: #0369a1 !important; }
+      .sim-panel { display: none !important; }
+      .formula-box {
+        background: #f4f4f5 !important;
+        border-left: 4px solid #0284c7 !important;
+        color: #000000 !important;
+      }
+      math { color: #000000 !important; }
+      .figure-container {
+        background: #fafafa !important;
+        border: 1px solid #d4d4d8 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .figure-container svg text { fill: #000000 !important; }
+    }
+
+    @media (max-width: 768px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .summary-row { grid-template-columns: 1fr; gap: 2px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========================================================================
+       1. 採点サマリーカード（仕様8）
+       ======================================================================== -->
+  <section class="card" aria-label="採点サマリー">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        学習テーマ・達成度診断
+      </div>
+      <span class="badge badge-info">Algorithm Deep Dive</span>
+    </div>
+
+    <div class="summary-grid">
+      <div class="score-box">
+        <span class="score-label">理解度到達目標</span>
+        <div class="score-val">100<span style="font-size: 1.5rem; font-weight: 600;">%</span></div>
+        <div class="score-badge">数理完全攻略</div>
+      </div>
+
+      <dl class="summary-list">
+        <div class="summary-row">
+          <dt>学習課題</dt>
+          <dd><strong>IDEALの最小二乗法（Least-Squares）アルゴリズムの本質と数理的機序の完全理解</strong></dd>
+        </div>
+        <div class="summary-row">
+          <dt>前提の振り返り</dt>
+          <dd>Dixon法は2TE（同位相・逆位相）の加減算だが、静磁場不均一（ΔB0）が存在すると局所位相回転誤差が生じ、水と脂肪が逆転（Swap）する欠点があった。</dd>
+        </div>
+        <div class="summary-row">
+          <dt>核心的コンセプト</dt>
+          <dd>IDEAL（Iterative Decomposition of Water and Fat with Echo Asymmetry and Least-Squares Estimation）は、<strong>「未知数（水・脂肪・磁場誤差）よりも多い3点以上のエコーを取得し、過決定系の連立方程式を反復最小二乗法（Gauss-Newton法）で解く」</strong>技術である。</dd>
+        </div>
+        <div class="summary-row">
+          <dt>到達すべき視点</dt>
+          <dd>単なる「計算」ではなく、<strong>①線形パラメータ（水・脂肪振幅）と非線形パラメータ（局所B0不均一）を分離して反復推定する仕組み</strong>、および<strong>②ノイズ増幅を幾何学的に最小化するエコー時間配置（Echo Asymmetry）</strong>の2点を数式とベクトルで説明できること。</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       2. アルゴリズムの全体像：なぜ「最小二乗法」なのか？
+       ======================================================================== -->
+  <section class="card" aria-label="問題設定と全体像">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        なぜ「最小二乗法」が必要なのか？（問題の数理モデル化）
+      </div>
+      <span class="badge badge-info">Mathematical Modeling</span>
+    </div>
+
+    <p style="font-size: 0.95rem;">
+      1つのボクセル内に水成分 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>w</mi></msub></math> と脂肪成分 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>f</mi></msub></math> が混在し、局所の静磁場不均一によって周波数シフト <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mi>B</mi></msub><mo>=</mo><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>B</mi><mn>0</mn></msub></math> が生じている状況を考えます。
+      エコー時間 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>t</mi><mi>n</mi></msub></math>（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>n</mi><mo>=</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mo>&#x2026;</mo><mo>,</mo><mi>N</mi></math>）で計測される複素MR信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>n</mi></msub></math> は以下の複素非線形モデルで表されます：
+    </p>
+
+    <!-- 基礎信号方程式（MathML） -->
+    <div class="formula-box">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <msub><mi>S</mi><mi>n</mi></msub>
+        <mo>=</mo>
+        <mrow>
+          <mo>(</mo>
+          <msub><mi>S</mi><mi>w</mi></msub>
+          <mo>+</mo>
+          <msub><mi>S</mi><mi>f</mi></msub>
+          <msup>
+            <mi>e</mi>
+            <mrow>
+              <mi>i</mi>
+              <mn>2</mn>
+              <mi>&#x03C0;</mi>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub>
+              <msub><mi>t</mi><mi>n</mi></msub>
+            </mrow>
+          </msup>
+          <mo>)</mo>
+        </mrow>
+        <mo>&#x22C5;</mo>
+        <msup>
+          <mi>e</mi>
+          <mrow>
+            <mi>i</mi>
+            <mrow>
+              <mo>(</mo>
+              <mn>2</mn>
+              <mi>&#x03C0;</mi>
+              <msub><mi>f</mi><mi>B</mi></msub>
+              <msub><mi>t</mi><mi>n</mi></msub>
+              <mo>+</mo>
+              <msub><mi>&#x03D5;</mi><mn>0</mn></msub>
+              <mo>)</mo>
+            </mrow>
+          </mrow>
+        </msup>
+        <mo>+</mo>
+        <msub><mi>&#x03F5;</mi><mi>n</mi></msub>
+      </math>
+    </div>
+
+    <!-- 数式メタ情報テーブル（仕様4準拠） -->
+    <table class="meta-table" aria-label="記号と意味の解説">
+      <thead>
+        <tr>
+          <th>解析項目</th>
+          <th>数理的・物理的内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>各変数の定義</th>
+          <td>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>w</mi></msub><mo>,</mo><msub><mi>S</mi><mi>f</mi></msub></math>：水および脂肪の複素磁化振幅（求めたい未知数・線形パラメータ）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub></math>：水-脂肪の化学シフト周波数差（既知定数：1.5Tで約 -220 Hz、3.0Tで約 -440 Hz）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mi>B</mi></msub></math>：静磁場不均一に起因する局所周波数オフセット [Hz]（求めたい未知数・非線形パラメータ）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>&#x03D5;</mi><mn>0</mn></msub></math>：受信コイルや高周波系による初期位相オフセット [rad]<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>&#x03F5;</mi><mi>n</mi></msub></math>：各エコーに含まれる複素ガウス雑音（ノイズ）
+          </td>
+        </tr>
+        <tr>
+          <th>未知数と方程式の数</th>
+          <td>
+            未知数は <strong>①水信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>w</mi></msub></math></strong>、<strong>②脂肪信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>f</mi></msub></math></strong>、<strong>③局所磁場不均一 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mi>B</mi></msub></math></strong>（および初期位相）です。
+            エコー数が <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>N</mi><mo>&#x2265;</mo><mn>3</mn></math>（通常3エコー）あれば、データ点数が未知数の自由度を上回る<strong>過決定系（Overdetermined system）</strong>となり、ノイズ <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>&#x03F5;</mi><mi>n</mi></msub></math> の二乗和を最小化する統計的最適解が求まります。
+          </td>
+        </tr>
+        <tr>
+          <th>最小二乗法が必要な本質的理由</th>
+          <td>
+            もし代数的にピッタリ解くだけならノイズにより解が激しく発散します。IDEALは最小二乗法を適用することで、<strong>3回分の計測ノイズを平均化し、理論限界に近い高いSNR効率（NSA：信号加算数3に近いSNR）を達成</strong>します。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ========================================================================
+       3. 2段階のアルゴリズム：反復法（Gauss-Newton）のステップ
+       ======================================================================== -->
+  <section class="card" aria-label="反復最小二乗法の詳細アルゴリズム">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        アルゴリズムの核心：線形・非線形パラメータの分離解法
+      </div>
+      <span class="badge badge-correct">Two-Step Optimization</span>
+    </div>
+
+    <p style="font-size: 0.92rem;">
+      水と脂肪の振幅 <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">[</mo><msub><mi>S</mi><mi>w</mi></msub><mo>,</mo><msub><mi>S</mi><mi>f</mi></msub><msup><mo stretchy="false">]</mo><mi>T</mi></msup></math> は線形パラメータですが、磁場不均一 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mi>B</mi></msub></math> は指数関数の肩に乗っているため<strong>非線形パラメータ</strong>です。
+      IDEALはこの2つを巧みに分離して、以下の反復ループ（Gauss-Newtonアルゴリズム）で高速かつ安定に解きます。
+    </p>
+
+    <!-- ステップ1：線形最小二乗法 -->
+    <div class="callout callout-info">
+      <strong style="color: #818cf8; font-size: 1rem;">Step 1：B0仮定下での水・脂肪の線形最小二乗推定</strong>
+      現在推定されている磁場不均一を <math xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mi>f</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></math> とします。各エコー信号からこの位相誤差分をあらかじめ復調（逆回転）した信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow class="MJX-TeXAtom-ORD"><mover><mi>S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow><mi>n</mi></msub><mo>=</mo><msub><mi>S</mi><mi>n</mi></msub><msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><msubsup><mi>f</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup><msub><mi>t</mi><mi>n</mi></msub></mrow></msup></math> を作ると、純粋な線形方程式が得られます：
+      
+      <div class="formula-box" style="margin: 10px 0;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mo>[</mo>
+            <mtable rowspacing="4pt" columnspacing="1em">
+              <mtr><mtd><msub><mrow class="MJX-TeXAtom-ORD"><mover><mi>S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow><mn>1</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mrow class="MJX-TeXAtom-ORD"><mover><mi>S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow><mn>2</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mrow class="MJX-TeXAtom-ORD"><mover><mi>S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow><mn>3</mn></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mo>=</mo>
+          <mrow>
+            <mo>[</mo>
+            <mtable rowspacing="4pt" columnspacing="1em">
+              <mtr><mtd><mn>1</mn></mtd><mtd><msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub><msub><mi>t</mi><mn>1</mn></msub></mrow></msup></mtd></mtr>
+              <mtr><mtd><mn>1</mn></mtd><mtd><msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub><msub><mi>t</mi><mn>2</mn></msub></mrow></msup></mtd></mtr>
+              <mtr><mtd><mn>1</mn></mtd><mtd><msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub><msub><mi>t</mi><mn>3</mn></msub></mrow></msup></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mrow>
+            <mo>[</mo>
+            <mtable rowspacing="4pt" columnspacing="1em">
+              <mtr><mtd><msub><mi>S</mi><mi>w</mi></msub></mtd></mtr>
+              <mtr><mtd><msub><mi>S</mi><mi>f</mi></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mo stretchy="false">&#x27F9;</mo>
+          <mrow class="MJX-TeXAtom-ORD"><mover><mi mathvariant="bold">S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow>
+          <mo>=</mo>
+          <mi mathvariant="bold">A</mi>
+          <mi mathvariant="bold">&#x03C1;</mi>
+        </math>
+      </div>
+      これを行列の擬似逆行列（Moore-Penrose一般化逆行列）を用いて線形最小二乗法で解きます：
+      <div style="text-align: center; margin-top: 6px;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <msup><mi mathvariant="bold">&#x03C1;</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup>
+          <mo>=</mo>
+          <msup><mrow><mo>(</mo><msup><mi mathvariant="bold">A</mi><mi>H</mi></msup><mi mathvariant="bold">A</mi><mo>)</mo></mrow><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup>
+          <msup><mi mathvariant="bold">A</mi><mi>H</mi></msup>
+          <mrow class="MJX-TeXAtom-ORD"><mover><mi mathvariant="bold">S</mi><mo stretchy="false">&#x007E;</mo></mover></mrow>
+        </math>
+      </div>
+    </div>
+
+    <!-- ステップ2：テイラー展開とB0誤差の更新 -->
+    <div class="callout callout-warn">
+      <strong style="color: #fbbf24; font-size: 1rem;">Step 2：テーラー展開によるB0位相誤差（ΔfB）の線形推定と更新</strong>
+      求めた水・脂肪信号から計算されるモデル信号と、実測信号との残差（ズレ）を評価します。真の周波数からの微小ズレを <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub></math> とすると、テイラー展開による1次近似（<math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub><mi>t</mi></mrow></msup><mo>&#x2248;</mo><mn>1</mn><mo>+</mo><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub><mi>t</mi></math>）により、非線形な位相誤差が線形方程式に落とし込まれます：
+      <div class="formula-box" style="margin: 10px 0;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mi mathvariant="normal">&#x0394;</mi><msub><mi>S</mi><mi>n</mi></msub>
+          <mo>=</mo>
+          <msubsup><mi>S</mi><mi>n</mi><mrow><mtext>meas</mtext></mrow></msubsup>
+          <mo>&#x2212;</mo>
+          <msubsup><mi>S</mi><mi>n</mi><mrow><mtext>calc</mtext></mrow></msubsup>
+          <mo>&#x2248;</mo>
+          <mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><msub><mi>t</mi><mi>n</mi></msub><mo>&#x22C5;</mo><msubsup><mi>S</mi><mi>n</mi><mrow><mtext>calc</mtext></mrow></msubsup><mo>&#x22C5;</mo><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub>
+        </math>
+      </div>
+      この残差方程式から最小二乗解として補正量 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub></math> を算出し、周波数マップを更新します：
+      <div style="text-align: center; margin-top: 6px;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <msubsup><mi>f</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msubsup>
+          <mo>=</mo>
+          <msubsup><mi>f</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup>
+          <mo>+</mo>
+          <mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>B</mi></msub>
+        </math>
+      </div>
+      この Step 1 と Step 2 を残差が十分にゼロに収束するまで反復（通常数回）することで、<strong>完全な水・脂肪画像と、局所B0不均一フィールドマップが同時に得られます</strong>。
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       4. インラインSVG図解：エコー非対称性（Echo Asymmetry）の幾何学
+       ======================================================================== -->
+  <section class="card" aria-label="エコー非対称性の幾何学的図解">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        Echo Asymmetry（エコー非対称性）とノイズ最小化の幾何学
+      </div>
+      <span class="badge badge-info">Geometric Optimization</span>
+    </div>
+
+    <p style="font-size: 0.92rem;">
+      なぜIDEALは「同位相（0°）」や「逆位相（180°）」に拘らないのか？
+      最小二乗法の行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi mathvariant="bold">A</mi><mi>H</mi></msup><mi mathvariant="bold">A</mi></math> の逆行列が存在し、かつノイズを増幅させないためには、3つのエコーにおける水と脂肪の位相差が<strong>複素平面上で正三角形（120°間隔）に近い配置</strong>を取ることが最も理想的です。
+    </p>
+
+    <div class="figure-container">
+      <svg width="100%" height="260" viewBox="0 0 780 260" style="max-width: 780px;" aria-label="IDEALの最適なエコー位相配置">
+        <!-- 枠1：対称エコー（従来のDixon：ノイズに弱い配置） -->
+        <g transform="translate(30, 20)">
+          <rect x="0" y="0" width="330" height="220" rx="8" fill="#0f172a" stroke="#334155"/>
+          <text x="165" y="24" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="bold">【対称エコー配置（従来Dixon）】</text>
+          
+          <circle cx="165" cy="120" r="65" fill="none" stroke="#1e293b" stroke-width="2"/>
+          <line x1="85" y1="120" x2="245" y2="120" stroke="#334155" stroke-width="1"/>
+          <line x1="165" y1="40" x2="165" y2="200" stroke="#334155" stroke-width="1"/>
+
+          <!-- 0度（同位相）と180度（逆位相）のみ -->
+          <circle cx="230" cy="120" r="6" fill="#38bdf8"/>
+          <text x="240" y="115" fill="#38bdf8" font-size="11" font-weight="bold">TE1: 0° (In)</text>
+
+          <circle cx="100" cy="120" r="6" fill="#f43f5e"/>
+          <text x="50" y="115" fill="#f43f5e" font-size="11" font-weight="bold">TE2: 180° (Opp)</text>
+
+          <circle cx="230" cy="120" r="10" fill="none" stroke="#38bdf8" stroke-dasharray="3"/>
+          <text x="240" y="135" fill="#94a3b8" font-size="10">TE3: 360° (In重複)</text>
+
+          <text x="165" y="205" text-anchor="middle" fill="#fca5a5" font-size="11">実質1次元の直線配置 ➔ 直交成分のB0誤差に極めて脆弱</text>
+        </g>
+
+        <!-- 枠2：非対称エコー配置（IDEAL：最適な幾何学的直交性） -->
+        <g transform="translate(420, 20)">
+          <rect x="0" y="0" width="330" height="220" rx="8" fill="#0f172a" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="165" y="24" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="bold">【IDEALの非対称最適位相配置】</text>
+          
+          <circle cx="165" cy="120" r="65" fill="none" stroke="#1e293b" stroke-width="2"/>
+          <line x1="85" y1="120" x2="245" y2="120" stroke="#334155" stroke-width="1"/>
+          <line x1="165" y1="40" x2="165" y2="200" stroke="#334155" stroke-width="1"/>
+
+          <!-- 正三角形の配置：-pi/6 (-30°), pi/2 (90°), 7pi/6 (210°) -->
+          <!-- TE1: -30 deg -->
+          <line x1="165" y1="120" x2="221" y2="152" stroke="#38bdf8" stroke-width="2"/>
+          <circle cx="221" cy="152" r="6" fill="#38bdf8"/>
+          <text x="230" y="165" fill="#38bdf8" font-size="11" font-weight="bold">TE1: -π/6 (-30°)</text>
+
+          <!-- TE2: +90 deg -->
+          <line x1="165" y1="120" x2="165" y2="55" stroke="#10b981" stroke-width="2"/>
+          <circle cx="165" cy="55" r="6" fill="#10b981"/>
+          <text x="175" y="58" fill="#10b981" font-size="11" font-weight="bold">TE2: π/2 (+90°)</text>
+
+          <!-- TE3: 210 deg -->
+          <line x1="165" y1="120" x2="108" y2="152" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="108" cy="152" r="6" fill="#f59e0b"/>
+          <text x="35" y="165" fill="#f59e0b" font-size="11" font-weight="bold">TE3: 7π/6 (210°)</text>
+
+          <!-- 幾何学的正三角形結合点線 -->
+          <polygon points="221,152 165,55 108,152" fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-dasharray="4"/>
+
+          <text x="165" y="205" text-anchor="middle" fill="#86efac" font-size="11">複素平面を均等に3分割 ➔ 最小二乗法の条件数（Condition No.）が最小</text>
+        </g>
+      </svg>
+      <div class="figure-caption">
+        図1：従来の対称エコー（同相・逆相）と、IDEALの非対称エコー配置（幾何学的直交配置）の比較
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5. インタラクティブ・反復最小二乗法シミュレーター（仕様6）
+       ======================================================================== -->
+  <section class="card" aria-label="反復収束シミュレーター">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        反復最小二乗法（Gauss-Newton法）の収束シミュレーター
+      </div>
+      <span class="badge badge-correct">Live Algorithm</span>
+    </div>
+
+    <p style="font-size: 0.9rem; color: var(--text-muted);">
+      「ステップ実行」または「自動反復」をクリックして、任意のB0不均一が存在する状態から、Gauss-Newton反復計算によって残差が二乗平均的に減少し、真の水・脂肪ベクトルへと吸い込まれるように収束していく挙動を確認してください。
+    </p>
+
+    <div class="figure-container">
+      <svg id="sim-canvas" width="100%" height="240" viewBox="0 0 640 240" style="max-width: 640px;">
+        <!-- 座標原点 (160, 120) -->
+        <g transform="translate(0,0)">
+          <circle cx="160" cy="120" r="80" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+          <line x1="60" y1="120" x2="260" y2="120" stroke="#334155" stroke-width="1"/>
+          <line x1="160" y1="20" x2="160" y2="220" stroke="#334155" stroke-width="1"/>
+          <text x="250" y="115" fill="#64748b" font-size="10">Real</text>
+          <text x="165" y="32" fill="#64748b" font-size="10">Imag</text>
+
+          <!-- 真のベクトル（薄い点線） -->
+          <line id="vec-true-w" x1="160" y1="120" x2="230" y2="120" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3" opacity="0.4"/>
+          <line id="vec-true-f" x1="160" y1="120" x2="160" y2="70" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3" opacity="0.4"/>
+
+          <!-- 推定中の現在ベクトル -->
+          <!-- 水ベクトル（青実線） -->
+          <line id="vec-est-w" x1="160" y1="120" x2="160" y2="120" stroke="#38bdf8" stroke-width="3.5"/>
+          <!-- 脂肪ベクトル（黄実線） -->
+          <line id="vec-est-f" x1="160" y1="120" x2="160" y2="120" stroke="#f59e0b" stroke-width="3"/>
+
+          <circle id="head-est-w" cx="160" cy="120" r="4" fill="#38bdf8"/>
+          <circle id="head-est-f" cx="160" cy="120" r="4" fill="#f59e0b"/>
+        </g>
+
+        <!-- ステータス表示板 -->
+        <g transform="translate(320, 25)">
+          <rect x="0" y="0" width="300" height="190" rx="8" fill="#0f172a" stroke="#24344d"/>
+          <text x="16" y="26" fill="#f1f5f9" font-size="13" font-weight="bold">推定演算ステータス（ボクセル内部）</text>
+          
+          <text x="16" y="55" fill="#94a3b8" font-size="11">反復ループ回数：<tspan id="lbl-iter" fill="#38bdf8" font-weight="bold">0 (未開始)</tspan></text>
+          <text x="16" y="80" fill="#94a3b8" font-size="11">推定B0誤差 (fB)：<tspan id="lbl-fb" fill="#f43f5e" font-weight="bold">0.0 Hz</tspan></text>
+          <text x="16" y="105" fill="#94a3b8" font-size="11">真のB0不均一：<tspan id="lbl-true-b0" fill="#f1f5f9">65.0 Hz</tspan></text>
+          <text x="16" y="130" fill="#94a3b8" font-size="11">二乗和残差 ||S - S_calc||²：<tspan id="lbl-res" fill="#f59e0b" font-weight="bold">0.8420</tspan></text>
+          <text x="16" y="155" fill="#94a3b8" font-size="11">水/脂肪 分離判定：<tspan id="lbl-status" fill="#f43f5e" font-weight="bold">未収束（分離不良）</tspan></text>
+
+          <!-- 残差ゲージ -->
+          <rect x="16" y="168" width="268" height="8" rx="4" fill="#1e293b"/>
+          <rect id="bar-res" x="16" y="168" width="268" height="8" rx="4" fill="#f43f5e"/>
+        </g>
+      </svg>
+
+      <div class="sim-panel">
+        <button type="button" class="btn btn-primary" id="btn-run-iter">
+          <span id="txt-play">▶ 自動反復開始</span>
+        </button>
+        <button type="button" class="btn" id="btn-step-iter">
+          1ステップ実行 (Gauss-Newton)
+        </button>
+        <button type="button" class="btn" id="btn-reset-iter">
+          リセット
+        </button>
+        <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+          <span>設定B0ズレ:</span>
+          <span class="readout">+65 Hz</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       6. 臨床への発展：IDEALからIDEAL-IQへの深化
+       ======================================================================== -->
+  <section class="card" aria-label="発展的臨床応用">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16.5 9.4 7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6a1.78 1.78 0 0 0 0-3.2z"/><path d="M21 5v14"/></svg>
+        最新の発展：IDEAL-IQ（複素フィールドマップとT2*補正）
+      </div>
+      <span class="badge badge-info">Clinical Frontier</span>
+    </div>
+
+    <p style="font-size: 0.92rem;">
+      実際の生体組織（特に肝臓など）では、鉄沈着による顕著な <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi><msup><mn>2</mn><mo>*</mo></msup></math> 減衰や、脂肪の複雑な化学構造（複数の共鳴周波数ピーク）が存在します。最新の <strong>IDEAL-IQ</strong> は、この最小二乗法を以下のように拡張しています：
+    </p>
+
+    <table class="meta-table" style="margin-top: 6px;">
+      <thead>
+        <tr>
+          <th style="width: 30%;">拡張アルゴリズム技術</th>
+          <th>数理解析と臨床的効果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>複素数型フィールドマップ<br><math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x03A8;</mi><mo>=</mo><msub><mi>f</mi><mi>B</mi></msub><mo>+</mo><mi>i</mi><mo>&#x22C5;</mo><mfrac><mrow><mi>R</mi><msup><mn>2</mn><mo>*</mo></msup></mrow><mrow><mn>2</mn><mi>&#x03C0;</mi></mrow></mfrac></math></strong></td>
+          <td>
+            静磁場不均一 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>f</mi><mi>B</mi></msub></math> を実部、横緩和率 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><msup><mn>2</mn><mo>*</mo></msup><mo>=</mo><mn>1</mn><mrow class="MJX-TeXAtom-ORD"><mo>/</mo></mrow><mi>T</mi><msup><mn>2</mn><mo>*</mo></msup></math> を虚部とする複素フィールドマップとしてモデル化。6エコー以上のマルチエコー信号から <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi><msup><mn>2</mn><mo>*</mo></msup></math> 減衰の影響を同時に最小二乗推定し、鉄沈着による脂肪含有率の過小評価を完全に防ぎます。
+          </td>
+        </tr>
+        <tr>
+          <td><strong>脂肪マルチピークモデル<br><math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo>&#x2211;</mo><mrow><mi>p</mi><mo>=</mo><mn>1</mn></mrow><mi>P</mi></munderover><msub><mi>&#x03B1;</mi><mi>p</mi></msub><msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mi>p</mi></msub><mi>t</mi></mrow></msup></math></strong></td>
+          <td>
+            単一ピーク近似（-220Hz）ではなく、トリグリセリドの多重共鳴ピーク（6峰モデルなど）を行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">A</mi></math> に組み込み、脂肪肝の定量（Fat Fraction: 脂肪分画％）を1回の息止めで病理レベルの高精度で画像化します。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<!-- ==========================================================================
+     完全オフライン Vanilla JavaScript ロジック
+     ========================================================================== -->
+<script>
+(function() {
+  'use strict';
+
+  // DOM参照
+  const vecEstW = document.getElementById('vec-est-w');
+  const vecEstF = document.getElementById('vec-est-f');
+  const headEstW = document.getElementById('head-est-w');
+  const headEstF = document.getElementById('head-est-f');
+
+  const lblIter = document.getElementById('lbl-iter');
+  const lblFb = document.getElementById('lbl-fb');
+  const lblRes = document.getElementById('lbl-res');
+  const lblStatus = document.getElementById('lbl-status');
+  const barRes = document.getElementById('bar-res');
+
+  const btnRun = document.getElementById('btn-run-iter');
+  const btnStep = document.getElementById('btn-step-iter');
+  const btnReset = document.getElementById('btn-reset-iter');
+  const txtPlay = document.getElementById('txt-play');
+
+  // 真のパラメータ
+  const TRUE_B0 = 65.0; // Hz
+  const TRUE_W_LEN = 70.0;
+  const TRUE_F_LEN = 50.0;
+  const originX = 160;
+  const originY = 120;
+
+  // 推定状態変数
+  let iter = 0;
+  let estFb = 0.0;
+  let isRunning = false;
+  let timerId = null;
+
+  function degToRad(deg) {
+    return (deg * Math.PI) / 180;
+  }
+
+  function updateVisuals() {
+    // 誤差率に基づく減衰挙動シミュレーション
+    // 収束に従い estFb が TRUE_B0 へ漸近
+    const errorFb = Math.abs(TRUE_B0 - estFb);
+    const residual = 0.8420 * Math.pow(0.25, iter);
+
+    // 水と脂肪の推定ベクトル計算
+    // 位相ズレが存在すると水・脂肪の分離が崩れて位相角が回転する
+    const phaseErrorDeg = (TRUE_B0 - estFb) * 0.8;
+    const radErr = degToRad(phaseErrorDeg);
+
+    // 推定された水ベクトル
+    const wX = originX + TRUE_W_LEN * Math.cos(radErr);
+    const wY = originY - TRUE_W_LEN * Math.sin(radErr);
+
+    // 推定された脂肪ベクトル（直交から位相ズレを含む）
+    const fAngle = (90 + phaseErrorDeg);
+    const radF = degToRad(fAngle);
+    const fX = originX + TRUE_F_LEN * Math.cos(radF);
+    const fY = originY - TRUE_F_LEN * Math.sin(radF);
+
+    // SVG反映
+    vecEstW.setAttribute('x2', wX.toFixed(1));
+    vecEstW.setAttribute('y2', wY.toFixed(1));
+    headEstW.setAttribute('cx', wX.toFixed(1));
+    headEstW.setAttribute('cy', wY.toFixed(1));
+
+    vecEstF.setAttribute('x2', fX.toFixed(1));
+    vecEstF.setAttribute('y2', fY.toFixed(1));
+    headEstF.setAttribute('cx', fX.toFixed(1));
+    headEstF.setAttribute('cy', fY.toFixed(1));
+
+    // テキスト反映
+    lblIter.textContent = iter === 0 ? '0 (未開始)' : `${iter} 回目`;
+    lblFb.textContent = `${estFb.toFixed(1)} Hz`;
+    lblRes.textContent = residual.toFixed(6);
+
+    // ゲージ長 (最大268px)
+    const gaugeWidth = Math.min(268, Math.max(8, residual * 318));
+    barRes.setAttribute('width', gaugeWidth.toFixed(1));
+
+    if (errorFb < 1.0 || iter >= 4) {
+      lblStatus.textContent = '収束完了（高精度完全分離）';
+      lblStatus.style.color = '#10b981';
+      barRes.setAttribute('fill', '#10b981');
+    } else if (iter > 0) {
+      lblStatus.textContent = '反復計算中（Gauss-Newton更新）';
+      lblStatus.style.color = '#38bdf8';
+      barRes.setAttribute('fill', '#38bdf8');
+    } else {
+      lblStatus.textContent = '未収束（B0誤差による分離不良）';
+      lblStatus.style.color = '#f43f5e';
+      barRes.setAttribute('fill', '#f43f5e');
+    }
+  }
+
+  function stepIteration() {
+    if (iter >= 5) {
+      stopAuto();
+      return;
+    }
+    iter++;
+    // Gauss-Newton法特有の2次収束的ステップ挙動
+    const delta = (TRUE_B0 - estFb) * 0.72;
+    estFb += delta;
+    updateVisuals();
+
+    if (Math.abs(TRUE_B0 - estFb) < 0.5) {
+      estFb = TRUE_B0;
+      updateVisuals();
+      stopAuto();
+    }
+  }
+
+  function stopAuto() {
+    isRunning = false;
+    txtPlay.textContent = '▶ 自動反復再開';
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function startAuto() {
+    if (iter >= 5) {
+      resetSim();
+    }
+    isRunning = true;
+    txtPlay.textContent = '⏸ 一時停止';
+    timerId = setInterval(function() {
+      stepIteration();
+      if (iter >= 5 || estFb >= TRUE_B0) {
+        stopAuto();
+      }
+    }, 700);
+  }
+
+  function resetSim() {
+    stopAuto();
+    iter = 0;
+    estFb = 0.0;
+    txtPlay.textContent = '▶ 自動反復開始';
+    updateVisuals();
+  }
+
+  // イベント登録
+  btnRun.addEventListener('click', function() {
+    if (isRunning) {
+      stopAuto();
+    } else {
+      startAuto();
+    }
+  });
+
+  btnStep.addEventListener('click', function() {
+    stopAuto();
+    stepIteration();
+  });
+
+  btnReset.addEventListener('click', resetSim);
+
+  // 初期化実行
+  updateVisuals();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汎用MRIパルスシーケンス＆物理動的シミュレータ</title>
+<style>
+  :root {
+    --bg-main: #0a0e17;
+    --bg-card: #131d2e;
+    --bg-panel: #0d1522;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #24344d;
+    --lane-line: #1e293b;
+    
+    /* 物理・レーン別カラーパレット */
+    --c-rf: #38bdf8;
+    --c-gz: #c084fc;
+    --c-gy: #f472b6;
+    --c-gx: #34d399;
+    --c-adc: #fbbf24;
+    --c-spoil: #fb7185;
+    --c-prep: #818cf8;
+    
+    /* 磁化・位相カラー */
+    --c-mz: #60a5fa;
+    --c-mxy: #f87171;
+    --c-mtot: #facc15;
+    --c-cursor: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-main);
+    padding: 14px;
+    line-height: 1.45;
+  }
+
+  .app-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ヘッダー */
+  header {
+    background: var(--bg-card);
+    padding: 14px 18px;
+    border-radius: 8px;
+    border-left: 5px solid var(--c-rf);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header h1 { font-size: 1.25rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  header p { font-size: 0.8rem; color: var(--text-muted); }
+
+  /* コントロールパネル */
+  .control-deck {
+    background: var(--bg-card);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  button {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  button:hover { background: #334155; border-color: var(--c-rf); }
+  button:active { transform: scale(0.96); }
+  button.active { background: #0284c7; border-color: var(--c-rf); color: #fff; }
+
+  select, input[type="range"] {
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    outline: none;
+    accent-color: var(--c-rf);
+  }
+
+  /* メイングリッド */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1.7fr 1.1fr;
+    gap: 12px;
+  }
+  @media (max-width: 1080px) {
+    .main-layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  /* シーケンス波形 SVG 表示領域 */
+  .seq-timeline-container {
+    width: 100%;
+    background: var(--bg-panel);
+    border-radius: 6px;
+    overflow-x: auto;
+    position: relative;
+  }
+  svg { display: block; width: 100%; height: auto; }
+
+  /* 物理ビジュアライザグリッド */
+  .physics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 580px) {
+    .physics-grid { grid-template-columns: 1fr; }
+  }
+
+  .p-box {
+    background: var(--bg-panel);
+    border-radius: 6px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .p-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-align: center;
+    width: 100%;
+  }
+  .p-readout {
+    font-size: 0.7rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* 教育解説・因果関係パネル */
+  .edu-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 900px) {
+    .edu-container { grid-template-columns: 1fr; }
+  }
+
+  .edu-box {
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .edu-box.accent-box {
+    background: #0b1528;
+    border-color: #1e3a8a;
+  }
+
+  .edu-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .edu-desc {
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+  }
+  .edu-next {
+    font-size: 0.76rem;
+    color: #cbd5e1;
+    background: rgba(30, 58, 138, 0.4);
+    border-left: 3px solid #3b82f6;
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-top: 2px;
+  }
+
+  /* オフライン完全数式レンダリング（HTML/CSS + Math記法） */
+  .math-block {
+    background: #111827;
+    border-left: 3px solid #a855f7;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .math-formula {
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 0.95rem;
+    color: #fde047;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+  }
+  .math-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 4px;
+  }
+  .math-num {
+    border-bottom: 1px solid #fde047;
+    padding-bottom: 1px;
+    font-size: 0.85em;
+  }
+  .math-den {
+    padding-top: 1px;
+    font-size: 0.85em;
+  }
+  .math-int { font-size: 1.3em; line-height: 0.8; }
+  .math-sub { font-size: 0.7em; vertical-align: sub; }
+  .math-sup { font-size: 0.7em; vertical-align: super; }
+  .math-mind {
+    font-size: 0.75rem;
+    color: #93c5fd;
+    line-height: 1.4;
+  }
+
+  /* 印刷・PDF出力対応 */
+  @media print {
+    body { background: #fff !important; color: #000 !important; padding: 0; }
+    .control-deck, button, select, input { display: none !important; }
+    .card, .p-box, header, .edu-box, .math-block {
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      color: #000 !important;
+      box-shadow: none !important;
+    }
+    .math-formula { color: #000 !important; }
+    .math-num { border-color: #000 !important; }
+    .math-mind { color: #333 !important; }
+    svg text { fill: #000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- ヘッダー -->
+  <header>
+    <div>
+      <h1><span>🔬</span> 汎用MRIパルスシーケンス・物理動的シミュレータ</h1>
+      <p>シーケンス波形・傾斜磁場モーメント積分・k-space軌跡・磁化ベクトル・スピン位相の完全同期学習システム</p>
+    </div>
+    <div style="font-size:0.75rem; color:var(--text-muted);">
+      規格: 汎用シーケンスパーサーエンジン搭載（完全オフライン対応）
+    </div>
+  </header>
+
+  <!-- コントロールバー -->
+  <div class="control-deck">
+    <div class="ctrl-group">
+      <span style="font-weight:700; color:#fff;">シーケンス選択:</span>
+      <select id="seqPresetSelect">
+        <option value="FSPGR">FSPGR / Turbo FLASH (Fast Spoiled GRE)</option>
+        <option value="SE">Spin Echo (90°-180° SE)</option>
+        <option value="bSSFP">bSSFP / TrueFISP (Balanced Steady-State)</option>
+        <option value="EPI">Single-Shot EPI (Diffusion/Functional)</option>
+        <option value="IR_FLAIR">IR-Prepared (FLAIR / CSF Nulling)</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <button id="btnPlay" class="active">一時停止 ⏸</button>
+      <button id="btnReset">リセット ⏪</button>
+      <button id="btnPrev">◀ 前イベント</button>
+      <button id="btnNext">次イベント ▶</button>
+    </div>
+
+    <div class="ctrl-group" style="flex:1; min-width: 180px;">
+      <span>時刻 t:</span>
+      <input type="range" id="timeSlider" min="0" max="100" step="0.1" value="0" style="flex:1;">
+      <span id="timeVal" style="font-family:monospace; width:45px; text-align:right;">0.0 ms</span>
+    </div>
+
+    <div class="ctrl-group" id="paramDynContainer">
+      <!-- シーケンス固有のパラメータ操作（FA, TE, TI等）が動的に挿入される -->
+    </div>
+
+    <div class="ctrl-group">
+      <span>速度:</span>
+      <select id="speedSelect">
+        <option value="0.5">0.5×</option>
+        <option value="1.0" selected>1.0×</option>
+        <option value="2.0">2.0×</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- メイン表示グリッド -->
+  <div class="main-layout">
+    
+    <!-- 左側：自動構成パルスシーケンス・タイムライン -->
+    <div class="card">
+      <div class="card-header">
+        <span id="timelineTitle">パルスシーケンス波形 (Pulse Timing Diagram)</span>
+        <span style="font-size:0.75rem; color:var(--text-muted);">網掛け: Gradient Moment ∫G dt (正:紫 / 負:緑)</span>
+      </div>
+
+      <div class="seq-timeline-container">
+        <svg id="seqSvg" viewBox="0 0 780 440" preserveAspectRatio="none">
+          <defs>
+            <!-- 正味面積（傾斜磁場モーメント）用ハッチングパターン -->
+            <pattern id="hatchPos" width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" />
+            </pattern>
+            <pattern id="hatchNeg" width="6" height="6" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" />
+            </pattern>
+          </defs>
+
+          <!-- レーン背景と軸線（動的生成） -->
+          <g id="seqLanesGroup"></g>
+
+          <!-- 静的波形＆面積（動的生成） -->
+          <g id="seqWavesGroup"></g>
+
+          <!-- TE / TR / TI 矢印ブラケット（動的生成） -->
+          <g id="seqBracketsGroup" font-size="10" fill="#93c5fd" stroke="#3b82f6" stroke-width="1"></g>
+
+          <!-- 現在時刻インジケータ（縦カーソル） -->
+          <g id="cursorGroup">
+            <line id="timeCursorLine" x1="95" y1="10" x2="95" y2="420" stroke="var(--c-cursor)" stroke-width="2" stroke-dasharray="4 2" />
+            <circle id="timeCursorHead" cx="95" cy="10" r="4" fill="var(--c-cursor)" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 右側：リアルタイム物理シミュレーション群 -->
+    <div class="card">
+      <div class="card-header">
+        <span>リアルタイム物理状態 (MRI Physics Simulation)</span>
+        <span id="activeEventTag" style="font-size:0.72rem; background:#0369a1; padding:2px 8px; border-radius:4px; color:#fff;">励起フェーズ</span>
+      </div>
+
+      <div class="physics-grid">
+        <!-- 1. k-space 軌跡モジュール -->
+        <div class="p-box">
+          <div class="p-title">k-space 走査軌跡 (kx, ky)</div>
+          <svg id="kspaceSvg" viewBox="0 0 160 160" width="135" height="135">
+            <rect x="8" y="8" width="144" height="144" fill="#030712" stroke="#334155" />
+            <line x1="8" y1="80" x2="152" y2="80" stroke="#475569" stroke-dasharray="2 2" />
+            <line x1="80" y1="8" x2="80" y2="152" stroke="#475569" stroke-dasharray="2 2" />
+            <text x="135" y="76" fill="#64748b" font-size="8">kx</text>
+            <text x="83" y="18" fill="#64748b" font-size="8">ky</text>
+            <!-- 既取得グリッド -->
+            <g id="kspaceAcquired" stroke="#10b981" stroke-width="1" opacity="0.35"></g>
+            <!-- リアルタイム走査線 -->
+            <path id="kspaceTrack" fill="none" stroke="#f59e0b" stroke-width="2" />
+            <!-- 現在位置プロット -->
+            <circle id="kspaceCurrentPt" cx="80" cy="80" r="4" fill="#ef4444" />
+          </svg>
+          <div id="kspaceCoordText" class="p-readout">kx: 0.00 | ky: 0.00</div>
+        </div>
+
+        <!-- 2. 巨視的磁化ベクトル (Mz, Mxy) -->
+        <div class="p-box">
+          <div class="p-title">巨視的磁化ベクトル (Magnetization)</div>
+          <svg id="magSvg" viewBox="0 0 160 160" width="135" height="135">
+            <rect x="8" y="8" width="144" height="144" fill="#030712" rx="4" stroke="#334155" />
+            <!-- 軸 -->
+            <line x1="80" y1="130" x2="80" y2="15" stroke="#475569" stroke-width="1.2" />
+            <line x1="15" y1="130" x2="145" y2="130" stroke="#475569" stroke-width="1.2" />
+            <text x="84" y="22" fill="#94a3b8" font-size="8">z (Mz)</text>
+            <text x="125" y="125" fill="#94a3b8" font-size="8">xy (Mxy)</text>
+            <circle cx="80" cy="130" r="90" fill="none" stroke="#1e293b" stroke-dasharray="2 2" />
+            <!-- ベクトル射影 -->
+            <line id="vecMz" x1="80" y1="130" x2="80" y2="40" stroke="var(--c-mz)" stroke-width="2.5" stroke-linecap="round" />
+            <line id="vecMxy" x1="80" y1="130" x2="80" y2="130" stroke="var(--c-mxy)" stroke-width="2.5" stroke-linecap="round" />
+            <line id="vecMtot" x1="80" y1="130" x2="80" y2="40" stroke="var(--c-mtot)" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <div id="magCoordText" class="p-readout">Mz: 1.00 | Mxy: 0.00</div>
+        </div>
+
+        <!-- 3. スピン等色団の位相分散 (Phase Dispersion) -->
+        <div class="p-box">
+          <div class="p-title">スピン位相分散 (Spin Isochromats)</div>
+          <svg id="spinSvg" viewBox="0 0 160 160" width="135" height="135">
+            <circle cx="80" cy="80" r="62" fill="#030712" stroke="#334155" />
+            <line x1="18" y1="80" x2="142" y2="80" stroke="#1f2937" />
+            <line x1="80" y1="18" x2="80" y2="142" stroke="#1f2937" />
+            <!-- 16本のスピンベクトル群 -->
+            <g id="spinVectorsGroup"></g>
+          </svg>
+          <div id="spinStatusText" class="p-readout" style="color:#fbbf24;">完全同位相 (In-Phase)</div>
+        </div>
+
+        <!-- 4. シーケンス特異的モジュール (RF位相/準備パルス/b-value等) -->
+        <div class="p-box">
+          <div id="specModuleTitle" class="p-title">RF Spoiling 位相サイクル</div>
+          <svg id="specSvg" viewBox="0 0 160 160" width="135" height="135">
+            <circle cx="80" cy="80" r="58" fill="#030712" stroke="#334155" />
+            <g id="specDynContent"></g>
+          </svg>
+          <div id="specModuleReadout" class="p-readout">θ = 117° (TR 1)</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 下部：MRI物理・因果関係・数式のお気持ちパネル -->
+  <div class="edu-container">
+    <div class="edu-box accent-box">
+      <div class="edu-title">
+        <span>⚡ 今、MRI装置の中で何が起きている？</span>
+        <span id="eduEventTitle" style="color:#fde047; font-size:0.8rem;">[スライス選択励起]</span>
+      </div>
+      <div id="eduEventDetail" class="edu-desc">
+        RFパルス照射と同時にスライス選択傾斜磁場(Gz)が印加されています。目的断面のラーモア周波数と合致したプロトンのみが励起角θだけ倒れ込み、縦磁化Mzが減少して横磁化Mxyが生まれます。
+      </div>
+      <div id="eduEventNext" class="edu-next">
+        <b>⏩ 次に起こること:</b> Gzリフェーズ傾斜磁場とGy位相エンコード、Gxディフェーズ傾斜磁場が同時に立ち上がります。
+      </div>
+    </div>
+
+    <div class="edu-box">
+      <div class="edu-title">
+        <span>📐 数式と物理の同期（数式のお気持ち）</span>
+      </div>
+      <div class="math-block" id="eduMathBlock">
+        <!-- 動的数式描画 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * 汎用MRIシーケンス定義エンジン & 物理計算アーキテクチャ
+ * 外部ライブラリ非依存・完全自律型
+ */
+
+// ==========================================
+// 1. 汎用シーケンス・プリセットデータベース
+// ==========================================
+const SEQUENCE_DATABASE = {
+  // --- FSPGR: 高速スポイルグラジエントエコー ---
+  FSPGR: {
+    name: "FSPGR / Turbo FLASH (Fast Spoiled GRE)",
+    category: "GRE",
+    trTotal: 100, // 内部正規化時間 (0〜100)
+    actualTR: 4.8, // ms
+    actualTE: 2.1, // ms
+    activeLanes: ["RF", "Gz", "Gy", "Gx", "ADC"],
+    laneLabels: { RF: "RF / Phase", Gz: "Gz (Slice)", Gy: "Gy (Phase)", Gx: "Gx (Read)", ADC: "ADC / Echo" },
+    laneColors: { RF: "var(--c-rf)", Gz: "var(--c-gz)", Gy: "var(--c-gy)", Gx: "var(--c-gx)", ADC: "var(--c-adc)" },
+    events: [
+      { id: "rf", start: 8, end: 18, name: "α° RF励起 + スライス選択 (Gz)",
+        desc: "微小フリップ角のRFパルスとGzを同時印加。短いTR内で縦磁化Mzを大きく枯渇させずに、高速で定常的な横磁化Mxyを生成します。",
+        next: "スライス内スピン位相差を戻すGzリフェーズ、およびGxディフェーズとGy位相エンコードが立ち上がります。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>θ</span><span class="math-sub">Ernst</span>
+            <span>&nbsp;=&nbsp;arccos(exp( -</span>
+            <div class="math-fraction"><span class="math-num">TR</span><span class="math-den">T<span class="math-sub">1</span></span></div>
+            <span>))</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 極短TRのGREでは、90°倒すと縦磁化が枯渇して次が取れません。「前回の回復量と今回倒す量のバランスが最大信号を生む最適角（エルンスト角）」を選びます。</div>
+        `
+      },
+      { id: "encode", start: 20, end: 32, name: "空間エンコード (Gy) & リードディフェーズ (Gx)",
+        desc: "Gxに負の面積(-A)を与えてスピンをあらかじめバラバラ(Dephase)にし、k-space左端へ移動。同時にGyでky座標を決定します。",
+        next: "Gx極性を反転（正の読み出し傾斜磁場）させ、ADCサンプリングを開始します。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>k</span><span class="math-sub">x</span><span>(t)&nbsp;=&nbsp;</span>
+            <div class="math-fraction"><span class="math-num">γ</span><span class="math-den">2π</span></div>
+            <span class="math-int">∫</span><span>G</span><span class="math-sub">x</span><span>(τ) dτ</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 傾斜磁場の「高さ」ではなく、これまでに積み重ねた「面積」の分だけ、k-space上を左端（-kx_max）へと走ります。</div>
+        `
+      },
+      { id: "adc", start: 42, end: 70, peak: 56, name: "ADC周波数サンプリング & Gradient Echo形成",
+        desc: "正のGx(+2A)印加中にエコー中心(TE=2.1ms)でスピンが再収束。180°パルスなしで傾斜磁場反転のみによりグラジエントエコーが形成されます。",
+        next: "残存する横磁化が次のTRに干渉しないよう、強力なスポイリングを実行します。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>S(t)&nbsp;∝&nbsp;M</span><span class="math-sub">xy</span><span>(0) · exp( -</span>
+            <div class="math-fraction"><span class="math-num">t</span><span class="math-den">T<span class="math-sub">2</span><span class="math-sup">*</span></span></div>
+            <span>)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 180°再収束パルスがないため、磁場不均一による位相ズレ（T2*）をキャンセルできません。そのためTEを限界まで短くして信号低下を防ぎます。</div>
+        `
+      },
+      { id: "spoil", start: 76, end: 94, name: "RF & Gradient スポイリング (横磁化消去)",
+        desc: "TR毎にRF位相をランダム/放物線状(117°ステップ)にシフトし、TR末端の強傾斜磁場で残留横磁化を完全分散。純粋なT1コントラストを担保します。",
+        next: "次のTRサイクルへ移行し、新たなRF位相角で励起を行います。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>φ</span><span class="math-sub">n</span><span>&nbsp;=&nbsp;φ</span><span class="math-sub">n-1</span><span>&nbsp;+&nbsp;n · Δθ</span>
+            <span>&nbsp;&nbsp;(Δθ&nbsp;=&nbsp;117°)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 前サイクルの残存横磁化が定常状態(SSFP)を作ってT2*成分が混ざるのを防ぐため、位相を回転させて干渉をゼロに打ち消し（スポイル）ます。</div>
+        `
+      }
+    ],
+    waveforms: [
+      // RF
+      { lane: "RF", type: "sinc", start: 8, end: 18, amp: 28, label: "α° RF" },
+      // Gz
+      { lane: "Gz", type: "rect", start: 6, end: 20, amp: 22, fill: "rgba(192,132,252,0.2)", label: "Slice" },
+      { lane: "Gz", type: "rect", start: 20, end: 30, amp: -22, fill: "url(#hatchNeg)", label: "Reph" },
+      // Gy
+      { lane: "Gy", type: "rect", start: 20, end: 32, amp: 20, fill: "rgba(244,114,182,0.25)", label: "Phase Encode" },
+      { lane: "Gy", type: "rect", start: 76, end: 92, amp: 24, fill: "url(#hatchPos)", label: "Gy Spoiler" },
+      // Gx
+      { lane: "Gx", type: "rect", start: 20, end: 32, amp: -22, fill: "url(#hatchNeg)", label: "Deph (-A)" },
+      { lane: "Gx", type: "rect", start: 40, end: 72, amp: 22, fill: "rgba(52,211,153,0.2)", label: "Read (+2A)" },
+      { lane: "Gx", type: "rect", start: 76, end: 92, amp: 26, fill: "url(#hatchPos)", label: "Gx Spoiler" },
+      // ADC
+      { lane: "ADC", type: "gate", start: 42, end: 70, amp: 14, label: "Sampling Gate" },
+      { lane: "ADC", type: "echo", start: 42, end: 70, peak: 56, amp: 28, label: "Gradient Echo" }
+    ],
+    specType: "rf_spoiling"
+  },
+
+  // --- SE: スピンエコー (90°-180°) ---
+  SE: {
+    name: "Spin Echo (90° - 180° SE)",
+    category: "SE",
+    trTotal: 100,
+    actualTR: 500, // ms
+    actualTE: 20,  // ms
+    activeLanes: ["RF", "Gz", "Gy", "Gx", "ADC"],
+    laneLabels: { RF: "RF (90°/180°)", Gz: "Gz (Slice)", Gy: "Gy (Phase)", Gx: "Gx (Read)", ADC: "ADC / Signal" },
+    laneColors: { RF: "var(--c-rf)", Gz: "var(--c-gz)", Gy: "var(--c-gy)", Gx: "var(--c-gx)", ADC: "var(--c-adc)" },
+    events: [
+      { id: "rf90", start: 6, end: 16, name: "90° 励起パルス + スライス選択",
+        desc: "90°RFパルスにより縦磁化Mzが完全に横平面xyへと倒れ、最大横磁化Mxyが生じます。",
+        next: "Gxディフェーズでスピンを意図的に分散させ、180°反転パルスを待ちます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>M</span><span class="math-sub">xy</span><span>(0<span class="math-sup">+</span>)&nbsp;=&nbsp;M</span><span class="math-sub">0</span><span>,&nbsp;&nbsp;M</span><span class="math-sub">z</span><span>(0<span class="math-sup">+</span>)&nbsp;=&nbsp;0</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 熱平衡状態にあったすべての縦磁化を、一気に横平面へと倒して最大の自由誘導減衰(FID)信号を取り出します。</div>
+        `
+      },
+      { id: "rf180", start: 44, end: 54, peak: 49, name: "180° 再収束パルス (Refocusing) & クラッシャー",
+        desc: "TE/2のタイミングで180°パルスを照射。磁場不均一で先行していた進相スピンと遅相スピンの位相関係が反転（ウサギとカメの折り返し）します。",
+        next: "反転したスピン同士がTEに向かってピタリと位相を揃え直します。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>φ(t<span class="math-sup">+</span>)&nbsp;=&nbsp;-φ(t<span class="math-sup">-</span>)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 180°反転は「位相の符号反転」です。足の速いスピンを後ろに、遅いスピンを前に配置し直すことで、TEでの同着ゴールを保証します。</div>
+        `
+      },
+      { id: "se_echo", start: 70, end: 94, peak: 82, name: "Spin Echo 形成 & ADC サンプリング",
+        desc: "TEの瞬間、静磁場不均一(ΔB0)の影響が完全相殺され、真のT2減衰のみを反映したスピンエコーが形成されます。",
+        next: "1TRが終了し、長いT1緩和時間を経て次の励起が行われます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>S(TE)&nbsp;∝&nbsp;exp( -</span>
+            <div class="math-fraction"><span class="math-num">TE</span><span class="math-den">T<span class="math-sub">2</span></span></div>
+            <span>)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> T2*減衰（不均一）が消滅し、分子間相互作用による不可逆な「真のT2」コントラストが手に入ります。</div>
+        `
+      }
+    ],
+    waveforms: [
+      { lane: "RF", type: "sinc", start: 6, end: 16, amp: 26, label: "90° RF" },
+      { lane: "RF", type: "rect_rf", start: 44, end: 54, amp: 34, label: "180° Refocus" },
+      { lane: "Gz", type: "rect", start: 4, end: 18, amp: 20, fill: "rgba(192,132,252,0.2)", label: "Slice 90" },
+      { lane: "Gz", type: "rect", start: 18, end: 26, amp: -20, fill: "url(#hatchNeg)", label: "Reph" },
+      { lane: "Gz", type: "rect", start: 38, end: 44, amp: 24, fill: "url(#hatchPos)", label: "Crusher" },
+      { lane: "Gz", type: "rect", start: 44, end: 54, amp: 18, fill: "rgba(192,132,252,0.2)", label: "Slice 180" },
+      { lane: "Gz", type: "rect", start: 54, end: 60, amp: 24, fill: "url(#hatchPos)", label: "Crusher" },
+      { lane: "Gy", type: "rect", start: 22, end: 34, amp: 22, fill: "rgba(244,114,182,0.25)", label: "Phase Encode" },
+      { lane: "Gx", type: "rect", start: 22, end: 34, amp: 22, fill: "url(#hatchPos)", label: "Dephase (+A)" },
+      { lane: "Gx", type: "rect", start: 68, end: 96, amp: 22, fill: "rgba(52,211,153,0.2)", label: "Readout (+2A)" },
+      { lane: "ADC", type: "gate", start: 70, end: 94, amp: 14, label: "ADC ON" },
+      { lane: "ADC", type: "echo", start: 70, end: 94, peak: 82, amp: 30, label: "Spin Echo" }
+    ],
+    specType: "se_vectors"
+  },
+
+  // --- bSSFP: 平衡型定常状態自由歳差運動 ---
+  bSSFP: {
+    name: "bSSFP / TrueFISP / FIESTA (Balanced Steady-State)",
+    category: "bSSFP",
+    trTotal: 100,
+    actualTR: 3.6,
+    actualTE: 1.8,
+    activeLanes: ["RF", "Gz", "Gy", "Gx", "ADC"],
+    laneLabels: { RF: "RF (±α°)", Gz: "Gz (Balanced)", Gy: "Gy (Balanced)", Gx: "Gx (Balanced)", ADC: "ADC / Echo" },
+    laneColors: { RF: "var(--c-rf)", Gz: "var(--c-gz)", Gy: "var(--c-gy)", Gx: "var(--c-gx)", ADC: "var(--c-adc)" },
+    events: [
+      { id: "bssfp_rf", start: 8, end: 18, name: "高フリップ角励起 (α°) & 位相交代 (0-180°)",
+        desc: "大きなフリップ角(約45°〜70°)で励起。TRごとにRFの印加位相を反転(0°, 180°, 0°...)させることで、磁場不均一によるバンディングアーチファクトを抑制します。",
+        next: "全軸の傾斜磁場が印加され、エコー後に完全巻き戻しが行われます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>S&nbsp;∝&nbsp;</span>
+            <div class="math-fraction"><span class="math-num">sin α</span><span class="math-den">(T<span class="math-sub">1</span>/T<span class="math-sub">2</span> + 1) - cos α(T<span class="math-sub">1</span>/T<span class="math-sub">2</span> - 1)</span></div>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> bSSFPのコントラストは「T2 / T1比」で決まります。水や血液（T2/T1が大きい）が異常なほど高信号に光り輝きます。</div>
+        `
+      },
+      { id: "bssfp_read", start: 40, end: 68, peak: 54, name: "バランス読み出し (TE = TR/2)",
+        desc: "TEは正確にTRの中央(TR/2)に設定。スピンエコー成分とグラジエントエコー成分が重畳した最強の定常信号を取得します。",
+        next: "TR終了までに全軸の傾斜磁場面積を0にリワインドします。",
+        mathHTML: `
+          <div class="math-formula">
+            <span class="math-int">∮</span><span>G(t) dt&nbsp;=&nbsp;0&nbsp;&nbsp;(All Axes)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 「全軸の正味の傾斜磁場面積がゼロ」。スピンに位置による位相ズレを残さず、TR終了時に全員を無傷で合流させます。</div>
+        `
+      },
+      { id: "bssfp_rewind", start: 74, end: 92, name: "全傾斜磁場完全リワインド (零モーメント)",
+        desc: "Gyリワインダー、Gzリフェーズ、Gxリワインダーにより、全軸の面積総和が0になります。横磁化は壊されず次TRへと再利用されます。",
+        next: "位相交代された逆極性のRFパルスで次TRの励起へ繋ぎます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>A</span><span class="math-sub">pos</span><span>&nbsp;+&nbsp;A</span><span class="math-sub">neg</span><span>&nbsp;=&nbsp;0</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> スポイラーで捨てるFSPGRと対極にあり、横磁化を「1滴も無駄にせず再循環」させて驚異的SNRを生み出します。</div>
+        `
+      }
+    ],
+    waveforms: [
+      { lane: "RF", type: "sinc", start: 8, end: 18, amp: 32, label: "α° RF (±)" },
+      // Gz balanced
+      { lane: "Gz", type: "rect", start: 6, end: 20, amp: 20, fill: "rgba(192,132,252,0.2)", label: "+Gz" },
+      { lane: "Gz", type: "rect", start: 20, end: 28, amp: -20, fill: "url(#hatchNeg)", label: "-Gz/2" },
+      { lane: "Gz", type: "rect", start: 78, end: 86, amp: -20, fill: "url(#hatchNeg)", label: "-Gz/2" },
+      // Gy balanced
+      { lane: "Gy", type: "rect", start: 22, end: 34, amp: 22, fill: "rgba(244,114,182,0.25)", label: "+Gy (Encode)" },
+      { lane: "Gy", type: "rect", start: 74, end: 86, amp: -22, fill: "url(#hatchNeg)", label: "-Gy (Rewind)" },
+      // Gx balanced
+      { lane: "Gx", type: "rect", start: 22, end: 34, amp: -22, fill: "url(#hatchNeg)", label: "-Gx (Deph)" },
+      { lane: "Gx", type: "rect", start: 38, end: 70, amp: 22, fill: "rgba(52,211,153,0.2)", label: "+2Gx (Read)" },
+      { lane: "Gx", type: "rect", start: 74, end: 86, amp: -22, fill: "url(#hatchNeg)", label: "-Gx (Rewind)" },
+      // ADC
+      { lane: "ADC", type: "gate", start: 40, end: 68, amp: 14, label: "ADC ON" },
+      { lane: "ADC", type: "echo", start: 40, end: 68, peak: 54, amp: 32, label: "SSFP Echo" }
+    ],
+    specType: "bssfp_balance"
+  },
+
+  // --- EPI: シングルショットEPI ---
+  EPI: {
+    name: "Single-Shot EPI (Echo Planar Imaging)",
+    category: "EPI",
+    trTotal: 100,
+    actualTR: 2000,
+    actualTE: 65,
+    activeLanes: ["RF", "Gz", "Gy", "Gx", "ADC"],
+    laneLabels: { RF: "RF (90°)", Gz: "Gz (Slice)", Gy: "Gy (Blips)", Gx: "Gx (Oscillating)", ADC: "ADC (Continuous)" },
+    laneColors: { RF: "var(--c-rf)", Gz: "var(--c-gz)", Gy: "var(--c-gy)", Gx: "var(--c-gx)", ADC: "var(--c-adc)" },
+    events: [
+      { id: "epi_rf", start: 6, end: 16, name: "励起 + 巨大プリフェージング",
+        desc: "90°励起後、GyとGxに極大のプレフェーザーを印加。k-spaceの角（-kx_max, -ky_max）へと一気にジャンプさせます。",
+        next: "Gxの高速反転振動とGyの微小ブリップパルスによる超高速走査が始まります。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>(k</span><span class="math-sub">x</span><span>,&nbsp;k</span><span class="math-sub">y</span><span>)&nbsp;→&nbsp;(-k</span><span class="math-sub">x,max</span><span>,&nbsp;-k</span><span class="math-sub">y,max</span><span>)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 1回の励起ですべてのk-spaceを刈り取るため、スタート地点である左下隅まで一瞬で移動します。</div>
+        `
+      },
+      { id: "epi_zigzag", start: 30, end: 94, name: "高速反転Gx読み出し & 位相ブリップ (Zig-Zag)",
+        desc: "Gxが超高速でプラス・マイナスへ交番振動し、1回の振れごとにグラジエントエコーを連発。端に来るたびにGyブリップが入り、kyを1行ずつ上へ進めます。",
+        next: "わずか数十ミリ秒でk-space全行の走査が完了します。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>Δk</span><span class="math-sub">y</span><span>&nbsp;=&nbsp;</span>
+            <div class="math-fraction"><span class="math-num">γ</span><span class="math-den">2π</span></div>
+            <span class="math-int">∫</span><span>G</span><span class="math-sub">blip</span><span>(t) dt&nbsp;=&nbsp;</span>
+            <div class="math-fraction"><span class="math-num">1</span><span class="math-den">FOV<span class="math-sub">y</span></span></div>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 階段を1段上がるようにGyブリップを刻み、ジグザグ軌道を描いて全k-spaceを1回のショットで網羅します。</div>
+        `
+      }
+    ],
+    waveforms: [
+      { lane: "RF", type: "sinc", start: 6, end: 16, amp: 28, label: "90° RF" },
+      { lane: "Gz", type: "rect", start: 4, end: 18, amp: 20, fill: "rgba(192,132,252,0.2)", label: "Slice" },
+      // Gy: Prephase + Blips
+      { lane: "Gy", type: "rect", start: 18, end: 28, amp: -26, fill: "url(#hatchNeg)", label: "Gy Prephase" },
+      { lane: "Gy", type: "blip", start: 41, end: 45, amp: 14 },
+      { lane: "Gy", type: "blip", start: 57, end: 61, amp: 14 },
+      { lane: "Gy", type: "blip", start: 73, end: 77, amp: 14 },
+      { lane: "Gy", type: "blip", start: 87, end: 91, amp: 14 },
+      // Gx: Prephase + Oscillating
+      { lane: "Gx", type: "rect", start: 18, end: 28, amp: -24, fill: "url(#hatchNeg)", label: "Gx Prephase" },
+      { lane: "Gx", type: "rect", start: 30, end: 42, amp: 22, fill: "rgba(52,211,153,0.2)" },
+      { lane: "Gx", type: "rect", start: 44, end: 58, amp: -22, fill: "url(#hatchNeg)" },
+      { lane: "Gx", type: "rect", start: 60, end: 74, amp: 22, fill: "rgba(52,211,153,0.2)" },
+      { lane: "Gx", type: "rect", start: 76, end: 88, amp: -22, fill: "url(#hatchNeg)" },
+      { lane: "Gx", type: "rect", start: 90, end: 98, amp: 22, fill: "rgba(52,211,153,0.2)" },
+      // ADC continuous
+      { lane: "ADC", type: "gate", start: 30, end: 98, amp: 12, label: "Continuous ADC" },
+      { lane: "ADC", type: "echo", start: 32, end: 40, peak: 36, amp: 20 },
+      { lane: "ADC", type: "echo", start: 48, end: 56, peak: 52, amp: 24 },
+      { lane: "ADC", type: "echo", start: 64, end: 72, peak: 68, amp: 26 },
+      { lane: "ADC", type: "echo", start: 80, end: 86, peak: 83, amp: 22 }
+    ],
+    specType: "epi_zigzag"
+  },
+
+  // --- IR-FLAIR: 反転回復 (脳脊髄液抑制) ---
+  IR_FLAIR: {
+    name: "IR-Prepared FLAIR (Fluid Attenuated Inversion Recovery)",
+    category: "IR",
+    trTotal: 100,
+    actualTR: 9000,
+    actualTE: 120,
+    actualTI: 2400,
+    activeLanes: ["RF", "Gz", "Gy", "Gx", "ADC"],
+    laneLabels: { RF: "RF (180° / 90°)", Gz: "Gz (Slice)", Gy: "Gy (Phase)", Gx: "Gx (Read)", ADC: "ADC / Signal" },
+    laneColors: { RF: "var(--c-rf)", Gz: "var(--c-gz)", Gy: "var(--c-gy)", Gx: "var(--c-gx)", ADC: "var(--c-adc)" },
+    events: [
+      { id: "ir_180", start: 4, end: 14, name: "180° 反転パルス (Inversion Pulse)",
+        desc: "撮像スライス（または全脳）の縦磁化を完全に反転(Mz = -M0)させます。ここから組織ごとの固有T1値に従う縦緩和回復が始まります。",
+        next: "縦磁化がゼロを通過する「Null point」まで時間TIだけ正確に待機します。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>M</span><span class="math-sub">z</span><span>(t)&nbsp;=&nbsp;M</span><span class="math-sub">0</span>
+            <span>&nbsp;[ 1&nbsp;-&nbsp;2 · exp( -</span>
+            <div class="math-fraction"><span class="math-num">t</span><span class="math-den">T<span class="math-sub">1</span></span></div>
+            <span>) ]</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> -M0まで真っ逆さまに落とされた縦磁化が、指数関数的に+M0へ向かって立ち上がってきます。</div>
+        `
+      },
+      { id: "ir_null", start: 45, end: 55, peak: 50, name: "TI到達 (Null Point) & 90° 励起",
+        desc: "T1の極めて長い脳脊髄液(CSF)の縦磁化がちょうどゼロ点(Mz=0)に達した瞬間に90°パルスを照射。CSFの信号発生能を完全に無力化します。",
+        next: "病変組織や白質・灰白質のみの横磁化が倒れ、高コントラストな読み出しが行われます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>TI</span><span class="math-sub">null</span>
+            <span>&nbsp;=&nbsp;T</span><span class="math-sub">1</span><span>&nbsp;·&nbsp;ln 2&nbsp;≈&nbsp;0.693 · T</span><span class="math-sub">1</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> 「縦磁化がゼロのときに倒しても、横磁化はゼロ」。消したい組織の通過時刻を狙い撃ちして信号を暗黒にします。</div>
+        `
+      },
+      { id: "ir_read", start: 68, end: 94, name: "T2強調読み出し (FSE / SE train)",
+        desc: "CSFを真っ黒に沈めた状態で長いTEを用いてT2強調像を取得。脳室周囲の多発性硬化症プラークや脳梗塞巣が高信号として浮き上がります。",
+        next: "長いTRの終端まで待機し、次の反転パルスへと備えます。",
+        mathHTML: `
+          <div class="math-formula">
+            <span>S</span><span class="math-sub">FLAIR</span>
+            <span>&nbsp;∝&nbsp;|&nbsp;M</span><span class="math-sub">z</span><span>(TI)&nbsp;|&nbsp;· exp( -</span>
+            <div class="math-fraction"><span class="math-num">TE</span><span class="math-den">T<span class="math-sub">2</span></span></div>
+            <span>)</span>
+          </div>
+          <div class="math-mind"><b>数式のお気持ち:</b> T1回復の差でCSFを打ち消し、さらにT2減衰の差で病変の水分を浮き彫りにする二重のコントラスト機構です。</div>
+        `
+      }
+    ],
+    waveforms: [
+      { lane: "RF", type: "rect_rf", start: 4, end: 14, amp: 34, label: "180° Inversion" },
+      { lane: "RF", type: "sinc", start: 46, end: 56, amp: 26, label: "90° Excitation" },
+      { lane: "Gz", type: "rect", start: 44, end: 58, amp: 20, fill: "rgba(192,132,252,0.2)", label: "Slice" },
+      { lane: "Gy", type: "rect", start: 60, end: 70, amp: 20, fill: "rgba(244,114,182,0.25)", label: "Phase Encode" },
+      { lane: "Gx", type: "rect", start: 60, end: 70, amp: -20, fill: "url(#hatchNeg)", label: "Dephase" },
+      { lane: "Gx", type: "rect", start: 74, end: 94, amp: 20, fill: "rgba(52,211,153,0.2)", label: "Readout" },
+      { lane: "ADC", type: "gate", start: 74, end: 94, amp: 14, label: "ADC ON" },
+      { lane: "ADC", type: "echo", start: 74, end: 94, peak: 84, amp: 28, label: "Signal Echo" }
+    ],
+    specType: "ir_recovery"
+  }
+};
+
+// ==========================================
+// 2. シミュレータ状態管理
+// ==========================================
+let simState = {
+  currentSeqKey: "FSPGR",
+  t: 0,              // 0 〜 100 の正規化時間
+  isPlaying: true,
+  speed: 1.0,
+  lastFrameTime: null,
+  // 変更可能パラメータ
+  params: {
+    flipAngle: 15,
+    tr: 4.8,
+    te: 2.1
+  }
+};
+
+// DOM参照キャッシュ
+const seqPresetSelect = document.getElementById('seqPresetSelect');
+const timeSlider = document.getElementById('timeSlider');
+const timeVal = document.getElementById('timeVal');
+const btnPlay = document.getElementById('btnPlay');
+const btnReset = document.getElementById('btnReset');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const speedSelect = document.getElementById('speedSelect');
+const paramDynContainer = document.getElementById('paramDynContainer');
+
+const timelineTitle = document.getElementById('timelineTitle');
+const seqLanesGroup = document.getElementById('seqLanesGroup');
+const seqWavesGroup = document.getElementById('seqWavesGroup');
+const seqBracketsGroup = document.getElementById('seqBracketsGroup');
+const timeCursorLine = document.getElementById('timeCursorLine');
+const timeCursorHead = document.getElementById('timeCursorHead');
+
+const kspaceSvg = document.getElementById('kspaceSvg');
+const kspaceAcquired = document.getElementById('kspaceAcquired');
+const kspaceTrack = document.getElementById('kspaceTrack');
+const kspaceCurrentPt = document.getElementById('kspaceCurrentPt');
+const kspaceCoordText = document.getElementById('kspaceCoordText');
+
+const vecMz = document.getElementById('vecMz');
+const vecMxy = document.getElementById('vecMxy');
+const vecMtot = document.getElementById('vecMtot');
+const magCoordText = document.getElementById('magCoordText');
+
+const spinVectorsGroup = document.getElementById('spinVectorsGroup');
+const spinStatusText = document.getElementById('spinStatusText');
+
+const specModuleTitle = document.getElementById('specModuleTitle');
+const specDynContent = document.getElementById('specDynContent');
+const specModuleReadout = document.getElementById('specModuleReadout');
+
+const activeEventTag = document.getElementById('activeEventTag');
+const eduEventTitle = document.getElementById('eduEventTitle');
+const eduEventDetail = document.getElementById('eduEventDetail');
+const eduEventNext = document.getElementById('eduEventNext');
+const eduMathBlock = document.getElementById('eduMathBlock');
+
+// 時間からSVG X座標 (95 〜 755) への写像
+function tToX(t) {
+  return 95 + (t / 100) * 660;
+}
+
+// ==========================================
+// 3. レーン波形・ブラケット自動レンダリング
+// ==========================================
+function setupSequence(seqKey) {
+  simState.currentSeqKey = seqKey;
+  const seq = SEQUENCE_DATABASE[seqKey];
+  timelineTitle.textContent = `パルスシーケンス波形: ${seq.name}`;
+
+  // レーン幾何計算
+  const lanes = seq.activeLanes;
+  const laneHeight = 360 / lanes.length;
+  const laneYMap = {};
+  seqLanesGroup.innerHTML = '';
+
+  lanes.forEach((laneId, idx) => {
+    const yCenter = 45 + idx * laneHeight + laneHeight * 0.45;
+    laneYMap[laneId] = yCenter;
+
+    // 水平ベースライン
+    seqLanesGroup.innerHTML += `
+      <text x="14" y="${yCenter + 4}" fill="${seq.laneColors[laneId]}" font-size="10.5" font-weight="700">${seq.laneLabels[laneId]}</text>
+      <line x1="95" y1="${yCenter}" x2="755" y2="${yCenter}" stroke="var(--lane-line)" stroke-width="1.2" />
+    `;
+  });
+
+  // 波形描画
+  seqWavesGroup.innerHTML = '';
+  seq.waveforms.forEach(w => {
+    const cy = laneYMap[w.lane];
+    const x1 = tToX(w.start);
+    const x2 = tToX(w.end);
+
+    if (w.type === "sinc") {
+      const mid = (x1 + x2) / 2;
+      const h = w.amp;
+      const d = `M ${x1} ${cy} Q ${(x1+mid)/2} ${cy-h*0.2} ${mid-10} ${cy} Q ${(mid-10+mid)/2} ${cy+h*0.3} ${mid-5} ${cy} Q ${mid} ${cy-h} ${mid+5} ${cy} Q ${(mid+5+mid+10)/2} ${cy+h*0.3} ${mid+10} ${cy} Q ${(mid+10+x2)/2} ${cy-h*0.2} ${x2} ${cy}`;
+      seqWavesGroup.innerHTML += `<path d="${d}" fill="rgba(56,189,248,0.2)" stroke="var(--c-rf)" stroke-width="2"/>`;
+      if (w.label) seqWavesGroup.innerHTML += `<text x="${mid}" y="${cy - h - 4}" fill="var(--c-rf)" font-size="9" text-anchor="middle" font-weight="700">${w.label}</text>`;
+    } 
+    else if (w.type === "rect" || w.type === "rect_rf") {
+      const y = (w.amp >= 0) ? cy - w.amp : cy;
+      const h = Math.abs(w.amp);
+      const strokeC = w.lane === "RF" ? "var(--c-rf)" : seq.laneColors[w.lane];
+      seqWavesGroup.innerHTML += `<rect x="${x1}" y="${y}" width="${x2-x1}" height="${h}" fill="${w.fill || 'rgba(255,255,255,0.1)'}" stroke="${strokeC}" stroke-width="1.6"/>`;
+      if (w.label) {
+        const textY = (w.amp >= 0) ? y - 4 : y + h + 11;
+        seqWavesGroup.innerHTML += `<text x="${(x1+x2)/2}" y="${textY}" fill="${strokeC}" font-size="8.5" text-anchor="middle">${w.label}</text>`;
+      }
+    }
+    else if (w.type === "gate") {
+      seqWavesGroup.innerHTML += `<rect x="${x1}" y="${cy - w.amp}" width="${x2-x1}" height="${w.amp}" fill="rgba(251,191,36,0.25)" stroke="var(--c-adc)" stroke-width="1.5"/>`;
+      if (w.label) seqWavesGroup.innerHTML += `<text x="${(x1+x2)/2}" y="${cy - w.amp - 4}" fill="var(--c-adc)" font-size="8.5" text-anchor="middle" font-weight="700">${w.label}</text>`;
+    }
+    else if (w.type === "echo") {
+      const peakX = tToX(w.peak);
+      const h = w.amp;
+      const d = `M ${x1} ${cy} Q ${peakX-10} ${cy} ${peakX-4} ${cy+h*0.3} Q ${peakX} ${cy-h} ${peakX+4} ${cy+h*0.3} Q ${peakX+10} ${cy} ${x2} ${cy}`;
+      seqWavesGroup.innerHTML += `<path d="${d}" fill="none" stroke="#facc15" stroke-width="2.4"/>`;
+      if (w.label) seqWavesGroup.innerHTML += `<text x="${peakX}" y="${cy + 22}" fill="#facc15" font-size="8.5" text-anchor="middle" font-weight="700">${w.label}</text>`;
+    }
+    else if (w.type === "blip") {
+      seqWavesGroup.innerHTML += `<rect x="${x1}" y="${cy - w.amp}" width="${x2-x1}" height="${w.amp}" fill="var(--c-gy)" opacity="0.8"/>`;
+    }
+  });
+
+  // TE / TR / TI 時間パラメータブラケット
+  seqBracketsGroup.innerHTML = '';
+  if (seq.actualTE) {
+    const rfEv = seq.events.find(e => e.id.includes("rf")) || seq.events[0];
+    const echoEv = seq.events.find(e => e.peak !== undefined) || seq.events[seq.events.length-1];
+    const xRf = tToX((rfEv.start + rfEv.end)/2);
+    const xEcho = tToX(echoEv.peak || (echoEv.start + echoEv.end)/2);
+    seqBracketsGroup.innerHTML += `
+      <line x1="${xRf}" y1="410" x2="${xEcho}" y2="410" />
+      <line x1="${xRf}" y1="405" x2="${xRf}" y2="415" />
+      <line x1="${xEcho}" y1="405" x2="${xEcho}" y2="415" />
+      <text x="${(xRf+xEcho)/2}" y="423" text-anchor="middle">TE: ${seq.actualTE} ms</text>
+    `;
+  }
+  if (seq.actualTR) {
+    seqBracketsGroup.innerHTML += `
+      <line x1="${tToX(10)}" y1="432" x2="${tToX(95)}" y2="432" stroke="#60a5fa" />
+      <line x1="${tToX(10)}" y1="428" x2="${tToX(10)}" y2="436" stroke="#60a5fa" />
+      <line x1="${tToX(95)}" y1="428" x2="${tToX(95)}" y2="436" stroke="#60a5fa" />
+      <text x="${tToX(52.5)}" y="438" fill="#60a5fa" text-anchor="middle">TR: ${seq.actualTR} ms</text>
+    `;
+  }
+
+  // パラメータUIの動的構築
+  setupParamControls(seqKey);
+  
+  // k-space静的ガイド線のリセット
+  resetKspaceAcquired(seqKey);
+
+  // 時刻0へリセット
+  simState.t = 0;
+  timeSlider.value = 0;
+  updateSim(0);
+}
+
+// パラメータコントロールの動的構築
+function setupParamControls(seqKey) {
+  paramDynContainer.innerHTML = '';
+  if (seqKey === "FSPGR") {
+    paramDynContainer.innerHTML = `
+      <span>FA:</span>
+      <input type="range" id="dynFA" min="5" max="40" step="1" value="${simState.params.flipAngle}" style="width:60px;">
+      <span id="dynFAVal" style="font-family:monospace; width:28px;">${simState.params.flipAngle}°</span>
+    `;
+    document.getElementById('dynFA').addEventListener('input', (e) => {
+      simState.params.flipAngle = parseInt(e.target.value, 10);
+      document.getElementById('dynFAVal').textContent = `${simState.params.flipAngle}°`;
+    });
+  } else if (seqKey === "IR_FLAIR") {
+    paramDynContainer.innerHTML = `
+      <span>TI:</span>
+      <select id="dynTI" style="font-size:0.75rem; padding:2px 4px;">
+        <option value="2400" selected>TI=2400ms (CSF Null)</option>
+        <option value="160">TI=160ms (Fat Null / STIR)</option>
+      </select>
+    `;
+  }
+}
+
+// k-space既取得グリッドの描画
+function resetKspaceAcquired(seqKey) {
+  kspaceAcquired.innerHTML = '';
+  if (seqKey === "EPI") {
+    // ジグザグの点線ガイド
+    kspaceAcquired.innerHTML = `
+      <path d="M 20 140 L 140 140 L 140 115 L 20 115 L 20 90 L 140 90 L 140 65 L 20 65 L 20 40 L 140 40" fill="none" stroke="#34d399" stroke-dasharray="2 2"/>
+    `;
+  } else {
+    for (let ky = 20; ky <= 140; ky += 20) {
+      kspaceAcquired.innerHTML += `<line x1="20" y1="${ky}" x2="140" y2="${ky}" />`;
+    }
+  }
+}
+
+// ==========================================
+// 4. 物理状態・因果関係・数式のリアルタイム計算
+// ==========================================
+function updateSim(t) {
+  const seq = SEQUENCE_DATABASE[simState.currentSeqKey];
+
+  // 1. カーソル更新
+  const cx = tToX(t);
+  timeCursorLine.setAttribute('x1', cx);
+  timeCursorLine.setAttribute('x2', cx);
+  timeCursorHead.setAttribute('cx', cx);
+  timeVal.textContent = ((t / 100) * seq.actualTR).toFixed(1) + " ms";
+
+  // 2. 現在アクティブなイベントの特定
+  const currentEvent = seq.events.find(e => t >= e.start && t <= e.end) || 
+                       (t < seq.events[0].start ? { name: "待機 / 熱平衡状態", desc: "RF励起前の熱平衡状態です。縦磁化Mzが静磁場B0に沿って配向しています。", next: seq.events[0].name, mathHTML: `<div class="math-mind">熱平衡状態: Mz = M0, Mxy = 0</div>` } : 
+                       { name: "緩和 / TR末端", desc: "エコーサンプリングが終了し、次サイクルの励起に向けて縦緩和（T1回復）が進行しています。", next: "次サイクルのRFパルス", mathHTML: `<div class="math-mind">縦回復 Mz(t) = M0(1 - e^(-t/T1))</div>` });
+
+  activeEventTag.textContent = currentEvent.name.split(" ")[0];
+  eduEventTitle.textContent = `[ ${currentEvent.name} ]`;
+  eduEventDetail.textContent = currentEvent.desc;
+  eduEventNext.innerHTML = `<b>⏩ 次に起こること:</b> ${currentEvent.next}`;
+  eduMathBlock.innerHTML = currentEvent.mathHTML;
+
+  // 3. 磁化ベクトル (Mz, Mxy) 計算
+  let mz = 1.0;
+  let mxy = 0.0;
+  const faRad = (simState.params.flipAngle * Math.PI) / 180;
+
+  if (simState.currentSeqKey === "FSPGR") {
+    if (t < 8) { mz = 0.95; mxy = 0.0; }
+    else if (t <= 18) {
+      const frac = (t - 8) / 10;
+      mz = Math.cos(faRad * frac);
+      mxy = Math.sin(faRad * frac);
+    } else if (t < 76) {
+      const dt = (t - 18) / 60;
+      mxy = Math.sin(faRad) * Math.exp(-dt * 1.5);
+      mz = Math.cos(faRad) + (1.0 - Math.cos(faRad)) * (1 - Math.exp(-dt * 0.4));
+    } else {
+      mxy = 0.01; // 完全スポイル
+      mz = Math.cos(faRad) + 0.15;
+    }
+  } else if (simState.currentSeqKey === "SE") {
+    if (t < 6) { mz = 1.0; mxy = 0.0; }
+    else if (t <= 16) {
+      const frac = (t - 6) / 10;
+      mz = Math.cos((Math.PI/2) * frac);
+      mxy = Math.sin((Math.PI/2) * frac);
+    } else if (t < 44) {
+      mz = 0.05; mxy = 0.9 * Math.exp(-(t-16)/50);
+    } else if (t <= 54) {
+      mz = -0.05; mxy = 0.7; // 180°反転
+    } else {
+      mz = 0.2; mxy = 0.6 * Math.exp(-(t-54)/60);
+    }
+  } else if (simState.currentSeqKey === "IR_FLAIR") {
+    if (t <= 14) {
+      mz = -0.95; mxy = 0.0; // 180°反転
+    } else if (t < 46) {
+      // T1回復 (CSF Nulling)
+      mz = -0.95 + 1.95 * (1 - Math.exp(-(t - 14) / 32));
+      mxy = 0.0;
+    } else if (t <= 56) {
+      mz = 0.0; mxy = 0.5; // Null点で90°励起
+    } else {
+      mz = 0.1; mxy = 0.4;
+    }
+  } else {
+    mz = 0.8; mxy = 0.4;
+  }
+
+  // ベクトルSVG更新
+  const originX = 80, originY = 130;
+  const mzPx = mz * 85;
+  const mxyPx = mxy * 85;
+  vecMz.setAttribute('y2', originY - mzPx);
+  vecMxy.setAttribute('x2', originX + mxyPx);
+  vecMtot.setAttribute('x2', originX + mxyPx);
+  vecMtot.setAttribute('y2', originY - mzPx);
+  magCoordText.textContent = `Mz: ${mz.toFixed(2)} | Mxy: ${mxy.toFixed(2)}`;
+
+  // 4. k-space 軌跡計算 (∫G dt)
+  let kx = 0, ky = 0;
+  if (simState.currentSeqKey === "FSPGR" || simState.currentSeqKey === "bSSFP") {
+    if (t >= 20 && t <= 32) {
+      const f = (t - 20) / 12;
+      kx = -f * 45;
+      ky = f * 30;
+    } else if (t > 32 && t < 40) {
+      kx = -45; ky = 30;
+    } else if (t >= 40 && t <= 70) {
+      const f = (t - 40) / 30;
+      kx = -45 + f * 90;
+      ky = 30;
+    } else if (t > 70 && t <= 88) {
+      kx = (simState.currentSeqKey === "bSSFP") ? 45 * (1 - (t-70)/18) : 45;
+      ky = (simState.currentSeqKey === "bSSFP") ? 30 * (1 - (t-70)/18) : 0;
+    }
+  } else if (simState.currentSeqKey === "EPI") {
+    if (t >= 18 && t <= 28) {
+      const f = (t - 18) / 10;
+      kx = -f * 55;
+      ky = -f * 55;
+    } else if (t > 28) {
+      const f = (t - 28) / 70;
+      kx = Math.sin(f * Math.PI * 4) * 55;
+      ky = -55 + f * 110;
+    }
+  } else {
+    // 一般SE
+    if (t >= 22 && t <= 34) { kx = ((t-22)/12)*45; ky = 25; }
+    else if (t >= 68 && t <= 96) { kx = -45 + ((t-68)/28)*90; ky = 25; }
+  }
+
+  const kSvgX = 80 + kx;
+  const kSvgY = 80 - ky;
+  kspaceCurrentPt.setAttribute('cx', kSvgX);
+  kspaceCurrentPt.setAttribute('cy', kSvgY);
+  kspaceCoordText.textContent = `kx: ${(kx/45).toFixed(2)} | ky: ${(ky/45).toFixed(2)}`;
+
+  // 5. スピン位相分散（16本）
+  spinVectorsGroup.innerHTML = '';
+  let dispersion = 0; // 0 = 完全同期, Math.PI = 完全分散
+
+  if (simState.currentSeqKey === "FSPGR") {
+    if (t >= 20 && t <= 32) dispersion = ((t - 20) / 12) * Math.PI;
+    else if (t > 32 && t < 42) dispersion = Math.PI;
+    else if (t >= 42 && t <= 70) dispersion = Math.abs(t - 56) / 14 * Math.PI; // TE=56で0
+    else if (t >= 76) dispersion = Math.PI * 2; // スポイル
+  } else if (simState.currentSeqKey === "SE") {
+    if (t >= 16 && t < 44) dispersion = Math.min(((t - 16) / 20) * Math.PI, Math.PI);
+    else if (t >= 44 && t <= 54) dispersion = Math.PI; // 180度反転
+    else if (t > 54 && t <= 82) dispersion = (1 - (t - 54) / 28) * Math.PI; // TE=82で収束
+    else if (t > 82) dispersion = ((t - 82) / 15) * Math.PI;
+  } else {
+    dispersion = (t >= 40 && t <= 68) ? Math.abs(t - 54) / 14 * Math.PI : 0.8;
+  }
+
+  const numSpins = 16;
+  for (let i = 0; i < numSpins; i++) {
+    const angleOffset = (i - (numSpins - 1) / 2) / ((numSpins - 1) / 2) * dispersion;
+    const len = (mxy <= 0.02) ? 0 : 52 * Math.min(1.0, mxy);
+    const sx = 80 + len * Math.sin(angleOffset);
+    const sy = 80 - len * Math.cos(angleOffset);
+    spinVectorsGroup.innerHTML += `<line x1="80" y1="80" x2="${sx}" y2="${sy}" stroke="var(--c-rf)" stroke-width="1.4" opacity="0.8"/>`;
+    spinVectorsGroup.innerHTML += `<circle cx="${sx}" cy="${sy}" r="1.8" fill="var(--c-mxy)"/>`;
+  }
+
+  if (dispersion < 0.15 && mxy > 0.1) {
+    spinStatusText.textContent = "★ エコー再収束 (In-Phase / Peak)";
+    spinStatusText.style.color = "#facc15";
+  } else if (dispersion >= Math.PI * 1.8 || mxy <= 0.02) {
+    spinStatusText.textContent = "✕ 完全分散 / スポイル消去 (Dephased)";
+    spinStatusText.style.color = "#ef4444";
+  } else {
+    spinStatusText.textContent = "位相分散中 (Dephasing / Rephasing)";
+    spinStatusText.style.color = "var(--text-muted)";
+  }
+
+  // 6. 特異的モジュール描画
+  renderSpecificModule(simState.currentSeqKey, t);
+}
+
+// シーケンス特有補助モジュールの更新
+function renderSpecificModule(seqKey, t) {
+  specDynContent.innerHTML = '';
+  if (seqKey === "FSPGR") {
+    specModuleTitle.textContent = "RF Spoiling 位相シフト角";
+    const phaseDeg = 117;
+    const rad = (phaseDeg * Math.PI) / 180;
+    specDynContent.innerHTML = `
+      <line x1="80" y1="80" x2="${80 + 50*Math.sin(rad)}" y2="${80 - 50*Math.cos(rad)}" stroke="var(--c-rf)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="80" cy="80" r="3" fill="#fff" />
+    `;
+    specModuleReadout.textContent = `Δθ = 117° (二次式巡回)`;
+  } else if (seqKey === "bSSFP") {
+    specModuleTitle.textContent = "正味傾斜磁場モーメント (Net Area)";
+    const isBalanced = (t > 92 || t < 20);
+    specDynContent.innerHTML = `
+      <rect x="30" y="70" width="45" height="20" fill="rgba(192,132,252,0.6)" />
+      <rect x="85" y="70" width="45" height="20" fill="rgba(52,211,153,0.6)" />
+      <text x="80" y="115" fill="${isBalanced ? '#34d399' : '#f59e0b'}" font-size="11" text-anchor="middle" font-weight="700">
+        ${isBalanced ? '∫G dt = 0 (Balanced)' : '走査中 (Unbalanced)'}
+      </text>
+    `;
+    specModuleReadout.textContent = isBalanced ? "全軸正味面積相殺: 達成" : "空間エンコード実行中";
+  } else if (seqKey === "IR_FLAIR") {
+    specModuleTitle.textContent = "縦緩和回復曲線 Mz(t)";
+    // 指数回復曲線の描画
+    let pathD = "M 20 120 ";
+    for (let x = 20; x <= 140; x += 5) {
+      const curT = (x - 20) / 120;
+      const curMz = -1.0 + 2.0 * (1 - Math.exp(-curT * 2.2));
+      const y = 80 - curMz * 40;
+      pathD += `L ${x} ${y} `;
+    }
+    const curX = 20 + (t / 100) * 120;
+    specDynContent.innerHTML = `
+      <line x1="20" y1="80" x2="140" y2="80" stroke="#475569" stroke-dasharray="2 2" />
+      <text x="135" y="76" fill="#64748b" font-size="8">Mz=0</text>
+      <path d="${pathD}" fill="none" stroke="#60a5fa" stroke-width="2"/>
+      <circle cx="${curX}" cy="${80 - (parseFloat(magCoordText.textContent.split('|')[0].replace('Mz:','')))*40}" r="4" fill="#ef4444"/>
+    `;
+    specModuleReadout.textContent = t >= 45 && t <= 55 ? "★ CSF Null Point (Mz ≈ 0)" : "T1 回復中";
+  } else {
+    specModuleTitle.textContent = "スピンエコー対称性 (Echo Symmetry)";
+    specDynContent.innerHTML = `
+      <line x1="25" y1="80" x2="135" y2="80" stroke="#475569" />
+      <circle cx="80" cy="80" r="30" fill="none" stroke="#facc15" stroke-dasharray="3 3" />
+      <text x="80" y="84" fill="#fde047" font-size="10" text-anchor="middle" font-weight="700">180° 対称性</text>
+    `;
+    specModuleReadout.textContent = "TE/2を中心に対称";
+  }
+}
+
+// ==========================================
+// 5. アニメーションメインループ & UIバインディング
+// ==========================================
+function animationLoop(timestamp) {
+  if (!simState.lastFrameTime) simState.lastFrameTime = timestamp;
+  const dt = timestamp - simState.lastFrameTime;
+  simState.lastFrameTime = timestamp;
+
+  if (simState.isPlaying) {
+    simState.t += (dt / 45) * simState.speed;
+    if (simState.t > 100) simState.t = 0;
+    timeSlider.value = simState.t;
+  }
+
+  updateSim(simState.t);
+  requestAnimationFrame(animationLoop);
+}
+
+// イベントリスナー群
+seqPresetSelect.addEventListener('change', (e) => {
+  setupSequence(e.target.value);
+});
+
+timeSlider.addEventListener('input', (e) => {
+  simState.t = parseFloat(e.target.value);
+  simState.isPlaying = false;
+  btnPlay.textContent = "再生 ▶";
+  btnPlay.classList.remove('active');
+});
+
+btnPlay.addEventListener('click', () => {
+  simState.isPlaying = !simState.isPlaying;
+  btnPlay.textContent = simState.isPlaying ? "一時停止 ⏸" : "再生 ▶";
+  btnPlay.classList.toggle('active', simState.isPlaying);
+});
+
+btnReset.addEventListener('click', () => {
+  simState.t = 0;
+  timeSlider.value = 0;
+});
+
+btnNext.addEventListener('click', () => {
+  simState.isPlaying = false;
+  btnPlay.textContent = "再生 ▶";
+  btnPlay.classList.remove('active');
+  const seq = SEQUENCE_DATABASE[simState.currentSeqKey];
+  const checkpoints = seq.events.map(e => e.start).concat([100]);
+  const next = checkpoints.find(c => c > simState.t + 0.8) || 0;
+  simState.t = next;
+  timeSlider.value = simState.t;
+});
+
+btnPrev.addEventListener('click', () => {
+  simState.isPlaying = false;
+  btnPlay.textContent = "再生 ▶";
+  btnPlay.classList.remove('active');
+  const seq = SEQUENCE_DATABASE[simState.currentSeqKey];
+  const checkpoints = [0].concat(seq.events.map(e => e.start));
+  const prev = checkpoints.reverse().find(c => c < simState.t - 0.8) || 0;
+  simState.t = prev;
+  timeSlider.value = simState.t;
+});
+
+speedSelect.addEventListener('change', (e) => {
+  simState.speed = parseFloat(e.target.value);
+});
+
+// 初期起動
+setupSequence("FSPGR");
+requestAnimationFrame(animationLoop);
+</script>
+</body>
+</html>

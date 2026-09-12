@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>復習教材：bSSFPバンディングアーチファクトとTR短縮・シミングの物理機序</title>
+  <style>
+    /* ==========================================================================
+       CSS Reset & Base Variables (完全オフライン対応・システムフォント仕様)
+       ========================================================================== */
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+      --border-focus: #3b82f6;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-sub: #64748b;
+      
+      --accent-blue: #2563eb;
+      --accent-blue-light: #eff6ff;
+      --accent-blue-border: #bfdbfe;
+      
+      --state-correct: #16a34a;
+      --state-correct-bg: #f0fdf4;
+      --state-correct-border: #bbf7d0;
+      
+      --state-warn: #d97706;
+      --state-warn-bg: #fffbeb;
+      --state-warn-border: #fde68a;
+      
+      --state-danger: #dc2626;
+      --state-danger-bg: #fef2f2;
+      --state-danger-border: #fecaca;
+
+      --code-bg: #0f172a;
+      --code-text: #38bdf8;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.65;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* ==========================================================================
+       Header & Breadcrumb
+       ========================================================================== */
+    .header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .badge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-primary {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    .badge-sub {
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .q-icon {
+      color: var(--accent-blue);
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       Scoring Summary Card (採点サマリー)
+       ========================================================================== */
+    .score-summary-card {
+      background: var(--bg-card);
+      border: 2px solid var(--accent-blue-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .score-summary-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--accent-blue), #60a5fa);
+    }
+    .score-top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      align-items: center;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .score-top-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .score-meter {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+    .score-num {
+      font-size: 3.25rem;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--accent-blue);
+      letter-spacing: -0.03em;
+    }
+    .score-denom {
+      font-size: 1.25rem;
+      color: var(--text-sub);
+      font-weight: 700;
+    }
+    .score-status-badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 800;
+      border-radius: 9999px;
+      background-color: var(--state-correct-bg);
+      color: var(--state-correct);
+      border: 1px solid var(--state-correct-border);
+    }
+    .eval-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .eval-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .eval-val {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .ans-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 768px) {
+      .ans-compare-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ans-box {
+      border-radius: var(--radius-md);
+      padding: 1rem 1.15rem;
+      font-size: 0.925rem;
+    }
+    .ans-user {
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+    }
+    .ans-model {
+      background-color: var(--accent-blue-light);
+      border: 1px solid var(--accent-blue-border);
+    }
+    .ans-box-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .ans-user .ans-box-title { color: #475569; }
+    .ans-model .ans-box-title { color: var(--accent-blue); }
+
+    .critique-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+    }
+    .critique-table th, .critique-table td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+    .critique-table th {
+      background-color: #f8fafc;
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 25%;
+    }
+    .critique-table td {
+      background-color: #ffffff;
+    }
+
+    /* ==========================================================================
+       Card Styles (General)
+       ========================================================================== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .card-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background-color: var(--accent-blue-light);
+      color: var(--accent-blue);
+      font-weight: 900;
+    }
+
+    /* ==========================================================================
+       Interactive Simulation & Visual Diagram
+       ========================================================================== */
+    .interactive-container {
+      background-color: #0f172a;
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      color: #f8fafc;
+      margin-bottom: 1.5rem;
+    }
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #334155;
+    }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 260px;
+    }
+    .slider-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .slider-val {
+      font-family: ui-monospace, monospace;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #38bdf8;
+      min-width: 4.5rem;
+      text-align: right;
+    }
+    input[type=range] {
+      flex: 1;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .sim-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+    .sim-btn:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+    .sim-btn:active {
+      transform: scale(0.97);
+    }
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 768px) {
+      .diagram-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .diagram-panel {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .diagram-caption {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+    .svg-canvas {
+      width: 100%;
+      height: auto;
+      max-height: 220px;
+      overflow: visible;
+    }
+
+    /* ==========================================================================
+       Mathematical MathML & Formula Display (完全オフラインMathML)
+       ========================================================================== */
+    .formula-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent-blue);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .formula-display {
+      font-size: 1.35rem;
+      text-align: center;
+      margin: 0.75rem 0;
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+    math {
+      font-family: "Latin Modern Math", "Cambria Math", STIXTwoMath, Georgia, serif;
+    }
+    .var-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+    .var-table th, .var-table td {
+      border: 1px solid #e2e8f0;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    .var-table th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #334155;
+    }
+    .var-sym {
+      font-weight: 700;
+      font-family: Georgia, serif;
+      color: var(--accent-blue);
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       Pedagogical Framework: Steps & Logic
+       ========================================================================== */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+    .step-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    .step-index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+    .step-desc {
+      font-size: 0.925rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .key-callout {
+      background-color: #fefce8;
+      border: 1px solid #fef08a;
+      border-left: 4px solid #ca8a04;
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: #713f12;
+    }
+    .key-callout strong {
+      color: #854d0e;
+    }
+
+    /* ==========================================================================
+       Print Styles (@media print - A4縦対応 & ページ分割保護)
+       ========================================================================== */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+      .container {
+        max-width: 100% !important;
+        gap: 1rem !important;
+      }
+      .score-summary-card,
+      .card,
+      .formula-card,
+      .critique-table,
+      .diagram-panel {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+      }
+      .controls-bar {
+        display: none !important; /* 印刷時は操作UIを非表示 */
+      }
+      .interactive-container {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #94a3b8 !important;
+        padding: 0.75rem !important;
+      }
+      .diagram-panel {
+        background-color: #f8fafc !important;
+      }
+      .svg-canvas text {
+        fill: #0f172a !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ================= 1. 問題ヘッダー ================= -->
+  <header class="header-card">
+    <div class="badge-wrap">
+      <span class="badge badge-primary">Q019</span>
+      <span class="badge badge-sub">トラブル対応</span>
+      <span class="badge badge-sub">bSSFP (TrueFISP / FIESTA / Balanced FFE)</span>
+      <span class="badge badge-sub">撮像パラメータ最適化</span>
+    </div>
+    <h1 class="header-title">
+      <span class="q-icon">◆</span>
+      <span>bSSFPで黒いバンディングが出たとき、TR短縮とシミングが有効なのはなぜですか。</span>
+    </h1>
+  </header>
+
+  <!-- ================= 2. 採点サマリー ================= -->
+  <section class="score-summary-card">
+    <div class="score-top-grid">
+      <div class="score-meter">
+        <span class="score-num">88</span>
+        <span class="score-denom">/ 100 点</span>
+        <span class="score-status-badge">合格 (A判定)</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="eval-row">
+          <span class="eval-label">判定</span>
+          <span class="eval-val">極めて良好な概念把握</span>
+        </div>
+        <div class="eval-row">
+          <span class="eval-label">学習優先度</span>
+          <span class="eval-val" style="color: var(--accent-blue);">中（定量的機序の補強）</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 解答比較 -->
+    <div class="ans-compare-grid">
+      <div class="ans-box ans-user">
+        <div class="ans-box-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          ユーザーの解答
+        </div>
+        <p>「TRを短縮することによって、位相蓄積を減らすことができるのと、シミングをすることによって、局所磁場不均一による影響を減らすため。」</p>
+      </div>
+      <div class="ans-box ans-model">
+        <div class="ans-box-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          模範解答（完全解）
+        </div>
+        <p>bSSFPでは1TR間におけるスピンの位相蓄積角 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> が <math><mo>±</mo><mi>π</mi></math>（180°）奇数倍となる周波数で定常横磁化が相殺され、信号欠損（暗線）が生じる。暗線の周波数間隔は <math><mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub><mo>=</mo><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> であるため、<strong>TRを短縮することで暗線間隔を拡大し、関心領域外へ暗線を押し出す</strong>ことができる。また<strong>シミングにより局所磁場不均一 <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math>（周波数オフセット <math><mi>Δ</mi><mi>f</mi></math>）自体を縮小し、位相蓄積が180°に達する急峻な勾配を解消する</strong>ため、両者は極めて有効となる。</p>
+      </div>
+    </div>
+
+    <!-- 項目別レビュー表 -->
+    <table class="critique-table">
+      <tbody>
+        <tr>
+          <th>正しく理解できた点</th>
+          <td>公式 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> を念頭に置き、「TR短縮 $\rightarrow$ 位相蓄積抑制」「シミング $\rightarrow$ 磁場不均一抑制」という物理変数（<math><mi mathvariant="normal">TR</mi></math> と <math><mi>Δ</mi><mi>f</mi></math>）双方の直接的因果関係を正確に捉えられている。</td>
+        </tr>
+        <tr>
+          <th>最大の修正点</th>
+          <td>「位相蓄積が減るとなぜ黒い帯が消えるのか（暗線周期 <math><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> の拡大効果）」という<strong>現象と空間配置の定量的メカニズム</strong>を言語化することで、臨床トラブルへの応用力が完成する。</td>
+        </tr>
+        <tr>
+          <th>根本的誤概念</th>
+          <td><strong>誤概念なし。</strong>物理的直感は極めて正確である。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================= 3. インタラクティブ・シミュレーター ================= -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-icon">⚡</span>
+      <h2 class="card-title">動的検証：TR短縮によるバンディング間隔の拡大シミュレーション</h2>
+    </div>
+
+    <div class="interactive-container">
+      <div class="controls-bar">
+        <div class="slider-wrap">
+          <label class="slider-label" for="trSlider">繰返し時間 (TR):</label>
+          <input type="range" id="trSlider" min="2.5" max="8.0" step="0.1" value="5.0">
+          <span class="slider-val" id="trValDisplay">5.0 ms</span>
+        </div>
+        <div class="btn-group">
+          <button class="sim-btn" id="btnPresetLong">長いTR (6.5ms)</button>
+          <button class="sim-btn" id="btnPresetShort">短いTR (3.0ms)</button>
+          <button class="sim-btn" id="btnReset">リセット</button>
+        </div>
+      </div>
+
+      <div class="diagram-grid">
+        <!-- SVG パネル1: 周波数応答プロファイル -->
+        <div class="diagram-panel">
+          <svg id="spectrumSvg" class="svg-canvas" viewBox="0 0 360 200">
+            <!-- 軸とグリッド -->
+            <line x1="30" y1="160" x2="340" y2="160" stroke="#475569" stroke-width="1.5" />
+            <line x1="185" y1="20" x2="185" y2="160" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />
+            <!-- ラベル -->
+            <text x="185" y="180" font-size="11" fill="#94a3b8" text-anchor="middle">周波数オフセット Δf = 0 (共鳴)</text>
+            <text x="30" y="25" font-size="10" fill="#38bdf8" font-weight="bold">定常横磁化 Mxy</text>
+            <text x="340" y="155" font-size="10" fill="#94a3b8" text-anchor="end">Δf (Hz)</text>
+            <!-- ゼロ点・暗線マーカー -->
+            <path id="nullMarkerLeft" d="M 110 155 L 110 165" stroke="#ef4444" stroke-width="2" />
+            <path id="nullMarkerRight" d="M 260 155 L 260 165" stroke="#ef4444" stroke-width="2" />
+            <text id="nullLabelLeft" x="110" y="145" font-size="9" fill="#f87171" text-anchor="middle">-100Hz</text>
+            <text id="nullLabelRight" x="260" y="145" font-size="9" fill="#f87171" text-anchor="middle">+100Hz</text>
+            <!-- 応答曲線プロファイル (動的更新) -->
+            <path id="curvePath" d="" fill="none" stroke="#38bdf8" stroke-width="2.5" />
+            <!-- バンド幅矢印 -->
+            <line id="bwArrow" x1="110" y1="70" x2="260" y2="70" stroke="#fbbf24" stroke-width="1.5" marker-start="" />
+            <text id="bwText" x="185" y="62" font-size="10" fill="#fbbf24" font-weight="bold" text-anchor="middle">暗線フリー領域: 200 Hz</text>
+          </svg>
+          <div class="diagram-caption">図1: bSSFPスペクトル周波数応答曲線（暗線周期 = 1/TR）</div>
+        </div>
+
+        <!-- SVG パネル2: ファントム模擬画像上の暗線 -->
+        <div class="diagram-panel">
+          <svg id="phantomSvg" class="svg-canvas" viewBox="0 0 200 200">
+            <defs>
+              <clipPath id="phantomClip">
+                <circle cx="100" cy="100" r="75" />
+              </clipPath>
+            </defs>
+            <!-- ファントム背景 (高信号組織) -->
+            <circle cx="100" cy="100" r="75" fill="#38bdf8" fill-opacity="0.85" stroke="#0284c7" stroke-width="2" />
+            <!-- 暗線ストライプ (動的更新) -->
+            <g clip-path="url(#phantomClip)" id="bandLinesGroup">
+              <!-- JSで動的に追加 -->
+            </g>
+            <!-- 関心領域 ROI -->
+            <rect x="70" y="70" width="60" height="60" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,3" />
+            <text x="100" y="64" font-size="9" fill="#4ade80" font-weight="bold" text-anchor="middle">撮像関心領域 (ROI)</text>
+          </svg>
+          <div class="diagram-caption" id="phantomCaption">図2: 画像上の暗線（TR短縮でROI外へシフト）</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. 数理物理理論・定量的解説 ================= -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-icon">📐</span>
+      <h2 class="card-title">数理物理から解き明かすバンディングの発生機序</h2>
+    </div>
+
+    <!-- 重要式1: 位相蓄積 -->
+    <div class="formula-card">
+      <p style="font-weight:700; color:var(--text-sub); font-size:0.85rem;">【基本式 1】 1 TR あたりのスピン位相蓄積角</p>
+      <div class="formula-display">
+        <math display="block">
+          <mi>θ</mi>
+          <mo>=</mo>
+          <mn>2</mn>
+          <mi>π</mi>
+          <mo>·</mo>
+          <mi>Δ</mi>
+          <mi>f</mi>
+          <mo>·</mo>
+          <mi mathvariant="normal">TR</mi>
+          <mo>=</mo>
+          <mi>γ</mi>
+          <mo>·</mo>
+          <mi>Δ</mi>
+          <msub><mi>B</mi><mn>0</mn></msub>
+          <mo>·</mo>
+          <mi mathvariant="normal">TR</mi>
+        </math>
+      </div>
+      <table class="var-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理的意味</th>
+            <th>単位</th>
+            <th>増減による影響</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="var-sym">θ</td>
+            <td>1 TR の間にスピンが歳差運動によって蓄積する余分な位相角</td>
+            <td>rad（ラジアン）</td>
+            <td><math><mi>θ</mi><mo>=</mo><mo>±</mo><mi>π</mi></math>（180°）で横磁化が完全相殺されゼロ信号</td>
+          </tr>
+          <tr>
+            <td class="var-sym">Δf</td>
+            <td>共鳴周波数からのズレ（オフレゾナンス周波数）</td>
+            <td>Hz</td>
+            <td>局所磁場不均一 <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math> に比例（<math><mi>Δ</mi><mi>f</mi><mo>=</mo><mfrac><mi>γ</mi><mrow><mn>2</mn><mi>π</mi></mrow></mfrac><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math>）</td>
+          </tr>
+          <tr>
+            <td class="var-sym">TR</td>
+            <td>パルスシーケンスの繰返し時間（Repetition Time）</td>
+            <td>s または ms</td>
+            <td><strong>短縮すると比例して位相蓄積角 θ が縮小する</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 重要式2: バンディング間隔 -->
+    <div class="formula-card">
+      <p style="font-weight:700; color:var(--text-sub); font-size:0.85rem;">【基本式 2】 バンディングフリー周波数幅（暗線が出現する周波数間隔）</p>
+      <div class="formula-display">
+        <math display="block">
+          <mi>Δ</mi>
+          <msub><mi>f</mi><mi mathvariant="normal">band</mi></msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi mathvariant="normal">TR</mi>
+          </mfrac>
+        </math>
+      </div>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.5rem;">
+        暗線（信号の極小点）は、位相角 <math><mi>θ</mi><mo>=</mo><mi>π</mi><mo>,</mo><mn>3</mn><mi>π</mi><mo>,</mo><mn>5</mn><mi>π</mi><mo>…</mo></math> となる周波数オフセットごとに周期的に出現します。暗線と暗線の間の間隔（周波数帯域）は <math><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> に厳密に反比例します。
+      </p>
+    </div>
+
+    <!-- 現象の論理的ステップ -->
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-index">1</div>
+        <div class="step-content">
+          <div class="step-title">なぜ黒い帯（バンディング）が発生するのか？</div>
+          <div class="step-desc">
+            bSSFPは、すべての軸（スライス選択・位相・周波数エンコード）の傾斜磁場面積を1TR内で完全にゼロ（リフェーズ）にし、FID信号とエコー信号（echo-like signal）を定常的に重ね合わせて極めて高いSNRを得るシーケンスです。
+            しかし、生体と空気の境界（肺・腸管ガス・頭蓋底）や金属などによって局所静磁場不均一 <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math> が存在すると、スピンが1TRあたり余分な位相角 <math><mi>θ</mi></math> を回転します。この位相蓄積が180°（<math><mi>π</mi></math>）に達すると、RFパルスの励起と先行する横磁化が完全に逆位相となって打ち消し合い、定常横磁化がゼロ（シグナルボイド）となって画像上に鋭い黒い帯を描出します。
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-index">2</div>
+        <div class="step-content">
+          <div class="step-title">TR短縮の物理的効果：暗線周期の空間的追放</div>
+          <div class="step-desc">
+            暗線の周波数間隔は <math><mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub><mo>=</mo><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> です。
+            例えば、<math><mi mathvariant="normal">TR</mi><mo>=</mo><mn>6.0</mn><mi mathvariant="normal">ms</mi></math> のとき暗線間隔はわずか約 <strong>167 Hz</strong> しかありません。生体内の磁場勾配により、関心領域（ROI）の中に複数の暗線が入り込んでしまいます。
+            ここでTRを限界まで短縮して <math><mi mathvariant="normal">TR</mi><mo>=</mo><mn>3.0</mn><mi mathvariant="normal">ms</mi></math> にすると、暗線間隔は <strong>333 Hz</strong> へと一気に2倍に広がります。その結果、暗線はROIの外側に押し出され、関心臓器（心臓壁や関節軟骨など）をアーチファクトのないクリアな高信号で覆うことができます。
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-index">3</div>
+        <div class="step-content">
+          <div class="step-title">シミングの物理的効果：周波数傾斜の平坦化</div>
+          <div class="step-desc">
+            シミング（特に局所高次シム）は、補正用傾斜磁場電流を細かく制御することで被写体内部の局所磁場不均一 <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math> を直接打ち消します。
+            空間的な周波数の変化率（勾配）<math><mo>∇</mo><mo stretchy="false">(</mo><mi>Δ</mi><mi>f</mi><mo stretchy="false">)</mo></math> が極めて緩やかになるため、生体内を移動しても位相蓄積が180°（<math><mi>π</mi></math>）の閾値に達しにくくなります。これにより暗線の本数そのものが減少し、消失します。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-callout">
+      <strong>臨床の腕の見せ所：</strong>
+      心臓シネMRI（TrueFISP / FIESTA）や内耳神経CISS撮像では、まず**局所シムボックス（Localized Shim Volume）**を目的部位にジャストサイズで当てて <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math> を極小化し、さらに**高受信バンド幅・部分エコー（Fractional Echo）**を駆使してTRを装置限界（約 2.8〜3.4 ms）まで切り詰めることがバンディング対策の王道です。
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= 5. インラインJavaScript (完全オフライン対話制御) ================= -->
+<script>
+  (function() {
+    // 要素参照
+    const trSlider = document.getElementById('trSlider');
+    const trValDisplay = document.getElementById('trValDisplay');
+    const curvePath = document.getElementById('curvePath');
+    const nullMarkerLeft = document.getElementById('nullMarkerLeft');
+    const nullMarkerRight = document.getElementById('nullMarkerRight');
+    const nullLabelLeft = document.getElementById('nullLabelLeft');
+    const nullLabelRight = document.getElementById('nullLabelRight');
+    const bwArrow = document.getElementById('bwArrow');
+    const bwText = document.getElementById('bwText');
+    const bandLinesGroup = document.getElementById('bandLinesGroup');
+    const phantomCaption = document.getElementById('phantomCaption');
+
+    const btnPresetLong = document.getElementById('btnPresetLong');
+    const btnPresetShort = document.getElementById('btnPresetShort');
+    const btnReset = document.getElementById('btnReset');
+
+    // SVG 描画パラメータ
+    const originX = 185;
+    const originY = 160;
+    const maxHeight = 120;
+    const freqScale = 0.55; // 1Hzあたりのピクセル
+
+    function updateSim() {
+      const tr = parseFloat(trSlider.value); // ms
+      trValDisplay.textContent = tr.toFixed(1) + ' ms';
+
+      // 暗線の周波数位置 f_null = 1 / (2 * TR) [Hz]
+      const fNull = (1000 / (2 * tr)); // Hz
+      const deltaFband = 1000 / tr;     // Hz
+
+      // 1. 周波数応答曲線の生成 Mxy(f)
+      // bSSFPの横磁化プロファイル簡易モデル: Mxy ∝ (1 - a*cos(2*pi*f*TR)) / (1 - b*cos(2*pi*f*TR))
+      let pathD = "";
+      for (let x = 40; x <= 330; x += 2) {
+        const deltaF = (x - originX) / freqScale; // Hz
+        const theta = 2 * Math.PI * (deltaF / 1000) * tr; // rad
+        // cos(theta) = -1 のときゼロに落ちる
+        const signalNorm = Math.max(0, (1 + Math.cos(theta)) / 2);
+        const y = originY - (signalNorm * maxHeight);
+        if (x === 40) {
+          pathD += "M " + x + " " + y;
+        } else {
+          pathD += " L " + x + " " + y;
+        }
+      }
+      curvePath.setAttribute('d', pathD);
+
+      // 2. マーカー位置の更新
+      const nullPixelOffset = fNull * freqScale;
+      const leftX = Math.max(40, originX - nullPixelOffset);
+      const rightX = Math.min(330, originX + nullPixelOffset);
+
+      nullMarkerLeft.setAttribute('d', `M ${leftX} 155 L ${leftX} 165`);
+      nullMarkerRight.setAttribute('d', `M ${rightX} 155 L ${rightX} 165`);
+      nullLabelLeft.setAttribute('x', leftX);
+      nullLabelLeft.textContent = `-${Math.round(fNull)}Hz`;
+      nullLabelRight.setAttribute('x', rightX);
+      nullLabelRight.textContent = `+${Math.round(fNull)}Hz`;
+
+      // 矢印・幅ラベル
+      bwArrow.setAttribute('x1', leftX);
+      bwArrow.setAttribute('x2', rightX);
+      bwText.setAttribute('x', originX);
+      bwText.textContent = `暗線フリー帯域 (1/TR): ${Math.round(deltaFband)} Hz`;
+
+      // 3. ファントム画像上の暗線描画 (磁場勾配を仮定: 左から右へ周波数が変化)
+      while (bandLinesGroup.firstChild) {
+        bandLinesGroup.removeChild(bandLinesGroup.firstChild);
+      }
+
+      // 磁場勾配空間での暗線位置計算 (空間勾配 4 Hz/pixel)
+      const gradHzPerPixel = 3.5;
+      const centerPhantomX = 100;
+      
+      // 暗線の周期ピクセル間隔
+      const bandPixelInterval = deltaFband / gradHzPerPixel;
+
+      // 複数の暗線を描画
+      let lineCount = 0;
+      for (let k = -3; k <= 3; k++) {
+        // 暗線位置: f = fNull + k * deltaFband
+        const lineFreq = (k + 0.5) * deltaFband;
+        const lineX = centerPhantomX + (lineFreq / gradHzPerPixel);
+
+        if (lineX >= 10 && lineX <= 190) {
+          lineCount++;
+          const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          rect.setAttribute("x", lineX - 3.5);
+          rect.setAttribute("y", 10);
+          rect.setAttribute("width", 7);
+          rect.setAttribute("height", 180);
+          rect.setAttribute("fill", "#090d16");
+          rect.setAttribute("opacity", "0.95");
+          bandLinesGroup.appendChild(rect);
+        }
+      }
+
+      // キャプションの動的更新
+      if (tr <= 3.2) {
+        phantomCaption.innerHTML = `<span style="color:#4ade80; font-weight:bold;">★ 最適状態：暗線がROI（緑枠）外へ完全に退避！</span>`;
+      } else {
+        phantomCaption.innerHTML = `<span style="color:#f87171; font-weight:bold;">警告：TR延長に伴い暗線がROI内に侵入中 (${lineCount}本)</span>`;
+      }
+    }
+
+    // イベントリスナー
+    trSlider.addEventListener('input', updateSim);
+
+    btnPresetLong.addEventListener('click', function() {
+      trSlider.value = 6.5;
+      updateSim();
+    });
+
+    btnPresetShort.addEventListener('click', function() {
+      trSlider.value = 3.0;
+      updateSim();
+    });
+
+    btnReset.addEventListener('click', function() {
+      trSlider.value = 5.0;
+      updateSim();
+    });
+
+    // 初期化実行
+    updateSim();
+  })();
+</script>
+
+</body>
+</html>

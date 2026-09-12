@@ -1,2 +1,6 @@
 .claude/
 .DS_Store
+_site/
+__pycache__/
+*.pyc
+.drive_sync_manifest.json

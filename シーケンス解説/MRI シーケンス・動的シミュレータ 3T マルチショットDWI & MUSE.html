@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRI シーケンス・動的シミュレータ：3T マルチショットDWI & MUSE</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --rf-color: #f0883e;
+      --gz-color: #bc8cff;
+      --gy-color: #39d353;
+      --gx-color: #58a6ff;
+      --adc-color: #f778ba;
+      --mpg-color: #e3b341;
+      --phase-color: #79c0ff;
+      --error-color: #ff7b72;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    h1, h2, h3 { color: var(--text-bright); }
+    header { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+    .badge {
+      background: #1f6feb33;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    /* Layout Grid */
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    @media (min-width: 1024px) {
+      .app-container {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    /* Controller Bar */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      background: #21262d;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+    .btn {
+      background: #238636;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2ea043; }
+    .btn-sub { background: #30363d; }
+    .btn-sub:hover { background: #3c444d; }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .slider-wrap input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+    select {
+      background: #0d1117;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    /* SVG Sequencer Canvas */
+    .seq-wrapper {
+      position: relative;
+      background: #090d13;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    svg.seq-diagram {
+      width: 100%;
+      height: 380px;
+      display: block;
+    }
+
+    /* Parameter HUD */
+    .param-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .param-card {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+    }
+    .param-card .label { color: var(--text-muted); font-size: 0.7rem; }
+    .param-card .value { font-size: 1.1rem; font-weight: bold; color: var(--text-bright); }
+
+    /* Sub-modules (k-space & Magnetization/Phase) */
+    .module-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    @media (max-width: 600px) {
+      .module-row { grid-template-columns: 1fr; }
+    }
+    .vis-box {
+      background: #090d13;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    .vis-box h4 { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+    canvas { background: #000; border-radius: 4px; display: block; margin: 0 auto; max-width: 100%; }
+
+    /* Explanations & Math Cards */
+    .explain-card {
+      background: #1c2128;
+      border-left: 4px solid var(--accent);
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .explain-card.next { border-left-color: #39d353; }
+    .explain-card h4 {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .explain-card p { font-size: 0.85rem; line-height: 1.4; }
+
+    /* Fully Offline Mathematical Typesetting Engine */
+    .formula-card {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+    .math-eq-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin: 8px 0;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .math-eq {
+      font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
+      font-size: 1.05rem;
+      color: #79c0ff;
+      background: #161b22;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .math-eq i {
+      font-style: italic;
+      padding-right: 1px;
+    }
+    .math-eq sub {
+      font-size: 0.72em;
+      vertical-align: -0.28em;
+    }
+    .math-eq sup {
+      font-size: 0.72em;
+      vertical-align: 0.45em;
+    }
+    .math-fraction {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      padding: 0 4px;
+      font-size: 0.9em;
+      line-height: 1.1;
+    }
+    .math-num {
+      border-bottom: 1px solid currentColor;
+      padding-bottom: 2px;
+    }
+    .math-den {
+      padding-top: 2px;
+    }
+    .math-integral {
+      font-size: 1.35rem;
+      line-height: 1;
+      vertical-align: -0.15em;
+      margin-right: 2px;
+      position: relative;
+      display: inline-block;
+    }
+    .math-limits {
+      display: inline-flex;
+      flex-direction: column;
+      font-size: 0.65em;
+      vertical-align: middle;
+      margin-right: 2px;
+      line-height: 0.9;
+    }
+    .math-op {
+      padding: 0 4px;
+    }
+    .formula-heart {
+      font-size: 0.8rem;
+      color: #e3b341;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    /* Comparison section for ss-EPI vs ms-EPI(MUSE) */
+    .recon-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .recon-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      background: #0d1117;
+      text-align: center;
+    }
+    .recon-card.bad { border-color: var(--error-color); }
+    .recon-card.good { border-color: var(--gy-color); }
+    .recon-card h5 { font-size: 0.8rem; margin-bottom: 6px; }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; color: #000; }
+      .controls, .slider-wrap, .btn { display: none; }
+      .panel, .vis-box, .explain-card { border-color: #ccc; background: #fff; color: #000; }
+      svg.seq-diagram text { fill: #000 !important; }
+      .math-eq { background: #eee; color: #000; border-color: #aaa; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>
+    <span>🧲 MRIシーケンス・動的シミュレータ</span>
+    <span class="badge">Level 4 完全シミュレータ</span>
+  </h1>
+  <p>3.0T拡散強調画像（DWI）：シングルショットEPIの限界とマルチショットEPI（MUSE）再構成アルゴリズムの動的解明</p>
+</header>
+
+<!-- コントロールバー -->
+<div class="controls">
+  <button id="btnPlay" class="btn">▶ 再生</button>
+  <button id="btnPrev" class="btn btn-sub">⏮ 前のイベント</button>
+  <button id="btnNext" class="btn btn-sub">⏭ 次のイベント</button>
+  <button id="btnReset" class="btn btn-sub">↺ リセット</button>
+
+  <div class="slider-wrap">
+    <span style="font-size: 0.8rem; color: var(--text-muted);">時刻 t:</span>
+    <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.1">
+    <span id="timeVal" style="font-family: monospace; font-size: 0.85rem; width: 45px;">0.0ms</span>
+  </div>
+
+  <div class="select-wrap">
+    <label for="shotSelect">撮像モード:</label>
+    <select id="shotSelect">
+      <option value="4shot">4-Shot マルチショットEPI (MUSE)</option>
+      <option value="1shot">シングルショットEPI (ss-EPI)</option>
+    </select>
+  </div>
+
+  <div class="select-wrap">
+    <label for="speedSelect">速度:</label>
+    <select id="speedSelect">
+      <option value="0.5">0.5x</option>
+      <option value="1" selected>1.0x</option>
+      <option value="2">2.0x</option>
+    </select>
+  </div>
+</div>
+
+<div class="app-container">
+  <!-- 左カラム: メイン波形とダイナミクス可視化 -->
+  <div class="main-column">
+    <div class="panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3>汎用パルスシーケンス・タイムライン（DWI-EPI）</h3>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">※横軸：時間 / 縦軸：振幅・極性</span>
+      </div>
+
+      <div class="seq-wrapper">
+        <svg id="seqSvg" class="seq-diagram" viewBox="0 0 900 380">
+          <defs>
+            <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#21262d" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="900" height="380" fill="url(#grid)"/>
+
+          <!-- RF -->
+          <line x1="80" y1="40" x2="880" y2="40" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="44" fill="#f0883e" font-size="12" font-weight="bold">RF</text>
+
+          <!-- Gz / Gslice -->
+          <line x1="80" y1="100" x2="880" y2="100" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="104" fill="#bc8cff" font-size="12" font-weight="bold">Gz (Slice)</text>
+
+          <!-- MPG (Diffusion) -->
+          <line x1="80" y1="160" x2="880" y2="160" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="164" fill="#e3b341" font-size="12" font-weight="bold">MPG (Diff)</text>
+
+          <!-- Gy / Gphase -->
+          <line x1="80" y1="220" x2="880" y2="220" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="224" fill="#39d353" font-size="12" font-weight="bold">Gy (Phase)</text>
+
+          <!-- Gx / Gread -->
+          <line x1="80" y1="280" x2="880" y2="280" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="284" fill="#58a6ff" font-size="12" font-weight="bold">Gx (Read)</text>
+
+          <!-- ADC & Signal -->
+          <line x1="80" y1="340" x2="880" y2="340" stroke="#30363d" stroke-width="1"/>
+          <text x="15" y="344" fill="#f778ba" font-size="12" font-weight="bold">ADC/Echo</text>
+
+          <!-- 静的シーケンス波形群 -->
+          <g id="seqShapes"></g>
+
+          <!-- タイミングブラケット（TE, δ, Δ） -->
+          <g id="seqTimingAnnotations" font-size="10" fill="#8b949e"></g>
+
+          <!-- 動的タイムカーソル -->
+          <line id="timeCursor" x1="80" y1="15" x2="80" y2="365" stroke="#ff7b72" stroke-width="2" stroke-dasharray="3,3"/>
+          <circle id="cursorHead" cx="80" cy="15" r="4" fill="#ff7b72"/>
+        </svg>
+      </div>
+
+      <!-- パラメータHUD -->
+      <div class="param-grid">
+        <div class="param-card">
+          <div class="label">シーケンス</div>
+          <div class="value" id="hudSeq">ms-DWI</div>
+        </div>
+        <div class="param-card">
+          <div class="label">実効エコートレイン長 (ETL)</div>
+          <div class="value" id="hudEtl">8 lines</div>
+        </div>
+        <div class="param-card">
+          <div class="label">位相方向BW (実効帯域)</div>
+          <div class="value" id="hudBw">4x 広帯域</div>
+        </div>
+        <div class="param-card">
+          <div class="label">3T 幾何学的歪み率</div>
+          <div class="value" id="hudDistort" style="color: #39d353;">極小 (約25%)</div>
+        </div>
+        <div class="param-card">
+          <div class="label">b-value</div>
+          <div class="value">1000 s/mm²</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 磁化・位相 & k空間 ダイナミクス -->
+    <div class="module-row">
+      <!-- k-space軌跡モジュール -->
+      <div class="vis-box">
+        <h4>k-Space Trajectory (k(t) ∝ ∫G dt)</h4>
+        <canvas id="kspaceCanvas" width="240" height="240"></canvas>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          取得済: <span id="kspaceAcqCount" style="color: var(--accent);">0</span> / 32 lines
+        </div>
+      </div>
+
+      <!-- スピン位相・微視的拡散モジュール -->
+      <div class="vis-box">
+        <h4>微視的スピン位相 (Diffusion & Motion)</h4>
+        <canvas id="spinCanvas" width="240" height="240"></canvas>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          黄: 静止組織 (再収束) / 赤: 拡散・拍動変位 (位相ズレ)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右カラム: 物理解説・MUSEアルゴリズム・画像比較 -->
+  <div class="side-column">
+    <!-- 現在何が起きている？ パネル -->
+    <div class="explain-card" id="nowCard">
+      <h4>⚡ 今、MRI装置の中で何が起きている？</h4>
+      <p id="descNow">待機状態です。すべての水分子スピンは静磁場B0に沿って熱平衡状態にあります。</p>
+    </div>
+
+    <!-- 次に起こること パネル -->
+    <div class="explain-card next" id="nextCard">
+      <h4>⏭ 次に起こること</h4>
+      <p id="descNext">スライス選択傾斜磁場Gzの印加とともに90°励起パルスが照射され、横磁化が形成されます。</p>
+    </div>
+
+    <!-- 数式のお気持ち パネル (美しく表示される数式エンジン) -->
+    <div class="formula-card">
+      <h4>📐 数式と物理のお気持ち</h4>
+      <div class="math-eq-container">
+        <div class="math-eq" id="mathEq">
+          <i>k</i><sub>x</sub>(<i>t</i>) = 
+          <span class="math-fraction">
+            <span class="math-num">&gamma;</span>
+            <span class="math-den">2&pi;</span>
+          </span>
+          <span class="math-integral">&int;</span>
+          <i>G</i><sub>x</sub>(&tau;) <i>d&tau;</i>
+        </div>
+      </div>
+      <p class="formula-heart" id="mathDesc">
+        <strong>【お気持ち】</strong> k空間の位置は勾配の高さそのものではなく、過去から現在までの面積（総積分量）で決まります。リード勾配が正負反転するたびにk空間を左右交互に走査します。
+      </p>
+    </div>
+
+    <!-- MUSE再構成 vs 単純FT 比較パネル -->
+    <div class="panel" style="padding: 12px;">
+      <h4 style="font-size: 0.85rem; margin-bottom: 8px;">🔬 3Tにおける再構成シミュレーション比較</h4>
+      <div class="recon-compare">
+        <div class="recon-card bad">
+          <h5 style="color: var(--error-color);">補正なし (単純合成)</h5>
+          <canvas id="reconBadCanvas" width="110" height="110"></canvas>
+          <p style="font-size: 0.7rem; color: var(--error-color); margin-top: 4px;">
+            ショット間位相差で完全干渉破壊・ゴースト発生
+          </p>
+        </div>
+        <div class="recon-card good">
+          <h5 style="color: var(--gy-color);">MUSE アルゴリズム</h5>
+          <canvas id="reconGoodCanvas" width="110" height="110"></canvas>
+          <p style="font-size: 0.7rem; color: var(--gy-color); margin-top: 4px;">
+            SENSE感度＋各Shot位相推定で歪み・ゴースト解消
+          </p>
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; line-height: 1.3;">
+        <strong>MUSEの真髄：</strong>
+        追加のナビゲーターエコーを用いず、各ショットの「間引かれた自己データ」と「多チャンネルコイル感度」から各ショットの非線形位相ズレを逆算し、高分解能に統合再構成します。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * 汎用MRIシーケンス・シミュレータ コアエンジン
+ * DWI-EPI & MUSE Reconstruction Model
+ */
+(function() {
+  // DOM Elements
+  const timeSlider = document.getElementById('timeSlider');
+  const timeVal = document.getElementById('timeVal');
+  const btnPlay = document.getElementById('btnPlay');
+  const btnReset = document.getElementById('btnReset');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const shotSelect = document.getElementById('shotSelect');
+  const speedSelect = document.getElementById('speedSelect');
+
+  const timeCursor = document.getElementById('timeCursor');
+  const cursorHead = document.getElementById('cursorHead');
+  const seqShapes = document.getElementById('seqShapes');
+  const seqTimingAnnotations = document.getElementById('seqTimingAnnotations');
+
+  const descNow = document.getElementById('descNow');
+  const descNext = document.getElementById('descNext');
+  const mathEq = document.getElementById('mathEq');
+  const mathDesc = document.getElementById('mathDesc');
+
+  const hudSeq = document.getElementById('hudSeq');
+  const hudEtl = document.getElementById('hudEtl');
+  const hudBw = document.getElementById('hudBw');
+  const hudDistort = document.getElementById('hudDistort');
+  const kspaceAcqCount = document.getElementById('kspaceAcqCount');
+
+  // Canvases
+  const kspaceCanvas = document.getElementById('kspaceCanvas');
+  const kCtx = kspaceCanvas.getContext('2d');
+  const spinCanvas = document.getElementById('spinCanvas');
+  const spinCtx = spinCanvas.getContext('2d');
+  const reconBadCanvas = document.getElementById('reconBadCanvas');
+  const rBadCtx = reconBadCanvas.getContext('2d');
+  const reconGoodCanvas = document.getElementById('reconGoodCanvas');
+  const rGoodCtx = reconGoodCanvas.getContext('2d');
+
+  // Time sequence bounds (ms virtual)
+  const T_MAX = 100.0;
+  let currentTime = 0.0;
+  let isPlaying = false;
+  let animId = null;
+  let playSpeed = 1.0;
+
+  // Shot mode: '4shot' or '1shot'
+  let shotMode = '4shot';
+
+  // Sequence Timing definitions (scaled to 0-100)
+  const EVENTS = [
+    { t: 0,   type: 'idle',          name: '待機・平衡状態' },
+    { t: 6,   type: 'rf90',          name: '90° 励起RFパルス' },
+    { t: 14,  type: 'slice_refocus', name: 'スライス再収束' },
+    { t: 20,  type: 'mpg1',          name: '第1 MPGパルス (拡散位相付加)' },
+    { t: 36,  type: 'rf180',         name: '180° 反転/Refocusingパルス' },
+    { t: 44,  type: 'mpg2',          name: '第2 MPGパルス (拡散再収束)' },
+    { t: 60,  type: 'prephase',      name: 'EPI プリフェーザー (Gx / Gy)' },
+    { t: 65,  type: 'epi_readout',   name: 'EPI 読取トレイン開始 (ADC ON)' },
+    { t: 95,  type: 'complete',      name: '1 shot 取得完了' }
+  ];
+
+  // SVG Base Geometry Constants
+  const SVG_X_START = 80;
+  const SVG_X_WIDTH = 800;
+  const TIME_TO_X = (t) => SVG_X_START + (t / T_MAX) * SVG_X_WIDTH;
+
+  // Draw Sequence Static Waves in SVG
+  function drawSequenceDiagram() {
+    seqShapes.innerHTML = '';
+    seqTimingAnnotations.innerHTML = '';
+
+    const is4Shot = (shotMode === '4shot');
+    const epiCycles = is4Shot ? 8 : 16;
+
+    // 1. RF Lane (Y = 40)
+    const x90 = TIME_TO_X(6), w90 = TIME_TO_X(10) - x90;
+    seqShapes.appendChild(createSincPulse(x90 + w90/2, 40, 22, '#f0883e', '90°'));
+
+    const x180 = TIME_TO_X(36), w180 = TIME_TO_X(40) - x180;
+    seqShapes.appendChild(createRectPulse(x180, 40, w180, 28, '#f0883e', '180°'));
+
+    // 2. Gz Lane (Y = 100)
+    seqShapes.appendChild(createTrap(TIME_TO_X(5), 100, TIME_TO_X(11)-TIME_TO_X(5), 20, '#bc8cff'));
+    seqShapes.appendChild(createTrap(TIME_TO_X(12), 100, TIME_TO_X(16)-TIME_TO_X(12), -15, '#bc8cff'));
+    seqShapes.appendChild(createTrap(TIME_TO_X(33), 100, TIME_TO_X(35)-TIME_TO_X(33), 18, '#bc8cff'));
+    seqShapes.appendChild(createTrap(TIME_TO_X(35.5), 100, TIME_TO_X(40.5)-TIME_TO_X(35.5), 20, '#bc8cff'));
+    seqShapes.appendChild(createTrap(TIME_TO_X(41), 100, TIME_TO_X(43)-TIME_TO_X(41), 18, '#bc8cff'));
+
+    // 3. MPG Lane (Y = 160)
+    const xMpg1 = TIME_TO_X(20), wMpg1 = TIME_TO_X(30) - xMpg1;
+    seqShapes.appendChild(createTrap(xMpg1, 160, wMpg1, 32, '#e3b341', 'MPG (δ)'));
+    const xMpg2 = TIME_TO_X(45), wMpg2 = TIME_TO_X(55) - xMpg2;
+    seqShapes.appendChild(createTrap(xMpg2, 160, wMpg2, 32, '#e3b341', 'MPG (δ)'));
+
+    // Timing Brackets for Diffusion (δ, Δ, TE)
+    addAnnotation(TIME_TO_X(20), 185, TIME_TO_X(30), 185, "δ (持続時間)");
+    addAnnotation(TIME_TO_X(25), 130, TIME_TO_X(50), 130, "Δ (印加間隔)");
+    addAnnotation(TIME_TO_X(8), 20, TIME_TO_X(75), 20, is4Shot ? "実効TE (短縮)" : "実効TE (長い)");
+
+    // 4. Gy Phase Lane (Y = 220)
+    seqShapes.appendChild(createTrap(TIME_TO_X(60), 220, TIME_TO_X(64)-TIME_TO_X(60), -20, '#39d353'));
+    const tEpiStart = 65, tEpiEnd = is4Shot ? 85 : 97;
+    const dt = (tEpiEnd - tEpiStart) / epiCycles;
+    for (let i = 0; i < epiCycles; i++) {
+      const bx = TIME_TO_X(tEpiStart + i * dt + dt * 0.85);
+      const bw = TIME_TO_X(tEpiStart + (i + 1) * dt) - bx;
+      const blipH = is4Shot ? 14 : 7;
+      seqShapes.appendChild(createTrap(bx, 220, bw, blipH, '#39d353'));
+    }
+
+    // 5. Gx Readout Lane (Y = 280)
+    seqShapes.appendChild(createTrap(TIME_TO_X(60), 280, TIME_TO_X(64)-TIME_TO_X(60), -18, '#58a6ff'));
+    for (let i = 0; i < epiCycles; i++) {
+      const rx = TIME_TO_X(tEpiStart + i * dt);
+      const rw = TIME_TO_X(tEpiStart + i * dt + dt * 0.85) - rx;
+      const polarity = (i % 2 === 0) ? 18 : -18;
+      seqShapes.appendChild(createTrap(rx, 280, rw, polarity, '#58a6ff'));
+    }
+
+    // 6. ADC & Echo Lane (Y = 340)
+    for (let i = 0; i < epiCycles; i++) {
+      const ax = TIME_TO_X(tEpiStart + i * dt + dt * 0.1);
+      const aw = TIME_TO_X(tEpiStart + i * dt + dt * 0.75) - ax;
+      seqShapes.appendChild(createRectPulse(ax, 340, aw, 12, '#f778ba'));
+      const echoH = 14 * Math.exp(-Math.pow((i - epiCycles/2.5) / 3, 2));
+      if (echoH > 2) {
+        seqShapes.appendChild(createEchoWave(ax + aw/2, 340, aw, echoH, '#f778ba'));
+      }
+    }
+  }
+
+  function createRectPulse(x, y, w, h, color, label) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x);
+    rect.setAttribute('y', y - h);
+    rect.setAttribute('width', w);
+    rect.setAttribute('height', h);
+    rect.setAttribute('fill', color);
+    rect.setAttribute('opacity', '0.85');
+    g.appendChild(rect);
+    if (label) {
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', x + w/2);
+      text.setAttribute('y', y - h - 3);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', color);
+      text.setAttribute('font-size', '10');
+      text.textContent = label;
+      g.appendChild(text);
+    }
+    return g;
+  }
+
+  function createTrap(x, y, w, h, color, label) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const ramp = Math.min(w * 0.25, 4);
+    const d = `M ${x} ${y} L ${x + ramp} ${y - h} L ${x + w - ramp} ${y - h} L ${x + w} ${y} Z`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', color);
+    path.setAttribute('fill-opacity', '0.45');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    g.appendChild(path);
+
+    if (label) {
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', x + w/2);
+      text.setAttribute('y', y - h - 4);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', color);
+      text.setAttribute('font-size', '10');
+      text.textContent = label;
+      g.appendChild(text);
+    }
+    return g;
+  }
+
+  function createSincPulse(cx, cy, h, color, label) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    let d = `M ${cx - 20} ${cy}`;
+    for (let px = -20; px <= 20; px += 2) {
+      const theta = (px / 5) * Math.PI;
+      const val = (theta === 0) ? 1 : Math.sin(theta) / theta;
+      const py = cy - val * h;
+      d += ` L ${cx + px} ${py}`;
+    }
+    d += ` L ${cx + 20} ${cy} Z`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', color);
+    path.setAttribute('fill-opacity', '0.6');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    g.appendChild(path);
+
+    if (label) {
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', cx);
+      text.setAttribute('y', cy - h - 3);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', color);
+      text.setAttribute('font-size', '10');
+      text.textContent = label;
+      g.appendChild(text);
+    }
+    return g;
+  }
+
+  function createEchoWave(cx, cy, w, h, color) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    let d = `M ${cx - w/2} ${cy}`;
+    for (let i = -w/2; i <= w/2; i += 2) {
+      const y = cy - Math.sin((i / (w/4)) * Math.PI * 2) * h * Math.exp(-Math.abs(i)/(w*0.3));
+      d += ` L ${cx + i} ${y}`;
+    }
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    return path;
+  }
+
+  function addAnnotation(x1, y1, x2, y2, text) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#8b949e');
+    line.setAttribute('stroke-width', '1');
+    g.appendChild(line);
+
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', (x1 + x2)/2);
+    txt.setAttribute('y', y1 - 4);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.textContent = text;
+    g.appendChild(txt);
+    seqTimingAnnotations.appendChild(g);
+  }
+
+  function updateSimulation() {
+    timeSlider.value = currentTime;
+    timeVal.textContent = currentTime.toFixed(1) + 'ms';
+
+    const cursorX = TIME_TO_X(currentTime);
+    timeCursor.setAttribute('x1', cursorX);
+    timeCursor.setAttribute('x2', cursorX);
+    cursorHead.setAttribute('cx', cursorX);
+
+    updateExplanations(currentTime);
+    renderKSpace(currentTime);
+    renderSpinPhases(currentTime);
+  }
+
+  // Pure HTML/Unicode Math Engine Updates
+  function updateExplanations(t) {
+    const is4Shot = (shotMode === '4shot');
+
+    if (t < 5) {
+      descNow.textContent = "待機・熱平衡状態（Mz = M0）。すべての水分子のスピンは静磁場 B0（3.0T）方向に揃っています。";
+      descNext.textContent = "スライス選択傾斜磁場 Gz とともに 90° RF励起パルスが印加され、横磁化が形成されます。";
+      mathEq.innerHTML = `
+        <i>M</i><sub>z</sub>(<i>t</i>) = <i>M</i><sub>0</sub> (1 &minus; <i>e</i><sup>&minus;<i>t</i> / <i>T</i><sub>1</sub></sup>)
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> 励起前は縦磁化のみが存在し、横磁化はゼロです。ここからスピンの壮大な旅が始まります。";
+    } else if (t >= 5 && t < 12) {
+      descNow.textContent = "【90° RF 励起】Gz印加中に共鳴周波数パルスを照射し、目的のスライス断面のスピンのみを90°倒して横磁化を生成します。";
+      descNext.textContent = "スライス選択によって生じた断面内の位相ズレを打ち消すため、逆極性のリフェーズ勾配が印加されます。";
+      mathEq.innerHTML = `
+        <i>B</i><sub>1</sub>(<i>t</i>) &nbsp;&rArr;&nbsp; &theta; = &gamma; 
+        <span class="math-integral">&int;</span>
+        <i>B</i><sub>1</sub>(&tau;) <i>d&tau;</i> = 90&deg;
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> 特定の周波数帯域の陽子だけをきれいに横平面（XY平面）にフリップさせます。";
+    } else if (t >= 12 && t < 20) {
+      descNow.textContent = "【スライス再収束】負のGzパルスによりスライス方向の位相を均一にリセットします。";
+      descNext.textContent = "DWIの核心である強大な第1 MPG（運動感受性傾斜磁場）が印加されます。";
+      mathEq.innerHTML = `
+        <span class="math-integral">&int;</span><i>G</i><sub>z, slice</sub> <i>d&tau;</i> + 
+        <span class="math-integral">&int;</span><i>G</i><sub>z, rephase</sub> <i>d&tau;</i> = 0
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> スライス厚内部で生じたスピンのバラツキをゼロに戻し、最大の信号を得る準備を整えます。";
+    } else if (t >= 20 && t < 32) {
+      descNow.textContent = "【第1 MPG印加 (δ)】巨大な傾斜磁場により、位置に応じた強い位相勾配（スピンの巻き上げ）を強制的に付加します。";
+      descNext.textContent = "180° Refocusingパルスが印加され、スピンの位相極性が鏡像反転します。";
+      mathEq.innerHTML = `
+        &phi;<sub>1</sub> = &gamma; 
+        <span class="math-integral">&int;</span>
+        <span class="math-limits"><span>&delta;</span><span>0</span></span>
+        <i>G</i><sub>diff</sub> &middot; <i>x</i>(&tau;) <i>d&tau;</i>
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> スピンの位置情報を「位相の回転角」として記録します。ここで動いたスピンと止まっているスピンに運命の差が生まれます。";
+    } else if (t >= 32 && t < 43) {
+      descNow.textContent = "【180° 反転パルス】クラッシャー勾配に挟まれた180°パルスにより、すべての横磁化の位相が反転します（進んでいた位相が遅れに化ける）。";
+      descNext.textContent = "反転したスピンに対し、まったく同じ強さの第2 MPGパルスが印加されます。";
+      mathEq.innerHTML = `
+        &phi; &nbsp;&rarr;&nbsp; &minus;&phi; &nbsp;&nbsp;<span style="color:var(--text-muted);font-size:0.85em;">(Phase Conjugation: 位相反転)</span>
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> 進んでいたスピンを後方に、遅れていたスピンを前方にひっくり返します。静磁場不均一（ΔB0）を完全に相殺するスピンエコーの肝です。";
+    } else if (t >= 43 && t < 57) {
+      descNow.textContent = "【第2 MPG印加】静止スピンは第1MPGで進んだ（遅れた）分が完全に巻き戻り、位相差がゼロ（再収束）に戻ります。しかし「微小移動・拡散したスピン」は元の位置にいないため位相が戻りきらず、信号が低下します。";
+      descNext.textContent = "周波数・位相エンコードのプリフェーザーが入り、k空間の端へと一気に移動します。";
+      mathEq.innerHTML = `
+        &Delta;&phi; = &gamma; &delta; <b>G</b> &middot; <b>v</b> &ne; 0 &nbsp;&rArr;&nbsp; 
+        <i>S</i> = <i>S</i><sub>0</sub> <i>e</i><sup>&minus;<i>b</i>&middot;<i>D</i></sup>
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> 動いた分子だけがペナルティとして位相が揃わず、消灯（減衰）します。また、脳の拍動によってショット毎に異なる巨大な位相ムラが乗ります。";
+    } else if (t >= 57 && t < 65) {
+      descNow.textContent = "【EPI プリフェージング】GxとGyを同時に負に印加し、k空間の読み始め座標 (-Kx_max, -Ky_start) へジャンプします。";
+      descNext.textContent = "高速リード反転傾斜磁場と位相ブリップによる一気呵成のk空間読み取り（ADCサンプリング）が始まります。";
+      mathEq.innerHTML = `
+        <i>k</i><sub>x</sub>(0) = &minus;
+        <span class="math-fraction">
+          <span class="math-num">&gamma;</span>
+          <span class="math-den">2&pi;</span>
+        </span>
+        <span class="math-integral">&int;</span><i>G</i><sub>x, pre</sub> <i>d&tau;</i>, &nbsp;&nbsp;
+        <i>k</i><sub>y</sub>(0) = &minus;
+        <span class="math-fraction">
+          <span class="math-num">&gamma;</span>
+          <span class="math-den">2&pi;</span>
+        </span>
+        <span class="math-integral">&int;</span><i>G</i><sub>y, pre</sub> <i>d&tau;</i>
+      `;
+      mathDesc.innerHTML = "<strong>【お気持ち】</strong> 測定を開始するk空間の左下隅へ一気に移動するステップです。";
+    } else {
+      if (is4Shot) {
+        descNow.textContent = "【4-Shot EPI 読取中】1ショットでk空間の1/4（4行おき）を間引きサンプリング。エコートレイン長（ETL）がss-EPIの1/4と極めて短いため、T2*減衰ボケと3T局所磁化率による歪みが激減します！";
+        descNext.textContent = "全4ショット完了後、MUSEアルゴリズムにより各ショットの拍動位相ズレを展開・補正して1枚の高精細DWIに合成します。";
+        mathEq.innerHTML = `
+          Distortion &prop; 
+          <span class="math-fraction">
+            <span class="math-num">&Delta;<i>B</i><sub>0</sub></span>
+            <span class="math-den">BW<sub>eff, pe</sub></span>
+          </span>
+          &nbsp;&rarr;&nbsp; <sup>1</sup>&frasl;<sub>4</sub> に抑制
+        `;
+        mathDesc.innerHTML = "<strong>【お気持ち】</strong> 短時間でサッと読み切るため、3Tの磁場ムラに捕まって歪む隙を与えません。ショット間の位相差はMUSEの数学力で解決します。";
+      } else {
+        descNow.textContent = "【シングルショットEPI (ss-EPI) 読取中】1回の励起で全32本のk空間行を走査します。エコートレイン長（ETL）が極端に長いため、位相エンコード方向の実効バンド幅が極度に狭く、3Tの静磁場不均一で画像が激しく歪みます。";
+        descNext.textContent = "エコー後半では横磁化がT2*減衰しきってしまい、輪郭のボケた画像になります。";
+        mathEq.innerHTML = `
+          BW<sub>eff, pe</sub> = 
+          <span class="math-fraction">
+            <span class="math-num">1</span>
+            <span class="math-den">ESP &times; <i>N</i><sub>y</sub></span>
+          </span>
+          &nbsp;&nbsp;<span style="color:var(--error-color);font-size:0.85em;">(極小 &rarr; 3Tで歪み倍増)</span>
+        `;
+        mathDesc.innerHTML = "<strong>【お気持ち】</strong> 1回で全部読もうと欲張るあまり、後半はヘトヘト（信号減衰）になり、磁場の波に流されてグニャリと歪みます。";
+      }
+    }
+  }
+
+  // Render k-space trajectory dynamically
+  function renderKSpace(t) {
+    kCtx.fillStyle = '#05080c';
+    kCtx.fillRect(0, 0, 240, 240);
+
+    kCtx.strokeStyle = '#21262d';
+    kCtx.lineWidth = 1;
+    kCtx.beginPath();
+    kCtx.moveTo(120, 0); kCtx.lineTo(120, 240);
+    kCtx.moveTo(0, 120); kCtx.lineTo(240, 120);
+    kCtx.stroke();
+
+    kCtx.fillStyle = '#484f58';
+    kCtx.font = '10px monospace';
+    kCtx.fillText('kx', 225, 115);
+    kCtx.fillText('ky', 125, 12);
+
+    const is4Shot = (shotMode === '4shot');
+    const totalLines = 32;
+    const linesPerShot = is4Shot ? 8 : 32;
+    const tEpiStart = 65, tEpiEnd = is4Shot ? 85 : 97;
+
+    kCtx.strokeStyle = '#161b22';
+    for (let i = 0; i < totalLines; i++) {
+      const y = 20 + (i / (totalLines - 1)) * 200;
+      kCtx.beginPath();
+      kCtx.moveTo(20, y);
+      kCtx.lineTo(220, y);
+      kCtx.stroke();
+    }
+
+    if (t < 60) {
+      kCtx.fillStyle = '#58a6ff';
+      kCtx.beginPath();
+      kCtx.arc(120, 120, 4, 0, Math.PI * 2);
+      kCtx.fill();
+      kspaceAcqCount.textContent = "0";
+      return;
+    }
+
+    if (t >= 60 && t < tEpiStart) {
+      const ratio = (t - 60) / (tEpiStart - 60);
+      const curKx = 120 - ratio * 100;
+      const curKy = 120 + ratio * 100;
+      kCtx.strokeStyle = '#388bfd';
+      kCtx.lineWidth = 1.5;
+      kCtx.beginPath();
+      kCtx.moveTo(120, 120);
+      kCtx.lineTo(curKx, curKy);
+      kCtx.stroke();
+      return;
+    }
+
+    const epiProgress = Math.min(1.0, Math.max(0, (t - tEpiStart) / (tEpiEnd - tEpiStart)));
+    const currentLineIndex = Math.floor(epiProgress * linesPerShot);
+    kspaceAcqCount.textContent = currentLineIndex;
+
+    kCtx.lineWidth = 2;
+    for (let i = 0; i <= currentLineIndex && i < linesPerShot; i++) {
+      const kyStep = is4Shot ? (i * 4 + 1) : i;
+      const y = 220 - (kyStep / (totalLines - 1)) * 200;
+
+      const isEven = (i % 2 === 0);
+      const isCurrent = (i === currentLineIndex);
+
+      kCtx.strokeStyle = is4Shot ? '#39d353' : '#58a6ff';
+      kCtx.beginPath();
+      if (isCurrent) {
+        const subRatio = (epiProgress * linesPerShot) - i;
+        const xStart = isEven ? 20 : 220;
+        const xEnd = isEven ? (20 + subRatio * 200) : (220 - subRatio * 200);
+        kCtx.moveTo(xStart, y);
+        kCtx.lineTo(xEnd, y);
+        kCtx.stroke();
+
+        kCtx.fillStyle = '#ff7b72';
+        kCtx.beginPath();
+        kCtx.arc(xEnd, y, 4, 0, Math.PI * 2);
+        kCtx.fill();
+      } else {
+        kCtx.moveTo(20, y);
+        kCtx.lineTo(220, y);
+        kCtx.stroke();
+      }
+    }
+
+    if (is4Shot) {
+      kCtx.fillStyle = '#8b949e';
+      kCtx.font = '9px sans-serif';
+      kCtx.fillText('Shot 1 (間引き取得 R=4)', 25, 235);
+    }
+  }
+
+  // Render microscopic spin phases
+  function renderSpinPhases(t) {
+    spinCtx.fillStyle = '#05080c';
+    spinCtx.fillRect(0, 0, 240, 240);
+
+    const cx = 120, cy = 120, r = 85;
+
+    spinCtx.strokeStyle = '#30363d';
+    spinCtx.lineWidth = 1;
+    spinCtx.beginPath();
+    spinCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    spinCtx.stroke();
+
+    let phiStationary = 0;
+    let phiDiffusing1 = 0;
+    let phiDiffusing2 = 0;
+
+    if (t >= 6 && t < 20) {
+      phiStationary = 0;
+      phiDiffusing1 = 0;
+      phiDiffusing2 = 0;
+    } else if (t >= 20 && t < 36) {
+      const dt = t - 20;
+      phiStationary = dt * 0.15;
+      phiDiffusing1 = dt * 0.22;
+      phiDiffusing2 = dt * 0.08;
+    } else if (t >= 36 && t < 44) {
+      const p1_end = 16 * 0.15;
+      const d1_end = 16 * 0.22;
+      const d2_end = 16 * 0.08;
+      phiStationary = -p1_end;
+      phiDiffusing1 = -d1_end;
+      phiDiffusing2 = -d2_end;
+    } else if (t >= 44 && t < 60) {
+      const dt = t - 44;
+      const p1_end = 16 * 0.15;
+      const d1_end = 16 * 0.22;
+      const d2_end = 16 * 0.08;
+      phiStationary = -p1_end + dt * 0.15;
+      phiDiffusing1 = -d1_end + dt * 0.10;
+      phiDiffusing2 = -d2_end + dt * 0.20;
+    } else if (t >= 60) {
+      phiStationary = 0;
+      phiDiffusing1 = 1.3;
+      phiDiffusing2 = -1.1;
+    }
+
+    drawVector(spinCtx, cx, cy, phiStationary, r * 0.9, '#e3b341', '静止スピン');
+    if (t >= 20) {
+      drawVector(spinCtx, cx, cy, phiDiffusing1, r * 0.75, '#ff7b72', '拍動・拡散A');
+      drawVector(spinCtx, cx, cy, phiDiffusing2, r * 0.75, '#79c0ff', '拍動・拡散B');
+    }
+
+    if (t >= 6) {
+      const vSx = Math.cos(phiStationary) + 0.6 * Math.cos(phiDiffusing1) + 0.6 * Math.cos(phiDiffusing2);
+      const vSy = Math.sin(phiStationary) + 0.6 * Math.sin(phiDiffusing1) + 0.6 * Math.sin(phiDiffusing2);
+      const netMag = Math.sqrt(vSx * vSx + vSy * vSy) / 2.2;
+
+      spinCtx.fillStyle = '#f0f6fc';
+      spinCtx.font = '10px monospace';
+      spinCtx.fillText(`正味横磁化 |Mxy|: ${(netMag * 100).toFixed(0)}%`, 15, 230);
+    }
+  }
+
+  function drawVector(ctx, cx, cy, angle, length, color, label) {
+    const ex = cx + Math.cos(angle) * length;
+    const ey = cy + Math.sin(angle) * length;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw Comparison Phantoms
+  function renderReconArtifactComparisons() {
+    // Bad reconstruction: Multi-shot without MUSE
+    rBadCtx.fillStyle = '#000';
+    rBadCtx.fillRect(0, 0, 110, 110);
+    rBadCtx.strokeStyle = 'rgba(255, 123, 114, 0.4)';
+    rBadCtx.lineWidth = 2;
+    for (let g = -25; g <= 25; g += 15) {
+      rBadCtx.beginPath();
+      rBadCtx.ellipse(55, 55 + g, 32, 22, 0, 0, Math.PI * 2);
+      rBadCtx.stroke();
+    }
+    rBadCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    for (let y = 10; y < 100; y += 8) {
+      rBadCtx.fillRect(15, y, 80, 2);
+    }
+
+    // MUSE reconstructed image
+    rGoodCtx.fillStyle = '#000';
+    rGoodCtx.fillRect(0, 0, 110, 110);
+    rGoodCtx.strokeStyle = '#58a6ff';
+    rGoodCtx.lineWidth = 2;
+    rGoodCtx.beginPath();
+    rGoodCtx.ellipse(55, 55, 34, 42, 0, 0, Math.PI * 2);
+    rGoodCtx.stroke();
+
+    rGoodCtx.fillStyle = '#161b22';
+    rGoodCtx.beginPath();
+    rGoodCtx.ellipse(55, 52, 10, 16, 0, 0, Math.PI * 2);
+    rGoodCtx.fill();
+
+    rGoodCtx.fillStyle = '#ffff00';
+    rGoodCtx.beginPath();
+    rGoodCtx.arc(42, 70, 6, 0, Math.PI * 2);
+    rGoodCtx.fill();
+
+    rGoodCtx.fillStyle = '#39d353';
+    rGoodCtx.font = '9px sans-serif';
+    rGoodCtx.fillText('高精細・病変明瞭', 18, 105);
+  }
+
+  // Animation Loop
+  function step(timestamp) {
+    if (!isPlaying) return;
+    currentTime += 0.25 * playSpeed;
+    if (currentTime > T_MAX) {
+      currentTime = 0;
+    }
+    updateSimulation();
+    animId = requestAnimationFrame(step);
+  }
+
+  function play() {
+    if (isPlaying) return;
+    isPlaying = true;
+    btnPlay.textContent = '⏸ 一時停止';
+    btnPlay.style.background = '#d29922';
+    animId = requestAnimationFrame(step);
+  }
+
+  function pause() {
+    isPlaying = false;
+    btnPlay.textContent = '▶ 再生';
+    btnPlay.style.background = '#238636';
+    if (animId) cancelAnimationFrame(animId);
+  }
+
+  // Event Listeners
+  btnPlay.addEventListener('click', () => {
+    if (isPlaying) pause(); else play();
+  });
+
+  btnReset.addEventListener('click', () => {
+    pause();
+    currentTime = 0;
+    updateSimulation();
+  });
+
+  timeSlider.addEventListener('input', (e) => {
+    pause();
+    currentTime = parseFloat(e.target.value);
+    updateSimulation();
+  });
+
+  btnNext.addEventListener('click', () => {
+    pause();
+    const nextEv = EVENTS.find(ev => ev.t > currentTime + 0.5);
+    currentTime = nextEv ? nextEv.t : 0;
+    updateSimulation();
+  });
+
+  btnPrev.addEventListener('click', () => {
+    pause();
+    const prevEv = [...EVENTS].reverse().find(ev => ev.t < currentTime - 0.5);
+    currentTime = prevEv ? prevEv.t : 0;
+    updateSimulation();
+  });
+
+  shotSelect.addEventListener('change', (e) => {
+    shotMode = e.target.value;
+    if (shotMode === '4shot') {
+      hudSeq.textContent = "ms-DWI (4-Shot)";
+      hudEtl.textContent = "8 lines (1/4)";
+      hudBw.textContent = "4x 広帯域";
+      hudDistort.textContent = "極小 (約25%)";
+      hudDistort.style.color = "#39d353";
+    } else {
+      hudSeq.textContent = "ss-DWI (1-Shot)";
+      hudEtl.textContent = "32 lines (全行)";
+      hudBw.textContent = "超狭帯域 (低速)";
+      hudDistort.textContent = "深刻な歪み (100%)";
+      hudDistort.style.color = "#ff7b72";
+    }
+    drawSequenceDiagram();
+    updateSimulation();
+  });
+
+  speedSelect.addEventListener('change', (e) => {
+    playSpeed = parseFloat(e.target.value);
+  });
+
+  // Initialization
+  drawSequenceDiagram();
+  renderReconArtifactComparisons();
+  updateSimulation();
+
+})();
+</script>
+
+</body>
+</html>

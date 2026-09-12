@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>復習教材：Dixon/IDEAL法とCHESS法の静磁場不均一耐性メカニズム</title>
+  <style>
+    /* ==========================================================================
+       1. 基本設定・タイポグラフィ（外部フォント非依存）
+       ========================================================================== */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-inner: #0f172a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-accent: #38bdf8;
+      --border-color: #334155;
+      
+      --color-correct: #10b981;
+      --color-correct-bg: rgba(16, 185, 129, 0.12);
+      --color-wrong: #f43f5e;
+      --color-wrong-bg: rgba(244, 63, 94, 0.12);
+      --color-warn: #f59e0b;
+      --color-warn-bg: rgba(245, 158, 11, 0.12);
+      --color-info: #0ea5e9;
+      --color-info-bg: rgba(14, 165, 233, 0.12);
+      --color-purple: #a855f7;
+      --color-purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --shadow-main: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ==========================================================================
+       2. レイアウト＆カードモジュール
+       ========================================================================== */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-main);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-b: 1px solid var(--border-color);
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-primary { background: var(--color-info-bg); color: var(--color-info); border: 1px solid var(--color-info); }
+    .badge-warn { background: var(--color-warn-bg); color: var(--color-warn); border: 1px solid var(--color-warn); }
+    .badge-correct { background: var(--color-correct-bg); color: var(--color-correct); border: 1px solid var(--color-correct); }
+
+    /* ==========================================================================
+       3. 採点サマリーカード（仕様8）
+       ========================================================================== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .score-box {
+      background: var(--bg-card-inner);
+      border: 2px solid var(--color-warn);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .score-value {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: var(--color-warn);
+      line-height: 1.1;
+      margin: 6px 0;
+    }
+
+    .score-verdict {
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--color-warn-bg);
+      color: var(--color-warn);
+    }
+
+    .summary-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg-card-inner);
+      padding: 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      font-size: 0.9rem;
+      align-items: baseline;
+    }
+
+    .detail-key {
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-val {
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       4. 数式表示（MathML & スタイル定義）
+       ========================================================================== */
+    .formula-container {
+      background: var(--bg-card-inner);
+      border-left: 4px solid var(--color-info);
+      padding: 18px 24px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    math {
+      font-family: "Cambria Math", "Latin Modern Math", STIXGeneral, serif;
+      font-size: 1.15rem;
+      color: #e0f2fe;
+    }
+
+    .formula-meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 14px;
+    }
+
+    .formula-meta-table th, .formula-meta-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .formula-meta-table th {
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text-accent);
+      font-weight: 600;
+      width: 22%;
+    }
+
+    .formula-meta-table td {
+      background: var(--bg-card);
+    }
+
+    /* ==========================================================================
+       5. 構造化比較表・解説カード
+       ========================================================================== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    .data-table th, .data-table td {
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: rgba(30, 41, 59, 0.95);
+      color: var(--text-accent);
+      font-weight: 700;
+    }
+
+    .data-table tr:nth-child(even) td {
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .highlight-box {
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      font-size: 0.92rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .box-info { background: var(--color-info-bg); border: 1px solid var(--color-info); color: #bae6fd; }
+    .box-warn { background: var(--color-warn-bg); border: 1px solid var(--color-warn); color: #fde68a; }
+    .box-correct { background: var(--color-correct-bg); border: 1px solid var(--color-correct); color: #a7f3d0; }
+    .box-wrong { background: var(--color-wrong-bg); border: 1px solid var(--color-wrong); color: #fecdd3; }
+
+    /* ==========================================================================
+       6. インラインSVG図解＆アニメーションシミュレーター
+       ========================================================================== */
+    .figure-wrapper {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .figure-caption {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .sim-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      background: var(--bg-card);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .sim-btn {
+      background: #334155;
+      color: #fff;
+      border: 1px solid #475569;
+      border-radius: var(--radius-sm);
+      padding: 7px 15px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease;
+      user-select: none;
+    }
+
+    .sim-btn:hover { background: #475569; }
+    .sim-btn:active { transform: scale(0.97); }
+    .sim-btn.primary { background: #0284c7; border-color: #38bdf8; }
+    .sim-btn.primary:hover { background: #0369a1; }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .slider-group input[type="range"] {
+      accent-color: var(--color-info);
+      cursor: pointer;
+      width: 130px;
+    }
+
+    .sim-readout {
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--text-accent);
+      min-width: 90px;
+    }
+
+    /* ==========================================================================
+       7. 印刷スタイル（@media print）（仕様9）
+       ========================================================================== */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 100% !important;
+        gap: 16px;
+      }
+
+      .card {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #999999 !important;
+        box-shadow: none !important;
+        padding: 16px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .card-header, .detail-row, .summary-details, .score-box {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #cccccc !important;
+      }
+
+      .score-value {
+        color: #b45309 !important;
+      }
+
+      .sim-controls {
+        display: none !important;
+      }
+
+      .figure-wrapper {
+        background: #fafafa !important;
+        border: 1px solid #cccccc !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .figure-wrapper svg text {
+        fill: #000000 !important;
+      }
+
+      .formula-container {
+        background: #f8fafc !important;
+        border-left: 4px solid #0284c7 !important;
+        color: #000000 !important;
+      }
+
+      math {
+        color: #000000 !important;
+      }
+
+      .data-table th, .formula-meta-table th {
+        background: #f1f5f9 !important;
+        color: #000000 !important;
+      }
+
+      .data-table td, .formula-meta-table td {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+    }
+
+    /* モバイルレスポンシブ */
+    @media (max-width: 768px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .score-box {
+        padding: 14px;
+      }
+      .detail-row {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+      .card {
+        padding: 18px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========================================================================
+       1. 採点サマリーカード（仕様8準拠）
+       ======================================================================== -->
+  <section class="card" aria-label="採点サマリー">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        採点・評価サマリー
+      </div>
+      <span class="badge badge-warn">Review & Remediation</span>
+    </div>
+
+    <div class="summary-grid">
+      <!-- 得点・判定 -->
+      <div class="score-box">
+        <span class="score-label">獲得得点</span>
+        <div class="score-value">62<span style="font-size: 1.5rem; font-weight: 600;">/100</span></div>
+        <div class="score-verdict">部分正解・要復習</div>
+      </div>
+
+      <!-- 評価詳細テーブル -->
+      <div class="summary-details">
+        <div class="detail-row">
+          <div class="detail-key">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            出題課題
+          </div>
+          <div class="detail-val" style="font-weight: 600;">
+            Q010 応用 脂肪抑制：Dixon/IDEALがCHESSよりB0不均一に強い理由を「複数TEの位相情報を使う」点を中心に説明せよ。
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-key">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ユーザー解答
+          </div>
+          <div class="detail-val" style="color: #cbd5e1; font-style: italic;">
+            「Dixonは複数TE情報を使う。1.5Tの場合、およそ2.25msで半周期逆位相、4.5msで同位相を繰り返します。そのように、逆位相、同位相などの条件を使って、水と、脂肪の条件を取ることによって画像化するので、静磁場不均一に強い。」
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-key" style="color: var(--color-correct);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            理解できた点
+          </div>
+          <div class="detail-val">
+            1.5Tにおける水・脂肪の位相周期（逆位相 約2.25 ms、同位相 約4.5 ms）を正確に記憶し、複数TEを用いて水と脂肪を分離する基本概念を記述できています。
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-key" style="color: var(--color-wrong);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            最大の修正点
+          </div>
+          <div class="detail-val">
+            <strong>「なぜ複数TEを使うとB0不均一に強くなるのか？」という核心（フィールドマップの推定と補正）が完全に抜け落ちています。</strong>単に逆位相・同位相を加減算するだけではB0不均一による位相ズレに負けて水と脂肪が反転（Swap）してしまいます。
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-key" style="color: var(--color-warn);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            根本的誤概念
+          </div>
+          <div class="detail-val">
+            「同位相と逆位相の画像さえ撮れば自動的に静磁場不均一に強くなる」という誤解。3点以上のエコー位相情報から<strong>「局所静磁場不均一マップ（B0フィールドマップ / 位相誤差）」を連立方程式として解き、補正演算を行って初めて不均一耐性が成立</strong>します。
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="detail-key">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            学習優先度
+          </div>
+          <div class="detail-val">
+            <span class="badge badge-primary">優先度：高</span>（MRI信号方程式、複素数平面における位相回転、IDEALの最小二乗法アルゴリズムの理解）
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       2. 正答模範解説と原理の比較カード
+       ======================================================================== -->
+  <section class="card" aria-label="正解の導出と原理の比較">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        模範解答と原理の根本比較
+      </div>
+      <span class="badge badge-primary">Core Physics</span>
+    </div>
+
+    <div class="highlight-box box-correct">
+      <strong style="font-size: 1rem;">模範解答（合格基準）</strong>
+      CHESSは励起前に「周波数選択パルス」を印加するため、局所磁場不均一（ΔB0）により脂肪の共鳴周波数がシフトすると脂肪が外れて抑制不良となったり、水が誤って抑制（逆説的水飽和）されます。
+      これに対しDixon/IDEAL法は、周波数選択ではなく通常励起を行い、水と脂肪の化学シフト差（Δf）に起因する位相差と、<strong>局所静磁場不均一（ΔB0）に起因する位相誤差</strong>の双方が含まれる複数TE（通常3エコー以上）の複素信号を取得します。
+      未知数である「水信号」「脂肪信号」に加えて<strong>「局所位相誤差（B0フィールドマップ）」を変数とする連立方程式を空間的に解き、磁場不均一成分を数理的に除去・補正して純粋な水と脂肪を分離する</strong>ため、高度なB0不均一下でも極めて均一な水画像が得られます。
+    </div>
+
+    <!-- 構造化テーブル -->
+    <table class="data-table" aria-label="CHESS法とDixon/IDEAL法の比較表">
+      <thead>
+        <tr>
+          <th>比較項目</th>
+          <th>周波数選択法（CHESS / Fat-Sat）</th>
+          <th>多点位相法（Dixon / IDEAL）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>分離の基本原理</strong></td>
+          <td>脂肪の共鳴周波数のみを狙った90°飽和パルス＋ディフェーズ</td>
+          <td>通常励起後、水・脂肪のケミカルシフト位相差＋B0位相誤差を多点収集</td>
+        </tr>
+        <tr>
+          <td><strong>B0不均一時の挙動</strong></td>
+          <td>周波数ピークがずれると<strong>脂肪が抜け、水が誤って飽和</strong>される</td>
+          <td>複数エコーから<strong>局所B0不均一マップを逆算・補正</strong>するため均一</td>
+        </tr>
+        <tr>
+          <td><strong>使用する信号情報</strong></td>
+          <td>実数振幅（マグニチュード）情報のみ</td>
+          <td><strong>複素数情報（マグニチュード ＋ 位相 Phase）</strong></td>
+        </tr>
+        <tr>
+          <td><strong>得られる画像</strong></td>
+          <td>脂肪抑制画像 1種類のみ</td>
+          <td><strong>Water、Fat、In-Phase、Out-of-Phase</strong> の4コントラスト</td>
+        </tr>
+        <tr>
+          <td><strong>主な臨床応用部位</strong></td>
+          <td>頭部、均一な体幹部中心</td>
+          <td>頸部、腕・手足、脊椎固定金属近傍、広範囲FOV</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ========================================================================
+       3. 数式徹底解説カード（仕様4準拠：MathML）
+       ======================================================================== -->
+  <section class="card" aria-label="数式による物理的メカニズム">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+        数式で解き明かす位相分離のメカニズム
+      </div>
+      <span class="badge badge-primary">Mathematical Formulation</span>
+    </div>
+
+    <p style="font-size: 0.92rem; color: var(--text-muted);">
+      第n番目のエコー時間 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>t</mi><mi>n</mi></msub></math> において、1つのボクセルから受信される複素MR信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>S</mi><mo stretchy="false">(</mo><msub><mi>t</mi><mi>n</mi></msub><mo stretchy="false">)</mo></math> は以下の信号方程式で記述されます：
+    </p>
+
+    <!-- 数式表示（MathML） -->
+    <div class="formula-container">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mi>S</mi>
+        <mo stretchy="false">(</mo>
+        <msub><mi>t</mi><mi>n</mi></msub>
+        <mo stretchy="false">)</mo>
+        <mo>=</mo>
+        <mrow>
+          <mo>[</mo>
+          <msub><mi>S</mi><mi>w</mi></msub>
+          <mo>+</mo>
+          <msub><mi>S</mi><mi>f</mi></msub>
+          <mo>&#x22C5;</mo>
+          <msup>
+            <mi>e</mi>
+            <mrow>
+              <mi>i</mi>
+              <mn>2</mn>
+              <mi>&#x03C0;</mi>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub>
+              <msub><mi>t</mi><mi>n</mi></msub>
+            </mrow>
+          </msup>
+          <mo>]</mo>
+        </mrow>
+        <mo>&#x22C5;</mo>
+        <msup>
+          <mi>e</mi>
+          <mrow>
+            <mi>i</mi>
+            <mrow>
+              <mo>(</mo>
+              <mn>2</mn>
+              <mi>&#x03C0;</mi>
+              <mi>&#x03B3;</mi>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <msub><mi>B</mi><mn>0</mn></msub>
+              <msub><mi>t</mi><mi>n</mi></msub>
+              <mo>+</mo>
+              <msub><mi>&#x03C6;</mi><mn>0</mn></msub>
+              <mo>)</mo>
+            </mrow>
+          </mrow>
+        </msup>
+      </math>
+    </div>
+
+    <!-- 数式解説テーブル（仕様4必須要件） -->
+    <table class="formula-meta-table" aria-label="数式記号と物理パラメータの解説">
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>内容・定義</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>各記号の定義</th>
+          <td>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>w</mi></msub></math>: 水の横磁化（実数振幅）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>f</mi></msub></math>: 脂肪の横磁化（実数振幅）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x0394;</mi><msub><mi>f</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub></math>: 水と脂肪の化学シフト共鳴周波数差（約 3.4 ppm。1.5Tで約217〜220 Hz、3.0Tで約435〜440 Hz）<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x0394;</mi><msub><mi>B</mi><mn>0</mn></msub></math>: 局所静磁場不均一量 [Tesla]<br>
+            <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>&#x03C6;</mi><mn>0</mn></msub></math>: 受信コイルやハードウェアに起因する初期位相オフセット [rad]
+          </td>
+        </tr>
+        <tr>
+          <th>式の物理的意味</th>
+          <td>
+            左括弧内は<strong>「水と脂肪のケミカルシフトによる相対的な位相回転」</strong>を表し、右の指数項は<strong>「静磁場不均一（ΔB0）によって水と脂肪の双方に一律に加わる好ましからざる位相誤差回転」</strong>を表します。
+          </td>
+        </tr>
+        <tr>
+          <th>比例・反比例関係</th>
+          <td>
+            位相回転角 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03B8;</mi><mo>=</mo><mn>2</mn><mi>&#x03C0;</mi><mi mathvariant="normal">&#x0394;</mi><mi>f</mi><mo>&#x22C5;</mo><mi>t</mi></math> は、磁場強度 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>B</mi><mn>0</mn></msub></math> およびエコー時間 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>t</mi></math> に正比例します。したがって高磁場ほど同一位相差に達する時間が短縮されます。
+          </td>
+        </tr>
+        <tr>
+          <th>なぜ2点Dixonでは不十分で、3点（IDEAL）が必要なのか？</th>
+          <td>
+            未知数は <strong>①水振幅 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>w</mi></msub></math>、②脂肪振幅 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mi>f</mi></msub></math>、③不均一による局所位相誤差 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03C8;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mn>2</mn><mi>&#x03C0;</mi><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>B</mi><mn>0</mn></msub><mi>t</mi></math></strong> の3つです。
+            2つのTE（同位相・逆位相）だけでは未知数3つに対して方程式が2本となり、局所磁場が狂っていると水と脂肪が逆転（Water-Fat Swap）します。<strong>3点以上のエコー（複素信号）を取得して初めて、局所B0不均一を独立して解く（フィールドマップを作成する）ことが可能</strong>になります。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ========================================================================
+       4. インラインSVGによる図解（仕様5準拠）
+       ======================================================================== -->
+  <section class="card" aria-label="現象のグラフィック図解">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        機序の図解：CHESSの破綻 vs Dixonの位相補正
+      </div>
+      <span class="badge badge-primary">Visual Schematic</span>
+    </div>
+
+    <!-- SVG図解：完全オフライン・Retina鮮明インラインSVG -->
+    <div class="figure-wrapper">
+      <svg width="100%" height="280" viewBox="0 0 800 280" style="max-width: 800px;" aria-label="CHESS法とDixon法の原理比較図">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/>
+          </marker>
+          <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#f43f5e"/>
+          </marker>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981"/>
+          </marker>
+        </defs>
+
+        <!-- 左側：CHESSの失敗 -->
+        <g transform="translate(20, 10)">
+          <rect x="0" y="0" width="360" height="255" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+          <text x="180" y="24" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="bold">【CHESS法】周波数軸での不均一による失敗</text>
+          
+          <!-- 周波数軸 -->
+          <line x1="30" y1="210" x2="330" y2="210" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="330" y="228" fill="#94a3b8" font-size="11">周波数 f</text>
+          
+          <!-- 水ピーク・脂肪ピーク（正常時）点線 -->
+          <path d="M 180 210 Q 200 70 220 210" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4"/>
+          <text x="200" y="65" fill="#64748b" font-size="11" text-anchor="middle">水 (正常時)</text>
+          
+          <path d="M 80 210 Q 100 110 120 210" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4"/>
+          <text x="100" y="105" fill="#64748b" font-size="11" text-anchor="middle">脂肪 (正常時)</text>
+          
+          <!-- B0不均一による周波数シフト後 -->
+          <!-- 局所磁場シフト量 -->
+          <line x1="100" y1="130" x2="160" y2="130" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="130" y="125" fill="#f59e0b" font-size="10" text-anchor="middle">ΔB0 シフト</text>
+          
+          <!-- シフトした脂肪ピーク（CHESSパルスから外れる） -->
+          <path d="M 140 210 Q 160 110 180 210" fill="none" stroke="#f43f5e" stroke-width="2.5"/>
+          <text x="155" y="105" fill="#f43f5e" font-size="11" font-weight="bold">シフトした脂肪</text>
+
+          <!-- CHESS飽和パルスの照射帯域 -->
+          <rect x="75" y="130" width="50" height="80" fill="rgba(14, 165, 233, 0.25)" stroke="#0284c7" stroke-dasharray="3"/>
+          <text x="100" y="160" fill="#38bdf8" font-size="10" text-anchor="middle">CHESS</text>
+          <text x="100" y="174" fill="#38bdf8" font-size="10" text-anchor="middle">飽和帯域</text>
+          
+          <text x="180" y="245" text-anchor="middle" fill="#fca5a5" font-size="11">結果：脂肪が飽和されず高信号で残存</text>
+        </g>
+
+        <!-- 右側：Dixon/IDEALの補正 -->
+        <g transform="translate(420, 10)">
+          <rect x="0" y="0" width="360" height="255" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+          <text x="180" y="24" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="bold">【Dixon/IDEAL】3点複素位相からフィールドマップ補正</text>
+
+          <!-- 複素平面の円 -->
+          <circle cx="100" cy="120" r="55" fill="none" stroke="#334155" stroke-width="1.5"/>
+          <line x1="40" y1="120" x2="160" y2="120" stroke="#475569" stroke-width="1"/>
+          <line x1="100" y1="60" x2="100" y2="180" stroke="#475569" stroke-width="1"/>
+
+          <!-- 水ベクトル（固定） -->
+          <line x1="100" y1="120" x2="145" y2="120" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+          <text x="145" y="115" fill="#38bdf8" font-size="11" font-weight="bold">水 W</text>
+
+          <!-- 脂肪ベクトル（回転） -->
+          <line x1="100" y1="120" x2="65" y2="85" stroke="#f59e0b" stroke-width="2.5"/>
+          <text x="55" y="80" fill="#f59e0b" font-size="11" font-weight="bold">脂肪 F</text>
+
+          <!-- B0不均一による共通回転誤差 ψ -->
+          <path d="M 145 120 A 45 45 0 0 1 135 150" fill="none" stroke="#f43f5e" stroke-width="2" stroke-dasharray="3"/>
+          <text x="155" y="145" fill="#f43f5e" font-size="11">位相誤差 ψ</text>
+
+          <!-- 演算ブロック -->
+          <rect x="180" y="60" width="165" height="120" rx="6" fill="#0f172a" stroke="#0ea5e9" stroke-width="1.5"/>
+          <text x="262" y="85" fill="#38bdf8" font-size="12" font-weight="bold" text-anchor="middle">多点最小二乗法推定</text>
+          <text x="262" y="110" fill="#94a3b8" font-size="10" text-anchor="middle">3エコーの複素連立解法</text>
+          <text x="262" y="130" fill="#f59e0b" font-size="11" font-weight="bold" text-anchor="middle">➔ 位相誤差マップ ψ を分離</text>
+          <text x="262" y="155" fill="#10b981" font-size="11" font-weight="bold" text-anchor="middle">➔ 純粋な水・脂肪を復元</text>
+
+          <text x="180" y="245" text-anchor="middle" fill="#86efac" font-size="11">結果：B0不均一が相殺され完全な水画像を取得</text>
+        </g>
+      </svg>
+      <div class="figure-caption">
+        図1：CHESS法の破綻機序（周波数シフトによる励起外れ）と、Dixon/IDEAL法による複素位相分離アルゴリズム
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5. インタラクティブ・位相シミュレーター（仕様6準拠）
+       ======================================================================== -->
+  <section class="card" aria-label="位相シミュレーション">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        インタラクティブ位相シミュレーター（B0不均一と補正の体感）
+      </div>
+      <span class="badge badge-primary">Interactive Physics</span>
+    </div>
+
+    <p style="font-size: 0.9rem; color: var(--text-muted);">
+      スライダーで局所静磁場不均一（ΔB0）を増減させてみてください。B0不均一が存在しても、Dixonの「フィールドマップ補正」をオンにすることで、水ベクトルと脂肪ベクトルが元の正常な相対角度へ正確に再建される様子を確認できます。
+    </p>
+
+    <!-- シミュレーター描画領域 -->
+    <div class="figure-wrapper">
+      <svg id="sim-svg" width="100%" height="240" viewBox="0 0 600 240" style="max-width: 600px;" aria-label="スピンベクトルシミュレーター">
+        <!-- 座標軸 -->
+        <circle cx="200" cy="120" r="80" fill="none" stroke="#334155" stroke-width="1.5"/>
+        <line x1="100" y1="120" x2="300" y2="120" stroke="#334155" stroke-width="1"/>
+        <line x1="200" y1="20" x2="200" y2="220" stroke="#334155" stroke-width="1"/>
+        <text x="290" y="115" fill="#64748b" font-size="10">Real</text>
+        <text x="205" y="32" fill="#64748b" font-size="10">Imag</text>
+
+        <!-- 水ベクトル（青） -->
+        <line id="vec-water" x1="200" y1="120" x2="270" y2="120" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#arrow)"/>
+        <!-- 脂肪ベクトル（黄） -->
+        <line id="vec-fat" x1="200" y1="120" x2="130" y2="120" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrow)"/>
+        <!-- 合成ベクトル（点線） -->
+        <line id="vec-sum" x1="200" y1="120" x2="200" y2="120" stroke="#a855f7" stroke-width="2" stroke-dasharray="4"/>
+
+        <!-- ステータス表示パネル -->
+        <g transform="translate(340, 40)">
+          <rect x="0" y="0" width="230" height="155" rx="8" fill="#1e293b" stroke="#334155"/>
+          <text x="15" y="26" fill="#f8fafc" font-size="13" font-weight="bold">スピン位相ステータス</text>
+          <text x="15" y="55" fill="#94a3b8" font-size="11">TE状態：<tspan id="txt-te" fill="#38bdf8" font-weight="bold">逆位相 (2.25 ms)</tspan></text>
+          <text x="15" y="80" fill="#94a3b8" font-size="11">B0位相ズレ ψ：<tspan id="txt-b0" fill="#f43f5e" font-weight="bold">0°</tspan></text>
+          <text x="15" y="105" fill="#94a3b8" font-size="11">フィールド補正：<tspan id="txt-corr" fill="#10b981" font-weight="bold">OFF</tspan></text>
+          <text x="15" y="132" fill="#e2e8f0" font-size="11">分離精度：<tspan id="txt-purity" fill="#38bdf8" font-weight="bold">100% (正常)</tspan></text>
+        </g>
+      </svg>
+
+      <!-- コントロールUI -->
+      <div class="sim-controls">
+        <button type="button" class="sim-btn primary" id="btn-toggle-play" aria-label="再生/一時停止">
+          <span id="btn-icon">▶</span> <span id="btn-text">TE時間変化 再生</span>
+        </button>
+        <button type="button" class="sim-btn" id="btn-step" aria-label="ステップ送り">
+          ステップ送り
+        </button>
+        <button type="button" class="sim-btn" id="btn-reset" aria-label="リセット">
+          リセット
+        </button>
+
+        <div class="slider-group">
+          <label for="slider-b0">B0不均一 (ΔB0):</label>
+          <input type="range" id="slider-b0" min="-90" max="90" value="0" step="5">
+          <span class="sim-readout" id="val-b0">0°</span>
+        </div>
+
+        <button type="button" class="sim-btn" id="btn-toggle-corr" style="border-color: #10b981;">
+          補正: <span id="corr-status">OFF</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       6. 今後の復習課題・学習アドバイス（仕様7）
+       ======================================================================== -->
+  <section class="card" aria-label="今後の学習アクション">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        本問の総括と次のステップ
+      </div>
+      <span class="badge badge-primary">Action Plan</span>
+    </div>
+
+    <div class="highlight-box box-info">
+      <strong>技師・専門医試験における解答力アップのポイント</strong>
+      「Dixonは同位相・逆位相を使う」で思考を止めず、<strong>「なぜ同位相・逆位相で足し引きするだけでは不均一に負けるのか？（＝位相誤差が未知数として入るから）」「それをIDEALはどうやって克服したのか？（＝3エコー以上で複素連立方程式を解き、フィールドマップを作って逆回転させるから）」</strong>という数理解析のステップを言葉にできるようにしてください。この概念は、MRエラストグラフィ（位相から硬さ算出）やQSM（位相から磁化率算出）の根本原理とも直結しています。
+    </div>
+  </section>
+
+</div>
+
+<!-- ==========================================================================
+     完全オフライン Vanilla JavaScript ロジック
+     ========================================================================== -->
+<script>
+  (function() {
+    'use strict';
+
+    // DOM要素参照
+    const vecWater = document.getElementById('vec-water');
+    const vecFat = document.getElementById('vec-fat');
+    const vecSum = document.getElementById('vec-sum');
+
+    const txtTe = document.getElementById('txt-te');
+    const txtB0 = document.getElementById('txt-b0');
+    const txtCorr = document.getElementById('txt-corr');
+    const txtPurity = document.getElementById('txt-purity');
+
+    const btnPlay = document.getElementById('btn-toggle-play');
+    const btnIcon = document.getElementById('btn-icon');
+    const btnText = document.getElementById('btn-text');
+    const btnStep = document.getElementById('btn-step');
+    const btnReset = document.getElementById('btn-reset');
+    const btnCorr = document.getElementById('btn-toggle-corr');
+    const corrStatus = document.getElementById('corr-status');
+
+    const sliderB0 = document.getElementById('slider-b0');
+    const valB0 = document.getElementById('val-b0');
+
+    // 内部シミュレーション状態
+    let isPlaying = false;
+    let animFrameId = null;
+    let tePhase = 180; // 180° = 逆位相（初期値 2.25ms）
+    let b0Error = 0;   // B0不均一による位相ズレ（度）
+    let isCorrected = false;
+
+    const originX = 200;
+    const originY = 120;
+    const radius = 70;
+
+    function toRad(deg) {
+      return (deg * Math.PI) / 180;
+    }
+
+    function updateSim() {
+      // B0誤差：補正ONなら実質0にキャンセルされる
+      const effectiveB0 = isCorrected ? 0 : b0Error;
+
+      // 水ベクトル角度：B0誤差のみ受ける
+      const waterAngleDeg = effectiveB0;
+      const waterRad = toRad(waterAngleDeg);
+      const wx = originX + radius * Math.cos(waterRad);
+      const wy = originY - radius * Math.sin(waterRad);
+
+      // 脂肪ベクトル角度：水に対するケミカルシフト位相差 + B0誤差
+      const fatAngleDeg = tePhase + effectiveB0;
+      const fatRad = toRad(fatAngleDeg);
+      const fx = originX + (radius * 0.85) * Math.cos(fatRad);
+      const fy = originY - (radius * 0.85) * Math.sin(fatRad);
+
+      // 合成ベクトル
+      const sx = (wx - originX) + (fx - originX);
+      const sy = (wy - originY) + (fy - originY);
+      const sumX = originX + sx;
+      const sumY = originY + sy;
+
+      // SVG描画更新
+      vecWater.setAttribute('x2', wx.toFixed(1));
+      vecWater.setAttribute('y2', wy.toFixed(1));
+      vecFat.setAttribute('x2', fx.toFixed(1));
+      vecFat.setAttribute('y2', fy.toFixed(1));
+      vecSum.setAttribute('x2', sumX.toFixed(1));
+      vecSum.setAttribute('y2', sumY.toFixed(1));
+
+      // テキスト表示更新
+      const teMod = ((tePhase % 360) + 360) % 360;
+      let teName = '任意位相';
+      if (Math.abs(teMod - 180) < 15) teName = '逆位相 (~2.25 ms)';
+      else if (Math.abs(teMod - 0) < 15 || Math.abs(teMod - 360) < 15) teName = '同位相 (~4.5 ms)';
+      else if (Math.abs(teMod - 90) < 15) teName = '直交位相 (~1.12 ms)';
+
+      txtTe.textContent = `${teName} [${Math.round(teMod)}°]`;
+      txtB0.textContent = `${b0Error > 0 ? '+' : ''}${b0Error}°`;
+      valB0.textContent = `${b0Error > 0 ? '+' : ''}${b0Error}°`;
+
+      txtCorr.textContent = isCorrected ? 'ON (補正済)' : 'OFF (未補正)';
+      txtCorr.style.color = isCorrected ? '#10b981' : '#f43f5e';
+      corrStatus.textContent = isCorrected ? 'ON' : 'OFF';
+
+      if (isCorrected) {
+        txtPurity.textContent = '100% 完全分離';
+        txtPurity.style.color = '#10b981';
+      } else if (Math.abs(b0Error) > 40) {
+        txtPurity.textContent = '破綻（Fat-Water Swap発生）';
+        txtPurity.style.color = '#f43f5e';
+      } else if (Math.abs(b0Error) > 10) {
+        txtPurity.textContent = '純度低下（抑制ムラ）';
+        txtPurity.style.color = '#f59e0b';
+      } else {
+        txtPurity.textContent = '良好 (正常)';
+        txtPurity.style.color = '#38bdf8';
+      }
+    }
+
+    function stepLoop() {
+      tePhase = (tePhase + 2) % 360;
+      updateSim();
+      if (isPlaying) {
+        animFrameId = requestAnimationFrame(stepLoop);
+      }
+    }
+
+    // イベントリスナー
+    btnPlay.addEventListener('click', function() {
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        btnIcon.textContent = '⏸';
+        btnText.textContent = '一時停止';
+        animFrameId = requestAnimationFrame(stepLoop);
+      } else {
+        btnIcon.textContent = '▶';
+        btnText.textContent = '再開';
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      }
+    });
+
+    btnStep.addEventListener('click', function() {
+      if (isPlaying) {
+        isPlaying = false;
+        btnIcon.textContent = '▶';
+        btnText.textContent = '再開';
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      }
+      tePhase = (tePhase + 45) % 360;
+      updateSim();
+    });
+
+    btnReset.addEventListener('click', function() {
+      if (isPlaying) {
+        isPlaying = false;
+        btnIcon.textContent = '▶';
+        btnText.textContent = 'TE時間変化 再生';
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      }
+      tePhase = 180;
+      b0Error = 0;
+      sliderB0.value = 0;
+      isCorrected = false;
+      updateSim();
+    });
+
+    sliderB0.addEventListener('input', function(e) {
+      b0Error = parseInt(e.target.value, 10);
+      updateSim();
+    });
+
+    btnCorr.addEventListener('click', function() {
+      isCorrected = !isCorrected;
+      updateSim();
+    });
+
+    // 初期描画実行
+    updateSim();
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材：FSPGR（Fast Spoiled Gradient Recalled Echo）</title>
+<style>
+  :root {
+    --bg-primary: #f4f6f9;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --accent-blue: #0284c7;
+    --accent-green: #16a34a;
+    --accent-amber: #d97706;
+    --accent-red: #dc2626;
+    --border-color: #e2e8f0;
+    --math-font: "Times New Roman", Times, serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* 採点サマリー */
+  .score-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border-left: 6px solid var(--accent-green);
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .score-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .score-badge {
+    background-color: #dcfce7;
+    color: var(--accent-green);
+    font-size: 1.1rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 9999px;
+  }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .score-item {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .score-item-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .score-item-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* セクションカード */
+  .card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
+  .card-header-icon {
+    width: 24px;
+    height: 24px;
+    fill: var(--accent-blue);
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* 表 */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  th, td {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+  }
+
+  /* 数式ボックス */
+  .math-display {
+    background: #f8fafc;
+    border-left: 4px solid var(--accent-blue);
+    padding: 12px 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: var(--math-font);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .math-explanation {
+    margin-top: 8px;
+    font-size: 0.9rem;
+  }
+
+  .math-explanation dl {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 6px 12px;
+  }
+
+  .math-explanation dt {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  /* アニメーション・図解コントロール */
+  .sim-container {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sim-canvas {
+    width: 100%;
+    max-width: 600px;
+    height: 220px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .sim-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    background: var(--accent-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  button:hover {
+    opacity: 0.9;
+  }
+
+  button.secondary {
+    background: #64748b;
+  }
+
+  /* 箇条書き・強調 */
+  ul {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+
+  li {
+    margin-bottom: 6px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+  .tag-t1 { background-color: #fee2e2; color: var(--accent-red); }
+  .tag-fast { background-color: #e0f2fe; color: var(--accent-blue); }
+
+  /* 印刷用 */
+  @media print {
+    body {
+      background-color: #ffffff;
+      padding: 0;
+    }
+    .container {
+      max-width: 100%;
+      gap: 16px;
+    }
+    .card, .score-card {
+      box-shadow: none;
+      border: 1px solid #cbd5e1;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 12px;
+    }
+    .sim-controls {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 8. 採点サマリー -->
+  <section class="score-card">
+    <div class="score-header">
+      <div class="score-title">学習評価・演習サマリー</div>
+      <div class="score-badge">92点 / 合格</div>
+    </div>
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score-item-label">正答</div>
+        <div class="score-item-val">RFスポイリングによるT1強調化・超高速化</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-label">ユーザー解答</div>
+        <div class="score-item-val">位相シフトによる横磁化消去と短TR化</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-label">正しく理解できた点</div>
+        <div class="score-item-val">残留横磁化の破棄と各社呼称の対応関係</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-label">最大の修正点</div>
+        <div class="score-item-val">極短TRに伴うSNR低下・磁化率影響の整理</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-label">根本的誤概念</div>
+        <div class="score-item-val">「短TRのみで純粋T1が得られる」誤認の排除</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-label">学習優先度</div>
+        <div class="score-item-val">中（臨床応用プロトコル設計へ移行）</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 概要 & 各社呼称カード -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="card-header-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      <div class="card-title">FSPGRの定義と各社呼称</div>
+    </div>
+    <p>
+      <strong>FSPGR（Fast Spoiled Gradient Recalled Echo）</strong>は、超短TR撮像において生じる残留横磁化を強制的に位相分散（スポイリング）し、定常状態（SSFP）の形成を防ぐことで、純粋な<strong>T1強調コントラスト</strong>を獲得する高速GREシーケンスです。
+    </p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>主要装置メーカー</th>
+            <th>基本シーケンス呼称</th>
+            <th>高速化（Fast/Turbo）呼称</th>
+            <th>代表的臨床アプリケーション</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GE HealthCare</strong></td>
+            <td>SPGR</td>
+            <td><strong>FSPGR</strong></td>
+            <td>LAVA, BRAVO, DISCO</td>
+          </tr>
+          <tr>
+            <td><strong>Siemens Healthineers</strong></td>
+            <td>FLASH</td>
+            <td><strong>Turbo FLASH</strong></td>
+            <td>VIBE, MP-RAGE</td>
+          </tr>
+          <tr>
+            <td><strong>Philips</strong></td>
+            <td>T1 FFE</td>
+            <td><strong>T1 TFE</strong></td>
+            <td>THRIVE</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- シーケンスの仕組みと原理 -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="card-header-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+      <div class="card-title">物理原理：RFスポイリングと高速化</div>
+    </div>
+    <ul>
+      <li>
+        <strong>RFスポイリングの機序：</strong>
+        励起パルスごとにRFの位相（&phi;）を特定のアルゴリズム（例：二次式的に増加させる位相シフト）に従って変化させます。受信器側でも同じ位相を基準にして信号を復調することで、直前のTRに照射されたパルスによる残留横磁化の位相をバラバラにして相殺し、<strong>T2*成分の干渉を排除</strong>します。
+      </li>
+      <li>
+        <strong>超短TR/TEを成立させる要素技術：</strong>
+        <ul>
+          <li><strong>部分エコー法（Fractional Echo）：</strong> エコー中心の前半部分を省略しTEを短縮。</li>
+          <li><strong>部分RF法（Fractional RF）：</strong> 非対称RFパルスを用いてパルス幅自体を短縮。</li>
+          <li><strong>広受信バンド幅（Wide BW）：</strong> データサンプリング時間（Ts）を圧縮してTR/TEを最小化。</li>
+          <li><strong>部分フーリエ法（Fractional NEX）：</strong> k空間の共役対称性を利用し位相エンコード数を削減。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- 4. 数式解説 -->
+    <div class="math-display">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mi>S</mi>
+        <mo>=</mo>
+        <msub><mi>M</mi><mn>0</mn></msub>
+        <mo>&#x22C5;</mo>
+        <mfrac>
+          <mrow>
+            <mi>sin</mi>
+            <mo>(</mo><mi>&#x3B1;</mi><mo>)</mo>
+            <mo>&#x22C5;</mo>
+            <mo>(</mo><mn>1</mn><mo>&#x2212;</mo><msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>TR</mi><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></mrow></msup><mo>)</mo>
+          </mrow>
+          <mrow>
+            <mn>1</mn>
+            <mo>&#x2212;</mo>
+            <mi>cos</mi>
+            <mo>(</mo><mi>&#x3B1;</mi><mo>)</mo>
+            <mo>&#x22C5;</mo>
+            <msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>TR</mi><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></mrow></msup>
+          </mrow>
+        </mfrac>
+        <mo>&#x22C5;</mo>
+        <msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>TE</mi><mo>/</mo><msubsup><mi>T</mi><mn>2</mn><mo>*</mo></msubsup></mrow></msup>
+      </math>
+    </div>
+
+    <div class="math-explanation">
+      <dl>
+        <dt>S [a.u.]</dt>
+        <dd>スポイル型GREシーケンスの定常状態信号強度</dd>
+        <dt>&alpha; [度またはrad]</dt>
+        <dd>RF励起フリップ角。T1強調を得るにはエルンスト角（Ernst Angle）より大きめに設定</dd>
+        <dt>TR, TE [ms]</dt>
+        <dd>繰り返し時間およびエコー時間。FSPGRでは両者とも数msオーダまで短縮</dd>
+        <dt>T1, T2* [ms]</dt>
+        <dd>組織固有の縦緩和時間および実効横緩和時間</dd>
+        <dt>変数増減と影響</dt>
+        <dd>TR &ll; T1 の環境下で &alpha; を大きく（例: 12°〜15°以上）設定すると、分母の項によりT1の差が極めて強く強調されます。</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 5 & 6. インタラクティブ・アニメーション図解 -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="card-header-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      <div class="card-title">メカニズム可視化：残存横磁化のRFスポイリング動態</div>
+    </div>
+    <div class="sim-container">
+      <svg id="simCanvas" class="sim-canvas" viewBox="0 0 600 220">
+        <!-- 背景グリッド・軸 -->
+        <line x1="50" y1="180" x2="550" y2="180" stroke="#cbd5e1" stroke-width="2"/>
+        <text x="560" y="185" font-size="12" fill="#64748b">時間</text>
+        
+        <!-- TR 1 ブロック -->
+        <rect x="70" y="130" width="16" height="50" fill="#0284c7" rx="2"/>
+        <text x="78" y="120" font-size="11" text-anchor="middle" fill="#0284c7" font-weight="bold">RF (&phi;1)</text>
+
+        <!-- TR 2 ブロック -->
+        <rect x="250" y="130" width="16" height="50" fill="#0284c7" rx="2"/>
+        <text x="258" y="120" font-size="11" text-anchor="middle" fill="#0284c7" font-weight="bold">RF (&phi;2)</text>
+
+        <!-- TR 3 ブロック -->
+        <rect x="430" y="130" width="16" height="50" fill="#0284c7" rx="2"/>
+        <text x="438" y="120" font-size="11" text-anchor="middle" fill="#0284c7" font-weight="bold">RF (&phi;3)</text>
+
+        <!-- アニメーション表示用横磁化ベクトル群 -->
+        <g id="spoilVectors" transform="translate(180, 80)">
+          <circle cx="0" cy="0" r="30" fill="none" stroke="#94a3b8" stroke-dasharray="2,2"/>
+          <!-- 動的に変化するスピン矢印群 -->
+          <line id="spin1" x1="0" y1="0" x2="25" y2="0" stroke="#dc2626" stroke-width="2"/>
+          <line id="spin2" x1="0" y1="0" x2="0" y2="25" stroke="#16a34a" stroke-width="2"/>
+          <line id="spin3" x1="0" y1="0" x2="-25" y2="0" stroke="#d97706" stroke-width="2"/>
+        </g>
+        <text x="180" y="130" font-size="11" text-anchor="middle" fill="#475569">TR末期の横磁化位相分散</text>
+        
+        <!-- 説明テキストボックス -->
+        <rect x="330" y="30" width="220" height="70" fill="#f1f5f9" rx="6" stroke="#e2e8f0"/>
+        <text id="statusText" x="340" y="55" font-size="12" fill="#1e293b" font-weight="bold">状態: 待機中</text>
+        <text id="subStatusText" x="340" y="75" font-size="11" fill="#64748b">RF位相シフトにより残留磁化を排除</text>
+      </svg>
+      <div class="sim-controls">
+        <button id="btnPlay">再生</button>
+        <button id="btnPause" class="secondary">一時停止</button>
+        <button id="btnStep" class="secondary">ステップ送り</button>
+        <button id="btnReset" class="secondary">リセット</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 臨床適応・利点と注意点 -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="card-header-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      <div class="card-title">主な臨床適応とトレードオフ</div>
+    </div>
+    
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>臨床適応</th>
+            <th>技術・シーケンス設計</th>
+            <th>臨床的意義</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>腹部ダイナミック造影</strong></td>
+            <td>3D FSPGR（LAVA / VIBE）</td>
+            <td>1呼吸停止時間内（15秒前後）で全肝をカバー。動脈相〜平衡相の多時相高分解能描出。</td>
+          </tr>
+          <tr>
+            <td><strong>頭部3D T1強調像</strong></td>
+            <td>IR-FSPGR（BRAVO / MP-RAGE）</td>
+            <td>180°反転回復パルスを前置し、灰白質・白質・CSF間の極めて高精細な解剖学的等方性ボリュームを収集。</td>
+          </tr>
+          <tr>
+            <td><strong>造影 / 非造影MRA</strong></td>
+            <td>3D FSPGR / TOF-MRA</td>
+            <td>GdのT1短縮効果の選択的描出、または流入効果（FRE）を利用した頭頸部・四肢血管の明瞭化。</td>
+          </tr>
+          <tr>
+            <td><strong>水脂肪分離撮像</strong></td>
+            <td>Dixon法（LAVA-Flex / IDEAL）</td>
+            <td>マルチエコー収集による均一な脂肪抑制水画像と脂肪画像の同時取得。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <strong>技術的トレードオフ（利点と留意点）：</strong>
+      <ul>
+        <li><span class="tag tag-fast">長所</span> 息止めが容易な超高速撮像、スライスクロストークのない薄層連続3Dボリューム収集、純粋なT1コントラスト。</li>
+        <li><span class="tag tag-t1">留意点</span> 極短TRによる縦磁化回復不足に起因する<strong>SNRの低下</strong>、および180°リフォーカスパルスを持たないため局所磁場不均一に起因する<strong>磁化率アーチファクトの増大</strong>。</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  (function() {
+    let animId = null;
+    let isPlaying = false;
+    let step = 0;
+
+    const spin1 = document.getElementById('spin1');
+    const spin2 = document.getElementById('spin2');
+    const spin3 = document.getElementById('spin3');
+    const statusText = document.getElementById('statusText');
+    const subStatusText = document.getElementById('subStatusText');
+
+    function updateFrame() {
+      step = (step + 1) % 360;
+      const angle1 = step * 2;
+      const angle2 = step * 5 + 45;
+      const angle3 = step * 8 + 120;
+
+      const rad1 = (angle1 * Math.PI) / 180;
+      const rad2 = (angle2 * Math.PI) / 180;
+      const rad3 = (angle3 * Math.PI) / 180;
+
+      spin1.setAttribute('x2', 25 * Math.cos(rad1));
+      spin1.setAttribute('y2', 25 * Math.sin(rad1));
+
+      spin2.setAttribute('x2', 25 * Math.cos(rad2));
+      spin2.setAttribute('y2', 25 * Math.sin(rad2));
+
+      spin3.setAttribute('x2', 25 * Math.cos(rad3));
+      spin3.setAttribute('y2', 25 * Math.sin(rad3));
+
+      if (step < 120) {
+        statusText.textContent = "状態: RFパルス照射・励起";
+        subStatusText.textContent = "パルスごとに異なる位相シフトを付与";
+      } else if (step < 240) {
+        statusText.textContent = "状態: データ読み出し";
+        subStatusText.textContent = "部分エコー法等による極短TEサンプリング";
+      } else {
+        statusText.textContent = "状態: RFスポイリング";
+        subStatusText.textContent = "位相不規則化により残留横磁化の合算値を0へ";
+      }
+
+      if (isPlaying) {
+        animId = requestAnimationFrame(updateFrame);
+      }
+    }
+
+    document.getElementById('btnPlay').addEventListener('click', function() {
+      if (!isPlaying) {
+        isPlaying = true;
+        animId = requestAnimationFrame(updateFrame);
+      }
+    });
+
+    document.getElementById('btnPause').addEventListener('click', function() {
+      isPlaying = false;
+      if (animId) cancelAnimationFrame(animId);
+    });
+
+    document.getElementById('btnStep').addEventListener('click', function() {
+      isPlaying = false;
+      if (animId) cancelAnimationFrame(animId);
+      step += 15;
+      updateFrame();
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+      isPlaying = false;
+      if (animId) cancelAnimationFrame(animId);
+      step = 0;
+      spin1.setAttribute('x2', 25);
+      spin1.setAttribute('y2', 0);
+      spin2.setAttribute('x2', 0);
+      spin2.setAttribute('y2', 25);
+      spin3.setAttribute('x2', -25);
+      spin3.setAttribute('y2', 0);
+      statusText.textContent = "状態: 待機中";
+      subStatusText.textContent = "RF位相シフトにより残留磁化を排除";
+    });
+  })();
+</script>
+
+</body>
+</html>

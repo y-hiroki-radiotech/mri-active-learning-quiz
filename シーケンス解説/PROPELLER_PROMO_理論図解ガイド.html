@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PROPELLERと3D PROMO ― 体動補正の理論を図解で理解する</title>
+<style>
+:root{
+  --ink:#142033; --muted:#607086; --line:#dfe7ef; --bg:#f5f8fb; --card:#ffffff;
+  --blue:#1769aa; --cyan:#0f8f9d; --green:#2f855a; --orange:#c96a18; --red:#c13f3f;
+  --purple:#6c4ccf; --navy:#203a5f; --softblue:#eaf4ff; --softgreen:#ecf8f1;
+  --softorange:#fff4e8; --softpurple:#f1edff; --softred:#fff0f0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.78}
+main{max-width:1120px;margin:auto;padding:30px 18px 64px}
+.hero{background:linear-gradient(135deg,#15355b,#1769aa 55%,#0f8f9d);color:white;border-radius:24px;padding:34px 34px 30px;box-shadow:0 14px 34px rgba(25,58,95,.18)}
+.hero h1{font-size:clamp(28px,4vw,46px);line-height:1.18;margin:0 0 14px}
+.hero p{margin:8px 0;max-width:920px}
+.kicker{font-size:13px;letter-spacing:.12em;font-weight:800;opacity:.9}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 5px 18px rgba(30,50,70,.05)}
+.card h3{margin-top:0;line-height:1.35}
+section{margin-top:34px}
+h2{font-size:clamp(24px,3vw,34px);line-height:1.28;margin:0 0 16px;color:var(--navy)}
+h3{font-size:21px;color:var(--navy)}
+p{margin:10px 0}
+small,.muted{color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:4px 10px;font-weight:800;font-size:12px;margin-right:6px}
+.b-blue{background:var(--softblue);color:var(--blue)}
+.b-green{background:var(--softgreen);color:var(--green)}
+.b-orange{background:var(--softorange);color:var(--orange)}
+.b-purple{background:var(--softpurple);color:var(--purple)}
+.callout{border-left:5px solid var(--blue);padding:15px 18px;background:var(--softblue);border-radius:12px;margin:16px 0}
+.warn{border-left-color:var(--orange);background:var(--softorange)}
+.key{font-weight:800;color:#0d4e86}
+.eq{font-family:"Times New Roman",serif;background:#f9fbfd;border:1px solid var(--line);padding:15px 18px;border-radius:12px;text-align:center;font-size:20px;overflow:auto}
+.arrow{font-size:24px;font-weight:800;color:var(--blue)}
+.flow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.step{flex:1 1 150px;min-width:145px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.step strong{display:block;color:var(--navy)}
+.svgbox{background:white;border:1px solid var(--line);border-radius:16px;padding:10px;overflow:auto}
+svg{max-width:100%;height:auto}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+th,td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{background:#edf4fa;color:var(--navy)}
+tr:last-child td{border-bottom:0}
+.pro{color:var(--blue);font-weight:800}.promo{color:var(--purple);font-weight:800}
+.timeline{display:grid;grid-template-columns:100px 1fr;gap:10px;align-items:start}
+.timeline .t{font-weight:800;color:var(--navy)}
+.timeline .d{border-left:3px solid var(--line);padding:0 0 17px 18px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.footer{margin-top:38px;color:var(--muted);font-size:13px}
+@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.hero{padding:26px 22px}.flow{display:block}.step{margin:8px 0}}
+@media print{body{background:white}.card,.hero{box-shadow:none}main{max-width:none}.hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+  <div class="kicker">MRI MOTION CORRECTION — CONCEPT GUIDE</div>
+  <h1>PROPELLER と 3D PROMO<br>「体動をどう扱うか」の理屈を図解で理解する</h1>
+  <p><b>結論：</b>PROPELLERは「動いた後のデータを、k空間とフーリエ変換の性質から整える」後向き補正。3D PROMOは「動きを測り、次の撮像座標を患者に合わせて動かす」前向き補正です。</p>
+</header>
+
+<section>
+<h2>0. まず、体動でMRI画像が乱れる理由</h2>
+<div class="grid3">
+ <div class="card"><span class="badge b-blue">① 位相の不整合</span><h3>同じ場所を撮っているつもりが、実際には違う</h3><p>k空間の各データは別々の時刻に取得されます。途中で患者が動くと、異なる位置・角度の情報を1枚の画像として合成することになります。</p></div>
+ <div class="card"><span class="badge b-orange">② k空間の整合性が崩れる</span><h3>「1つの物体」のフーリエデータではなくなる</h3><p>あるラインは移動前、別のラインは移動後という状態になり、単純な逆フーリエ変換ではゴースト・ボケ・輪郭の不一致が生じます。</p></div>
+ <div class="card"><span class="badge b-purple">③ 補正には2つの発想</span><h3>後で直す / 先回りして追いかける</h3><p><b>Retrospective：</b>収集済みデータから運動を推定して補正。<br><b>Prospective：</b>運動をリアルタイム測定し、これから取得する座標を補正。</p></div>
+</div>
+</section>
+
+<section>
+<h2>1. 全体像：同じ「頭が動いた」でも処理が違う</h2>
+<div class="svgbox">
+<svg viewBox="0 0 1040 430" role="img" aria-label="PROPELLERとPROMOの概念比較">
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#52677f"/></marker></defs>
+<rect x="25" y="25" width="990" height="375" rx="22" fill="#f9fbfd"/>
+<text x="520" y="62" text-anchor="middle" font-size="24" font-weight="700" fill="#203a5f">患者が撮像中に動いた</text>
+<line x1="520" y1="78" x2="520" y2="125" stroke="#52677f" stroke-width="3" marker-end="url(#a)"/>
+<line x1="520" y1="125" x2="260" y2="175" stroke="#52677f" stroke-width="3" marker-end="url(#a)"/>
+<line x1="520" y1="125" x2="780" y2="175" stroke="#52677f" stroke-width="3" marker-end="url(#a)"/>
+
+<rect x="75" y="175" width="370" height="175" rx="18" fill="#eaf4ff" stroke="#1769aa" stroke-width="2"/>
+<text x="260" y="210" text-anchor="middle" font-size="24" font-weight="700" fill="#1769aa">PROPELLER</text>
+<text x="260" y="242" text-anchor="middle" font-size="17" fill="#203a5f">まずデータを収集</text>
+<text x="260" y="272" text-anchor="middle" font-size="17" fill="#203a5f">↓</text>
+<text x="260" y="300" text-anchor="middle" font-size="17" fill="#203a5f">重複k空間から動きを推定</text>
+<text x="260" y="328" text-anchor="middle" font-size="17" fill="#203a5f">↓ 後処理で補正・重み付け・除外</text>
+
+<rect x="595" y="175" width="370" height="175" rx="18" fill="#f1edff" stroke="#6c4ccf" stroke-width="2"/>
+<text x="780" y="210" text-anchor="middle" font-size="24" font-weight="700" fill="#6c4ccf">3D PROMO</text>
+<text x="780" y="242" text-anchor="middle" font-size="17" fill="#203a5f">Navigatorで現在位置を測る</text>
+<text x="780" y="272" text-anchor="middle" font-size="17" fill="#203a5f">↓</text>
+<text x="780" y="300" text-anchor="middle" font-size="17" fill="#203a5f">次のRF・勾配座標を更新</text>
+<text x="780" y="328" text-anchor="middle" font-size="17" fill="#203a5f">＋動き過大なら破棄して再収集</text>
+</svg>
+</div>
+<div class="callout"><b>覚え方：</b> PROPELLERは「<b>データが患者に合わせて整列する</b>」。PROMOは「<b>撮像座標系が患者についていく</b>」。</div>
+</section>
+
+<section>
+<h2>2. PROPELLER：なぜ「ブレード」を回すと動きを直せるのか</h2>
+<p>資料ではPROPELLERを、複数の平行ラインでできた細長い<b>Blade</b>を回転させながらk空間を埋め、すべてのBladeがk空間中心を重複して通る方式として説明しています。</p>
+
+<div class="grid2">
+<div class="card">
+<h3>2-1. k空間中心を毎回通る意味</h3>
+<p>k空間中心は、画像の大まかな形・コントラストに強く関係する低空間周波数成分です。各Bladeが同じ中心領域を持つため、Blade同士を比較できます。</p>
+<div class="callout"><b>つまり：</b> 本来の撮像データそのものが、動きを測るための「自己Navigator」になります。</div>
+</div>
+<div class="svgbox">
+<svg viewBox="0 0 500 360">
+<circle cx="250" cy="180" r="145" fill="#fbfdff" stroke="#b9c7d6"/>
+<g transform="translate(250,180)" opacity=".78">
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#5fa6df" transform="rotate(0)"/>
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#70b9a3" transform="rotate(30)"/>
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#d9a46a" transform="rotate(60)"/>
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#927fe0" transform="rotate(90)"/>
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#d87575" transform="rotate(120)"/>
+<rect x="-185" y="-18" width="370" height="36" rx="8" fill="#6fb6c0" transform="rotate(150)"/>
+<circle cx="0" cy="0" r="30" fill="#ffffff" stroke="#203a5f" stroke-width="3"/>
+</g>
+<text x="250" y="28" text-anchor="middle" font-size="20" font-weight="700" fill="#203a5f">回転するBlade</text>
+<text x="250" y="187" text-anchor="middle" font-size="14" font-weight="700" fill="#203a5f">重複中心</text>
+<text x="250" y="342" text-anchor="middle" font-size="15" fill="#607086">中心領域を毎回取得 → Blade間の比較が可能</text>
+</svg>
+</div>
+</div>
+
+<h3>2-2. 並進と回転は、フーリエ変換後に「違う姿」で現れる</h3>
+<p>ここがPROPELLERの理論の核です。実空間画像を <i>f(r)</i>、そのフーリエ変換を <i>F(k)</i> とします。</p>
+<div class="grid2">
+<div class="card">
+<span class="badge b-green">並進</span>
+<h3>物体が Δr だけ平行移動</h3>
+<div class="eq">f(r − Δr) ⇔ F(k) · e<sup>−i2π k·Δr</sup></div>
+<p><b>重要：</b>移動はk空間の<b>位相</b>に線形な傾きを与えますが、マグニチュード |F(k)| は変えません。</p>
+<p class="muted">→ 位置ずれを知りたいなら「位相差の傾き」を調べればよい。</p>
+</div>
+<div class="card">
+<span class="badge b-purple">回転</span>
+<h3>物体が Rθ 回転</h3>
+<div class="eq">f(R<sub>θ</sub><sup>−1</sup>r) ⇔ F(R<sub>θ</sub><sup>−1</sup>k)</div>
+<p><b>重要：</b>実空間で回転すれば、k空間の模様も同じ回転関係を持ちます。</p>
+<p class="muted">→ Bladeの中心データの形を比較すれば、回転角を見つけられる。</p>
+</div>
+</div>
+
+<h3>2-3. なぜ「回転を先、並進を後」に推定できるのか</h3>
+<div class="flow">
+ <div class="step"><strong>① |F(k)| を比較</strong>並進は位相にしか出ないので、マグニチュード比較では並進の影響を受けにくい</div>
+ <div class="step"><strong>② 回転角 θ を推定</strong>中心領域の相互相関などからBladeの向きのズレを求める</div>
+ <div class="step"><strong>③ Bladeを逆回転</strong>サンプリング座標を基準方向へ揃える</div>
+ <div class="step"><strong>④ 位相差を解析</strong>Δφ(k)=2πk·Δr の傾きから並進量を求める</div>
+ <div class="step"><strong>⑤ 逆位相を乗算</strong>e<sup>+i2πk·Δr</sup> を掛けて並進を打ち消す</div>
+</div>
+
+<div class="svgbox" style="margin-top:16px">
+<svg viewBox="0 0 1040 290">
+<defs><marker id="b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#1769aa"/></marker></defs>
+<rect x="25" y="35" width="170" height="110" rx="16" fill="#eef6fd" stroke="#1769aa"/>
+<text x="110" y="70" text-anchor="middle" font-size="18" font-weight="700">Blade A</text><text x="110" y="100" text-anchor="middle" font-size="15">基準</text>
+<rect x="25" y="170" width="170" height="85" rx="16" fill="#fff4e8" stroke="#c96a18"/>
+<text x="110" y="205" text-anchor="middle" font-size="18" font-weight="700">Blade B</text><text x="110" y="232" text-anchor="middle" font-size="15">回転＋並進</text>
+<line x1="215" y1="145" x2="325" y2="145" stroke="#1769aa" stroke-width="3" marker-end="url(#b)"/>
+<rect x="335" y="82" width="190" height="126" rx="16" fill="#ecf8f1" stroke="#2f855a"/>
+<text x="430" y="118" text-anchor="middle" font-size="17" font-weight="700">マグニチュード相関</text>
+<text x="430" y="150" text-anchor="middle" font-size="15">→ 回転角 θ</text>
+<text x="430" y="180" text-anchor="middle" font-size="14" fill="#607086">並進由来の位相を切り離す</text>
+<line x1="535" y1="145" x2="625" y2="145" stroke="#1769aa" stroke-width="3" marker-end="url(#b)"/>
+<rect x="635" y="82" width="165" height="126" rx="16" fill="#f1edff" stroke="#6c4ccf"/>
+<text x="718" y="118" text-anchor="middle" font-size="17" font-weight="700">逆回転</text>
+<text x="718" y="150" text-anchor="middle" font-size="15">向きを揃える</text>
+<line x1="810" y1="145" x2="875" y2="145" stroke="#1769aa" stroke-width="3" marker-end="url(#b)"/>
+<rect x="885" y="70" width="130" height="150" rx="16" fill="#fff0f0" stroke="#c13f3f"/>
+<text x="950" y="105" text-anchor="middle" font-size="16" font-weight="700">位相差</text>
+<text x="950" y="135" text-anchor="middle" font-size="14">→ Δr</text>
+<text x="950" y="165" text-anchor="middle" font-size="14">逆位相を乗算</text>
+<text x="950" y="195" text-anchor="middle" font-size="14">並進補正</text>
+</svg>
+</div>
+
+<h3>2-4. 面外運動が苦手な理由</h3>
+<div class="card">
+<p>PROPELLERの基本的な自己補正は「同じ2D撮像面内に存在する構造」がBladeごとにどう移動・回転したかを利用します。ところが患者が<b>スライス面外</b>へ動くと、そもそも撮像断面に含まれる組織が変わります。</p>
+<div class="eq">同じ物体の「位置が変わった」 ≠ 別の断面の「内容が変わった」</div>
+<p>この場合、単純な2D剛体変換では一致させられません。資料では、中心データの相関が低いBladeの重みを下げたり破棄したりすることで、全体の画質悪化を抑えると説明されています。</p>
+</div>
+</section>
+
+<section>
+<h2>3. 3D PROMO：なぜ「座標系を追従」させると動きを防げるのか</h2>
+<p>3D PROMOでは頭部を「変形しない剛体」とみなし、3次元位置と姿勢を<b>6自由度</b>で表します。</p>
+
+<div class="grid2">
+<div class="card">
+<h3>3-1. 剛体6自由度</h3>
+<table>
+<tr><th>種類</th><th>パラメータ</th><th>意味</th></tr>
+<tr><td>並進</td><td>T<sub>x</sub>, T<sub>y</sub>, T<sub>z</sub></td><td>左右・前後・上下方向への移動</td></tr>
+<tr><td>回転</td><td>R<sub>x</sub>, R<sub>y</sub>, R<sub>z</sub></td><td>Pitch・Roll・Yawに相当する姿勢変化</td></tr>
+</table>
+<div class="callout">頭全体が硬い塊として動くなら、この6つが分かれば「現在の頭部座標」を記述できます。</div>
+</div>
+<div class="svgbox">
+<svg viewBox="0 0 500 390">
+<ellipse cx="250" cy="190" rx="90" ry="115" fill="#edf4fa" stroke="#203a5f" stroke-width="3"/>
+<circle cx="220" cy="168" r="6" fill="#203a5f"/><circle cx="280" cy="168" r="6" fill="#203a5f"/>
+<path d="M220 225 Q250 245 280 225" fill="none" stroke="#203a5f" stroke-width="3"/>
+<line x1="250" y1="190" x2="410" y2="190" stroke="#1769aa" stroke-width="4"/>
+<line x1="250" y1="190" x2="250" y2="40" stroke="#2f855a" stroke-width="4"/>
+<line x1="250" y1="190" x2="120" y2="300" stroke="#c96a18" stroke-width="4"/>
+<text x="420" y="196" fill="#1769aa" font-size="18">Tx</text><text x="258" y="38" fill="#2f855a" font-size="18">Tz</text><text x="90" y="325" fill="#c96a18" font-size="18">Ty</text>
+<path d="M355 120 A80 80 0 0 1 365 250" fill="none" stroke="#6c4ccf" stroke-width="4"/>
+<path d="M160 75 A110 70 0 0 1 335 75" fill="none" stroke="#c13f3f" stroke-width="4"/>
+<path d="M120 210 A90 90 0 0 0 190 320" fill="none" stroke="#0f8f9d" stroke-width="4"/>
+<text x="370" y="115" fill="#6c4ccf" font-size="16">Rx</text><text x="240" y="63" fill="#c13f3f" font-size="16">Rz</text><text x="115" y="205" fill="#0f8f9d" font-size="16">Ry</text>
+<text x="250" y="370" text-anchor="middle" font-size="15" fill="#607086">3並進 + 3回転 = 6自由度</text>
+</svg>
+</div>
+</div>
+
+<h3>3-2. Navigator → 位置推定 → 次の撮像座標を更新</h3>
+<div class="timeline">
+<div class="t">Step 1</div><div class="d"><b>Reference</b>：撮像開始時の基準位置を決める。</div>
+<div class="t">Step 2</div><div class="d"><b>3D Navigator</b>：本スキャンの合間に高速・低分解能の位置情報を取得する。</div>
+<div class="t">Step 3</div><div class="d"><b>Registration</b>：Referenceと現在のNavigatorを照合し、6自由度の変位を推定する。</div>
+<div class="t">Step 4</div><div class="d"><b>Prospective update</b>：次に取得するRF・勾配磁場の設定を更新する。</div>
+<div class="t">Step 5</div><div class="d"><b>Rescan判定</b>：収集中に閾値を超える動きがあれば、そのデータを無効化し同じ部分を再収集する。</div>
+</div>
+
+<h3>3-3. 「座標を追従する」とは、具体的に何を変えるのか</h3>
+<div class="grid2">
+<div class="card">
+<span class="badge b-blue">並進への追従</span>
+<h3>励起位置をずらす</h3>
+<p>資料では、送信RFの中心周波数や受信位相を調整し、励起スライス／スラブの位置を動いた頭部へ追従させる考え方が示されています。</p>
+<div class="eq">頭部が +Δz 移動 → 次の励起スラブも +Δz 側へ</div>
+</div>
+<div class="card">
+<span class="badge b-purple">回転への追従</span>
+<h3>勾配磁場ベクトルを回す</h3>
+<p>X・Y・Z物理勾配を組み合わせて、スライス選択・位相エンコード・読み出し軸の方向を回転行列に従って更新します。</p>
+<div class="eq">G′ = R · G</div>
+<p class="muted">Gは論理的な撮像軸、Rは推定された回転に対応する変換。</p>
+</div>
+</div>
+
+<div class="callout"><b>本質：</b>「患者を元の位置へ戻す」のではなく、<b>次に使うMRIの論理座標系を現在の患者位置へ合わせる</b>ことで、患者から見れば同じ断面・同じVolumeを撮り続ける状態を作ります。</div>
+
+<h3>3-4. なぜリスキャンが必要なのか</h3>
+<div class="card">
+<p>Prospective correctionは「Navigatorで位置を測った時点」から「次のNavigatorまで」の間に位置が変わらないことを暗黙に期待します。しかし実際には<b>データ収集ブロックの最中</b>に頭が動くことがあります。</p>
+<div class="eq">Navigator前：正しい位置　→　収集中：動く　→　Navigator後：ズレを検出</div>
+<p>このとき、その収集ブロックは複数の位置が混ざった不整合データです。そこで資料では、前後Navigatorの比較で閾値を超えた場合、データを破棄し、同じ部分を再収集すると説明されています。</p>
+</div>
+</section>
+
+<section>
+<h2>4. Retrospective と Prospective を時間軸で比較</h2>
+<div class="svgbox">
+<svg viewBox="0 0 1040 400">
+<line x1="100" y1="125" x2="970" y2="125" stroke="#9aabbd" stroke-width="3"/>
+<text x="25" y="130" font-size="19" font-weight="700" fill="#1769aa">PROPELLER</text>
+<g fill="#5fa6df">
+<rect x="130" y="95" width="110" height="60" rx="8"/><rect x="255" y="95" width="110" height="60" rx="8"/><rect x="380" y="95" width="110" height="60" rx="8"/><rect x="505" y="95" width="110" height="60" rx="8"/><rect x="630" y="95" width="110" height="60" rx="8"/>
+</g>
+<text x="435" y="83" text-anchor="middle" font-size="15" fill="#607086">Bladeを順次収集</text>
+<path d="M740 125 C810 125 825 185 875 190" fill="none" stroke="#1769aa" stroke-width="4"/>
+<rect x="860" y="165" width="130" height="55" rx="10" fill="#eaf4ff" stroke="#1769aa"/>
+<text x="925" y="198" text-anchor="middle" font-size="15" font-weight="700">後で補正</text>
+
+<line x1="100" y1="305" x2="970" y2="305" stroke="#9aabbd" stroke-width="3"/>
+<text x="25" y="310" font-size="19" font-weight="700" fill="#6c4ccf">PROMO</text>
+<g>
+<rect x="130" y="270" width="70" height="70" rx="8" fill="#d8cffb"/><text x="165" y="313" text-anchor="middle" font-size="13">Nav</text>
+<rect x="215" y="280" width="110" height="50" rx="8" fill="#927fe0"/><text x="270" y="312" text-anchor="middle" font-size="13" fill="white">Data</text>
+<rect x="340" y="270" width="70" height="70" rx="8" fill="#d8cffb"/><text x="375" y="313" text-anchor="middle" font-size="13">Nav</text>
+<rect x="425" y="280" width="110" height="50" rx="8" fill="#927fe0"/><text x="480" y="312" text-anchor="middle" font-size="13" fill="white">Data</text>
+<rect x="550" y="270" width="70" height="70" rx="8" fill="#d8cffb"/><text x="585" y="313" text-anchor="middle" font-size="13">Nav</text>
+<rect x="635" y="280" width="110" height="50" rx="8" fill="#e7aaaa"/><text x="690" y="312" text-anchor="middle" font-size="13">動き大</text>
+<rect x="760" y="270" width="70" height="70" rx="8" fill="#d8cffb"/><text x="795" y="313" text-anchor="middle" font-size="13">Nav</text>
+<rect x="845" y="280" width="110" height="50" rx="8" fill="#927fe0"/><text x="900" y="312" text-anchor="middle" font-size="13" fill="white">Rescan</text>
+</g>
+<text x="520" y="375" text-anchor="middle" font-size="15" fill="#607086">測る → 座標更新 → 撮る → 動き過大なら捨てて撮り直す</text>
+</svg>
+</div>
+</section>
+
+<section>
+<h2>5. 実務で迷わない比較表</h2>
+<table>
+<tr><th>項目</th><th>PROPELLER</th><th>3D PROMO</th></tr>
+<tr><td>思想</td><td><span class="pro">撮った後に整える</span></td><td><span class="promo">撮る前に追従する</span></td></tr>
+<tr><td>補正タイミング</td><td>Retrospective</td><td>Prospective ＋ Rescan</td></tr>
+<tr><td>動き検出</td><td>各Bladeが共有するk空間中心</td><td>リアルタイム3D Navigator</td></tr>
+<tr><td>数学モデル</td><td>フーリエシフト則・回転関係・相関</td><td>3D剛体6自由度＋座標変換</td></tr>
+<tr><td>主に扱う動き</td><td>面内並進・面内回転</td><td>3D並進3軸＋回転3軸</td></tr>
+<tr><td>不良データ</td><td>重みを下げる／除外して再構成</td><td>破棄して再収集</td></tr>
+<tr><td>撮像時間</td><td>基本的に予定時間内</td><td>体動が多いほど再収集分だけ延長</td></tr>
+<tr><td>資料記載の代表例</td><td>主に2D FSE、FLAIR、DWIなど</td><td>3D CUBE、BRAVO、MP-RAGEなど</td></tr>
+<tr><td>原理的な弱点</td><td>面外運動・大きな断面内容変化</td><td>非剛体変形、Navigator間の急激な運動、再スキャンによる時間延長</td></tr>
+</table>
+</section>
+
+<section>
+<h2>6. 初学者向け「1つの例」で理解する</h2>
+<div class="grid2">
+<div class="card">
+<h3>PROPELLERの場合</h3>
+<p>頭が右へ3 mm動き、さらに少し回転したとします。</p>
+<ol>
+<li>Blade AとBの中心データを比較。</li>
+<li>まずマグニチュードの形から回転ズレを推定。</li>
+<li>Blade Bを逆回転。</li>
+<li>次に複素位相差の傾きから3 mmの並進を推定。</li>
+<li>逆位相をかけて整列。</li>
+<li>他のBladeと合成して画像を再構成。</li>
+</ol>
+<p><b>発想：</b>「動いて取得されたデータを、数学で元の座標へ戻す」。</p>
+</div>
+<div class="card">
+<h3>3D PROMOの場合</h3>
+<p>頭が右へ3 mm動き、さらに少し回転したとします。</p>
+<ol>
+<li>Navigatorが現在の位置・姿勢を検出。</li>
+<li>Referenceとの差から6自由度の変換を計算。</li>
+<li>次の励起スラブ位置と勾配軸を更新。</li>
+<li>患者から見て同じ3D Volumeを続けて収集。</li>
+<li>収集中に急に動きすぎたブロックは破棄。</li>
+<li>同じブロックをRescan。</li>
+</ol>
+<p><b>発想：</b>「患者が動いたら、MRIの撮像座標を追いかけさせる」。</p>
+</div>
+</div>
+</section>
+
+<section>
+<h2>7. 理論から自然に導ける「使い分け」の考え方</h2>
+<div class="grid3">
+<div class="card"><h3>短時間の2D撮像</h3><p>中心を毎回通るBlade構造から自己補正できるPROPELLERの考え方と相性がよい。特に面内運動に対して理屈が明快です。</p></div>
+<div class="card"><h3>高精細3D Volume</h3><p>Volume全体の位置・姿勢を保つ必要があるため、6自由度で追従するPROMOの理屈が適しています。</p></div>
+<div class="card"><h3>体動が非常に多い場合</h3><p>PROMOはRescanが増え、撮像時間が動的に延びます。PROPELLERは時間を固定しやすい一方、面外運動の限界を意識します。</p></div>
+</div>
+<div class="callout warn"><b>注意：</b>本ページはアップロード資料の説明を中心に、理解しやすいよう数式・座標変換の意味を補足した教材です。実際に選択可能なシーケンス、Navigatorの挿入タイミング、併用制約、設定値は装置のソフトウェアバージョンやシーケンス実装で変わり得るため、実機操作ではGEの当該バージョンの一次資料で確認してください。</div>
+</section>
+
+<section>
+<h2>8. 最後に：2つを一文で説明できれば理解できている</h2>
+<div class="grid2">
+<div class="card" style="border-top:5px solid #1769aa">
+<h3>PROPELLER</h3>
+<p style="font-size:19px"><b>k空間中心の重複データを自己Navigatorとして使い、フーリエ変換における「並進＝位相」「回転＝k空間の回転」という性質から運動を逆算し、収集後にBladeを整えて再構成する。</b></p>
+</div>
+<div class="card" style="border-top:5px solid #6c4ccf">
+<h3>3D PROMO</h3>
+<p style="font-size:19px"><b>3D Navigatorから頭部の6自由度運動をリアルタイム推定し、RF・勾配磁場で定義される撮像座標を患者へ追従させ、動き過大なデータは破棄・再収集する。</b></p>
+</div>
+</div>
+</section>
+
+<div class="footer">
+<p>作成基礎：ユーザー提供資料「PROPELLERとPROMOの本質的な理屈の違い」「GEのMRIにおける代表的な体動補正技術であるPROPELLERとPROMO」。</p>
+<p>このHTMLは単体で閲覧でき、図はすべてインラインSVGで埋め込まれています。</p>
+</div>
+</main>
+</body>
+</html>

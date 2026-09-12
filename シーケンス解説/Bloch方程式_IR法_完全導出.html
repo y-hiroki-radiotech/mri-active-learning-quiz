@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bloch方程式から反転回復（IR）法の式を完全導出</title>
+<style>
+@page{size:A4;margin:14mm}
+:root{--ink:#172033;--muted:#5f6b7a;--line:#dce3ea;--soft:#f5f8fb;--accent:#2457a7;--accent2:#7a3fb0;--good:#147d64}
+*{box-sizing:border-box} body{margin:0;background:#eef2f6;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;line-height:1.78}
+main{max-width:960px;margin:28px auto;background:white;padding:44px 54px;box-shadow:0 8px 30px #0001}
+h1{font-size:2rem;line-height:1.35;margin:0 0 8px} h2{margin-top:2.2em;border-left:6px solid var(--accent);padding-left:14px} h3{margin-top:1.6em}
+.lead{font-size:1.08rem;color:#39465a}.box{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:18px 0}
+.key{background:#eef6ff;border-color:#b8d4f5}.meaning{background:#f4f0fb;border-color:#d6c5eb}.result{background:#eef9f5;border-color:#b9e1d4}
+.eq{font-family:"Times New Roman",serif;font-size:1.25rem;text-align:center;padding:13px 8px;margin:8px 0;overflow-x:auto}
+.small{font-size:.92rem;color:var(--muted)} table{border-collapse:collapse;width:100%;margin:18px 0;font-size:.95rem} th,td{border:1px solid var(--line);padding:10px;vertical-align:top}th{background:#edf3f9}
+.step{display:inline-block;background:var(--accent);color:white;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.82rem}
+svg{max-width:100%;height:auto;display:block;margin:10px auto}.caption{text-align:center;color:var(--muted);font-size:.9rem}
+code{background:#f1f3f5;padding:2px 5px;border-radius:4px}
+@media print{body{background:white}main{box-shadow:none;margin:0;max-width:none;padding:0}h2{break-after:avoid}.box,table,svg{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>Bloch方程式から反転回復（IR）法の式を完全導出</h1>
+<p class="lead">縦緩和の微分方程式を「なぜこの形なのか」から始め、変数分離、積分、指数関数への変形、初期条件の適用まで一段ずつ追い、最終的に <b>M<sub>z</sub>(t)=M<sub>0</sub>(1−2e<sup>−t/T1</sup>)</b> が現れる理由を理解します。</p>
+
+<h2>1. 出発点：Bloch方程式の縦成分</h2>
+<p>静磁場 B<sub>0</sub> を z 方向に取ると、RFパルス後の縦磁化 M<sub>z</sub> は熱平衡値 M<sub>0</sub> に戻ろうとします。その回復を表すBloch方程式の縦成分は、</p>
+<div class="eq">dM<sub>z</sub>/dt = −(M<sub>z</sub>−M<sub>0</sub>)/T1</div>
+<p>です。同じ式を符号の意味が見えやすいように書けば、</p>
+<div class="eq">dM<sub>z</sub>/dt = (M<sub>0</sub>−M<sub>z</sub>)/T1</div>
+<div class="box key">
+<b>各量の意味</b><br>
+M<sub>z</sub>(t)：時刻 t の縦磁化 ／ M<sub>0</sub>：熱平衡時の縦磁化 ／ T1：縦緩和時間。<br>
+右辺の M<sub>0</sub>−M<sub>z</sub> は「現在地からゴール M<sub>0</sub> まで、あとどれだけ離れているか」を表します。差が大きいほど回復速度は大きく、M<sub>z</sub> が M<sub>0</sub> に近づくほど速度は0へ近づきます。
+</div>
+<p>例えば IR 直後は M<sub>z</sub>=−M<sub>0</sub> なので、初期回復速度は</p>
+<div class="eq">dM<sub>z</sub>/dt |<sub>t=0</sub> = {M<sub>0</sub>−(−M<sub>0</sub>)}/T1 = 2M<sub>0</sub>/T1</div>
+<p>となります。ここですでに「−M<sub>0</sub> から +M<sub>0</sub> までの差が 2M<sub>0</sub>」であることが見えています。</p>
+
+<h2>2. 微分方程式を変数分離法で解く</h2>
+<h3><span class="step">Step 1</span> M<sub>z</sub> と t を左右に分ける</h3>
+<p>出発式</p>
+<div class="eq">dM<sub>z</sub>/dt = −(M<sub>z</sub>−M<sub>0</sub>)/T1</div>
+<p>の両辺に dt を掛けると、</p>
+<div class="eq">dM<sub>z</sub> = −(M<sub>z</sub>−M<sub>0</sub>)/T1 · dt</div>
+<p>さらに両辺を M<sub>z</sub>−M<sub>0</sub> で割ります。</p>
+<div class="eq">dM<sub>z</sub>/(M<sub>z</sub>−M<sub>0</sub>) = −dt/T1</div>
+<p>これで左辺は M<sub>z</sub> だけ、右辺は t だけになりました。これが「変数分離」です。</p>
+
+<h3><span class="step">Step 2</span> 両辺を積分する</h3>
+<div class="eq">∫ dM<sub>z</sub>/(M<sub>z</sub>−M<sub>0</sub>) = ∫ −dt/T1</div>
+<p>左辺では u=M<sub>z</sub>−M<sub>0</sub> と置けば du=dM<sub>z</sub> なので、基本公式 ∫du/u=ln|u| を使えます。</p>
+<div class="eq">ln|M<sub>z</sub>−M<sub>0</sub>| = −t/T1 + C<sub>1</sub></div>
+<div class="box meaning">
+<b>なぜ絶対値が付くのか：</b> ln x は x&gt;0 で定義されますが、IR直後は M<sub>z</sub>−M<sub>0</sub>=−2M<sub>0</sub>&lt;0 です。そこで積分結果は ln|M<sub>z</sub>−M<sub>0</sub>| と書く必要があります。
+</div>
+
+<h3><span class="step">Step 3</span> 対数を外す</h3>
+<p>両辺を e の指数にします。</p>
+<div class="eq">e<sup>ln|M<sub>z</sub>−M<sub>0</sub>|</sup> = e<sup>−t/T1+C₁</sup></div>
+<div class="eq">|M<sub>z</sub>−M<sub>0</sub>| = e<sup>C₁</sup>e<sup>−t/T1</sup></div>
+<p>絶対値を外すと ± が生じますが、±e<sup>C₁</sup> は時刻によらない一つの定数なので、まとめて C と置けます。</p>
+<div class="eq">M<sub>z</sub>−M<sub>0</sub> = C e<sup>−t/T1</sup></div>
+<p>したがって一般解は、</p>
+<div class="eq"><b>M<sub>z</sub>(t)=M<sub>0</sub>+C e<sup>−t/T1</sup></b></div>
+<p>です。指数項は時間とともに0へ減衰するので、t→∞ では必ず M<sub>z</sub>→M<sub>0</sub> となります。つまり、この一般解そのものが「平衡値との差が指数関数的に消える」ことを表しています。</p>
+
+<h2>3. 初期条件を一般化すると本質が見える</h2>
+<p>t=0 の縦磁化を M<sub>z</sub>(0) とします。一般解へ t=0 を代入すると、e<sup>0</sup>=1 なので、</p>
+<div class="eq">M<sub>z</sub>(0)=M<sub>0</sub>+C</div>
+<div class="eq">∴ C=M<sub>z</sub>(0)−M<sub>0</sub></div>
+<p>よって縦緩和の最も一般的な形は、</p>
+<div class="eq"><b>M<sub>z</sub>(t)=M<sub>0</sub>+[M<sub>z</sub>(0)−M<sub>0</sub>]e<sup>−t/T1</sup></b></div>
+<div class="box key">C は「初期値 − 平衡値」です。言い換えると、平衡値から見た初期偏差を表します。その偏差だけが e<sup>−t/T1</sup> に従って消えていきます。</div>
+
+<h2>4. 180°反転パルスを入れると「2」が出る</h2>
+<p>理想的な180°RFパルスでは、パルス直前の +M<sub>0</sub> が z 軸の反対側へ完全に反転します。</p>
+<div class="eq">M<sub>z</sub>(0)=−M<sub>0</sub></div>
+<p>したがって積分定数は、</p>
+<div class="eq">C=M<sub>z</sub>(0)−M<sub>0</sub>=−M<sub>0</sub>−M<sub>0</sub>=−2M<sub>0</sub></div>
+<p>これを一般解へ代入すると、</p>
+<div class="eq">M<sub>z</sub>(t)=M<sub>0</sub>−2M<sub>0</sub>e<sup>−t/T1</sup></div>
+<p>M<sub>0</sub> でくくれば、</p>
+<div class="box result"><div class="eq"><b>M<sub>z</sub>(t)=M<sub>0</sub>(1−2e<sup>−t/T1</sup>)</b></div></div>
+
+<svg viewBox="0 0 760 300" role="img" aria-label="IR縦磁化回復曲線">
+<line x1="70" y1="145" x2="720" y2="145" stroke="#9aa5b1"/><line x1="70" y1="30" x2="70" y2="270" stroke="#9aa5b1"/>
+<line x1="70" y1="45" x2="720" y2="45" stroke="#ccd5df" stroke-dasharray="5 5"/>
+<text x="15" y="50" font-size="16">+M₀</text><text x="25" y="150" font-size="16">0</text><text x="15" y="255" font-size="16">−M₀</text>
+<path d="M70,250 C120,185 165,135 220,100 C300,55 430,47 720,45" fill="none" stroke="#2457a7" stroke-width="4"/>
+<text x="620" y="80" font-size="16">→ M₀</text><text x="82" y="236" font-size="15">180°直後</text>
+<text x="690" y="165" font-size="16">t</text><text x="78" y="24" font-size="16">Mz</text>
+</svg>
+<p class="caption">IRでは −M₀ から出発し、0を通過して +M₀ に漸近する。</p>
+
+<h2>5. なぜ飽和回復は「1」、IRは「2」なのか</h2>
+<table>
+<tr><th>項目</th><th>飽和回復（理想的に Mz=0）</th><th>反転回復（180°）</th></tr>
+<tr><td>t=0 の初期値</td><td>0</td><td>−M₀</td></tr>
+<tr><td>t→∞ のゴール</td><td>+M₀</td><td>+M₀</td></tr>
+<tr><td>初期値−平衡値</td><td>−M₀</td><td>−2M₀</td></tr>
+<tr><td>C</td><td>−M₀</td><td>−2M₀</td></tr>
+<tr><td>回復式</td><td>M₀(1−e<sup>−t/T1</sup>)</td><td>M₀(1−2e<sup>−t/T1</sup>)</td></tr>
+</table>
+<p>つまり「2」はBloch方程式そのものに特別に埋め込まれている数字ではありません。<b>180°パルスによって初期値が −M₀ になったという初期条件</b>から生じます。−M₀ から +M₀ までの全幅が 2M₀ であるため、初期偏差 C が −2M₀ になるのです。</p>
+
+<h2>6. T1の意味を式から読む</h2>
+<p>T1 は「平衡値との差」が 1/e ≈ 0.368 倍になる時間です。IRでは初期偏差が −2M₀ なので、t=T1 では、</p>
+<div class="eq">M<sub>z</sub>(T1)=M<sub>0</sub>(1−2/e) ≈ 0.264M<sub>0</sub></div>
+<p>また M<sub>z</sub>=0 となる時刻（null point）は、</p>
+<div class="eq">0=1−2e<sup>−t/T1</sup> → e<sup>−t/T1</sup>=1/2 → <b>t=T1 ln2 ≈0.693T1</b></div>
+<p>IR法で特定組織の信号を抑制する考え方（STIRやFLAIR）は、この「縦磁化が0を横切る時刻」を利用することにつながります。</p>
+
+<h2>7. 最終チェック：式が物理的に正しいか</h2>
+<div class="box result">
+<b>t=0：</b> M<sub>z</sub>=M<sub>0</sub>(1−2)=−M<sub>0</sub> → 180°直後の条件と一致。<br>
+<b>t→∞：</b> e<sup>−t/T1</sup>→0 なので M<sub>z</sub>→M<sub>0</sub> → 熱平衡へ回復。<br>
+<b>途中：</b> M<sub>z</sub>&lt;M<sub>0</sub> の間は dM<sub>z</sub>/dt&gt;0 → 縦磁化は常に +M<sub>0</sub> 方向へ回復。
+</div>
+
+<h2>まとめ</h2>
+<p>Bloch方程式の縦緩和は「平衡値との差が大きいほど速く戻る」という一次の緩和過程です。変数分離と積分によって一般解 <b>M<sub>z</sub>(t)=M<sub>0</sub>+[M<sub>z</sub>(0)−M<sub>0</sub>]e<sup>−t/T1</sup></b> が得られ、IRでは M<sub>z</sub>(0)=−M<sub>0</sub> を代入するだけで係数 −2M<sub>0</sub> が決まります。したがって「2」の正体は、180°反転によって生じた <b>−M₀から+M₀までの2M₀の初期偏差</b>です。</p>
+<p class="small">※ 理想的な瞬時180°パルス、完全な反転、RF直前に熱平衡 M₀ にあることを仮定した基本式です。実際の撮像では反転効率、TR、読み出しパルスなどの影響を考慮する場合があります。</p>
+</main></body></html>

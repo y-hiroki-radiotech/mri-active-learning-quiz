@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRI復習教材：MUSE（Multiplexed Sensitivity Encoding）の数理と臨床</title>
+  <style>
+    /* CSS Reset & Global Layout */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      line-height: 1.65;
+      color: #24292e;
+      background-color: #f6f8fa;
+      padding: 24px 16px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Card System */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-bottom: 2px solid #eaecef;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon {
+      display: inline-block;
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: -0.2em;
+    }
+
+    /* Score Summary Top Card */
+    .score-card {
+      border-top: 6px solid #0366d6;
+      background: linear-gradient(180deg, #f1f8ff 0%, #ffffff 100px);
+    }
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .score-badge {
+      background: #ffffff;
+      border: 1px solid #d1d5da;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    .score-badge .label {
+      font-size: 0.85rem;
+      color: #586069;
+      margin-bottom: 4px;
+    }
+    .score-badge .val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0366d6;
+    }
+    .eval-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .eval-box {
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .eval-box.success {
+      background: #dcffe4;
+      border-left: 4px solid #28a745;
+      color: #155724;
+    }
+    .eval-box.warning {
+      background: #fffbdd;
+      border-left: 4px solid #f66a0a;
+      color: #735c0f;
+    }
+    .eval-box.danger {
+      background: #ffeef0;
+      border-left: 4px solid #d73a49;
+      color: #86181d;
+    }
+
+    /* Concept & Principle Sections */
+    .highlight-card {
+      border-left: 4px solid #0366d6;
+    }
+    .attention-card {
+      border-left: 4px solid #f66a0a;
+    }
+    .math-card {
+      background: #fafbfc;
+      border: 1px solid #e1e4e8;
+    }
+
+    /* MathML and SVG Container */
+    .formula-container {
+      margin: 16px 0;
+      padding: 16px;
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      overflow-x: auto;
+      text-align: center;
+    }
+    math {
+      font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", serif;
+      font-size: 1.15rem;
+    }
+
+    /* Responsive Figures & SVG */
+    .svg-wrapper {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0;
+    }
+    .svg-wrapper svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .figure-caption {
+      font-size: 0.85rem;
+      color: #586069;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* Controls for Stepper UI */
+    .stepper-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0 16px 0;
+    }
+    .btn {
+      appearance: none;
+      background: #fafbfc;
+      border: 1px solid #d1d5da;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #24292e;
+    }
+    .btn:hover {
+      background: #f3f4f6;
+      border-color: #c0c4c8;
+    }
+    .btn:active {
+      background: #edeff2;
+    }
+    .btn.primary {
+      background: #0366d6;
+      color: #ffffff;
+      border-color: #0366d6;
+    }
+    .btn.primary:hover {
+      background: #0256b9;
+    }
+
+    /* Responsive Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      text-align: left;
+    }
+    th, td {
+      border: 1px solid #e1e4e8;
+      padding: 10px 14px;
+    }
+    th {
+      background: #f6f8fa;
+      font-weight: 700;
+    }
+    tr:nth-child(even) {
+      background-color: #fafbfc;
+    }
+
+    /* Interactive Stepper Details */
+    .step-display {
+      min-height: 50px;
+      padding: 12px 16px;
+      background: #f1f8ff;
+      border: 1px solid #c8e1ff;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #0366d6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    /* Print / PDF Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        padding: 0;
+      }
+      .card, .score-card {
+        box-shadow: none;
+        border: 1px solid #666666;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+      }
+      .btn, .stepper-controls {
+        display: none !important;
+      }
+      .formula-container {
+        border: 1px solid #999999;
+        background: #ffffff;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 8. 採点サマリー (Score Summary) -->
+  <header class="card score-card">
+    <h1 class="card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+      復習採点サマリー：MUSE（Multiplexed Sensitivity Encoding）
+    </h1>
+    <div class="score-grid">
+      <div class="score-badge">
+        <div class="label">得点 / 判定</div>
+        <div class="val">85点 / <span style="color:#28a745;">合格 (Good)</span></div>
+      </div>
+      <div class="score-badge">
+        <div class="label">学習優先度</div>
+        <div class="val" style="color:#d73a49;">優先度：中</div>
+      </div>
+      <div class="score-badge">
+        <div class="label">理解度状況</div>
+        <div class="val" style="color:#0366d6;">数理モデリング要復習</div>
+      </div>
+    </div>
+    <div class="eval-row">
+      <div class="eval-box success">
+        <strong>正答・正しく理解できた点：</strong>
+        3.0Tの高磁場でss-EPIのETL延長に伴い幾何学的歪みとボケ（T2*減衰）が倍増すること、およびマルチショット分割により実効バンド幅が拡張して歪みが激減する臨床利点を正確に把握しています。
+      </div>
+      <div class="eval-box warning">
+        <strong>最大の修正点：</strong>
+        MUSEが「ナビゲーターパルスを用いずに」位相誤差を補正する具体的メカニズムにおいて、SENSE展開による粗いショット画像の複素割当から位相誤差マップを自己推定する数理ステップの区別を明確にする必要があります。
+      </div>
+      <div class="eval-box danger">
+        <strong>根本的誤概念：</strong>
+        「MUSEは被写体のあらゆる体動を補正できる」という誤解に注意。補正対象は心拍動・脳実質拍動に伴う局所非線形位相シフトであり、頭部全体の大きな剛体運動（体動）では逆問題の行列演算が破綻します。
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. MUSEの背景：なぜ3T DWIでMUSEが必要なのか -->
+  <section class="card highlight-card">
+    <h2 class="card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      1. 3.0T DWIの物理的課題とMUSEの必然性
+    </h2>
+    <p>
+      3.0T MRIは1.5Tと比較して優れたSNR（信号雑音比）を提供しますが、静磁場不均一（<math><mi>&Delta;</mi><msub><mi>B</mi><mn>0</mn></msub></math>）や空気・組織境界（錐体骨や副鼻腔周辺）での局所磁化率較差が約2倍に拡大します。
+    </p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>撮像法</th>
+            <th>エコートレイン長 (ETL)</th>
+            <th>実効バンド幅 (<math><mi>B</mi><msub><mi>W</mi><mi>eff, PE</mi></msub></math>)</th>
+            <th>幾何学的歪み・ボケ</th>
+            <th>体動位相アーチファクト</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>シングルショットEPI (ss-EPI)</strong></td>
+            <td>極めて長い（全k空間充填）</td>
+            <td>非常に低い（数十 Hz/pixel）</td>
+            <td><strong>極めて大きい（3Tで重篤）</strong></td>
+            <td>絶対値化により相殺（無影響）</td>
+          </tr>
+          <tr>
+            <td><strong>従来のms-EPI（補正なし）</strong></td>
+            <td>短縮（<math><mn>1</mn><mo>/</mo><mi>N</mi></math>に分割）</td>
+            <td>向上（ショット数倍に向上）</td>
+            <td>劇的に低減</td>
+            <td><strong>致命的（激しい位相干渉・ゴースト）</strong></td>
+          </tr>
+          <tr>
+            <td><strong>MUSE (ms-EPI + SENSE逆再構成)</strong></td>
+            <td>短縮（高精細マトリクス可能）</td>
+            <td>向上</td>
+            <td><strong>極小（高解像・低歪み）</strong></td>
+            <td><strong>数理的に完全補正・消去</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. 数式解説：物理・数学モデル -->
+  <section class="card math-card">
+    <h2 class="card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 3h15a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-15A1.5 1.5 0 0 1 4.5 3zm5.7 6.3L8.5 7.6 5.8 12l2.7 4.4 1.7-1.7-1.4-2.7 1.4-2.7zm3.6 0l1.4 2.7-1.4 2.7 1.7 1.7 2.7-4.4-2.7-4.4-1.7 1.7z"/></svg>
+      2. 物理・数学モデル：歪みとMUSE正準方程式の定式化
+    </h2>
+
+    <!-- 式1: 歪み量 -->
+    <p><strong>【式1：位相エンコード方向の位置ズレ量（幾何学的歪み）】</strong></p>
+    <div class="formula-container">
+      <math display="block">
+        <mi>&Delta;</mi><mi>y</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mrow><mi>&gamma;</mi><mo>&InvisibleTimes;</mo><mi>&Delta;</mi><msub><mi>B</mi><mn>0</mn></msub><mo>&InvisibleTimes;</mo><mi>FOV</mi></mrow>
+          <mrow><mn>2</mn><mo>&pi;</mo><mo>&InvisibleTimes;</mo><msub><mi>BW</mi><mrow><mi>eff</mi><mo>,</mo><mi>PE</mi></mrow></msub></mrow>
+        </mfrac>
+        <mo>=</mo>
+        <mi>&gamma;</mi><mo>&InvisibleTimes;</mo><mi>&Delta;</mi><msub><mi>B</mi><mn>0</mn></msub><mo>&InvisibleTimes;</mo><msub><mi>ESP</mi><mi>eff</mi></msub><mo>&InvisibleTimes;</mo><mi>FOV</mi>
+      </math>
+    </div>
+    <ul style="margin-left: 20px; font-size: 0.95rem;">
+      <li><strong>記号の定義：</strong><math><mi>&Delta;</mi><mi>y</mi></math>＝空間的変位量 [m]、<math><mi>&gamma;</mi></math>＝磁気回転比 [rad/(s&middot;T)]、<math><mi>&Delta;</mi><msub><mi>B</mi><mn>0</mn></msub></math>＝局所静磁場不均一 [T]、<math><msub><mi>BW</mi><mrow><mi>eff</mi><mo>,</mo><mi>PE</mi></mrow></msub></math>＝位相エンコード方向の実効受信バンド幅 [Hz]、<math><msub><mi>ESP</mi><mi>eff</mi></msub></math>＝実効エコースペーシング [s]。</li>
+      <li><strong>比例・反比例関係：</strong>変位量 <math><mi>&Delta;</mi><mi>y</mi></math> は静磁場不均一 <math><mi>&Delta;</mi><msub><mi>B</mi><mn>0</mn></msub></math> に正比例し、実効バンド幅 <math><msub><mi>BW</mi><mrow><mi>eff</mi><mo>,</mo><mi>PE</mi></mrow></msub></math> に反比例します。</li>
+      <li><strong>変数増減による結果：</strong>マルチショット化（ショット数 <math><mi>N</mi></math>）により実効エコースペーシングが <math><mn>1</mn><mo>/</mo><mi>N</mi></math> となり、実効バンド幅が <math><mi>N</mi></math> 倍に跳ね上がるため、歪み量 <math><mi>&Delta;</mi><mi>y</mi></math> は <math><mn>1</mn><mo>/</mo><mi>N</mi></math> に圧縮されます。</li>
+    </ul>
+
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e1e4e8;">
+
+    <!-- 式2: MUSE結合正準方程式 -->
+    <p><strong>【式2：MUSE再構成正準方程式】</strong></p>
+    <div class="formula-container">
+      <math display="block">
+        <msub><mi mathvariant="bold">d</mi><mrow><mi>m</mi><mo>,</mo><mi>c</mi></mrow></msub>
+        <mo>=</mo>
+        <msub><mi mathvariant="bold">F</mi><mi>m</mi></msub>
+        <mo>&InvisibleTimes;</mo>
+        <mfenced>
+          <mrow>
+            <msub><mi mathvariant="bold">S</mi><mi>c</mi></msub>
+            <mo>&InvisibleTimes;</mo>
+            <msup><mi mathvariant="normal">e</mi><mrow><mi>i</mi><mo>&InvisibleTimes;</mo><msub><mi>&theta;</mi><mi>m</mi></msub></mrow></msup>
+            <mo>&InvisibleTimes;</mo>
+            <mi mathvariant="bold">&rho;</mi>
+          </mrow>
+        </mfenced>
+      </math>
+    </div>
+    <ul style="margin-left: 20px; font-size: 0.95rem;">
+      <li><strong>記号の定義：</strong><math><msub><mi mathvariant="bold">d</mi><mrow><mi>m</mi><mo>,</mo><mi>c</mi></mrow></msub></math>＝第 <math><mi>c</mi></math> コイル・第 <math><mi>m</mi></math> ショットで取得されたk空間間引き信号ベクトル、<math><msub><mi mathvariant="bold">F</mi><mi>m</mi></msub></math>＝間引きフーリエサンプリング演算子、<math><msub><mi mathvariant="bold">S</mi><mi>c</mi></msub></math>＝第 <math><mi>c</mi></math> コイルの既知の空間感度分布行列、<math><msub><mi>&theta;</mi><mi>m</mi></msub><mo>(</mo><mi mathvariant="bold">r</mi><mo>)</mo></math>＝第 <math><mi>m</mi></math> ショット固有の空間的非線形位相誤差マップ、<math><mi mathvariant="bold">&rho;</mi></math>＝再構成すべき真の高分解能拡散強調磁化分布ベクトル。</li>
+      <li><strong>数理的意味：</strong>ショット間位相ズレ <math><msup><mi mathvariant="normal">e</mi><mrow><mi>i</mi><mo>&InvisibleTimes;</mo><msub><mi>&theta;</mi><mi>m</mi></msub></mrow></msup></math> をコイル感度 <math><msub><mi mathvariant="bold">S</mi><mi>c</mi></msub></math> に統合（Multiplex）し、全ショット・全コイルの観測量から真の画像 <math><mi mathvariant="bold">&rho;</mi></math> を最小二乗正則化（Inversion）によって一意に解き明かします。</li>
+    </ul>
+  </section>
+
+  <!-- 5 & 6. 図とアニメーション（インラインSVG & インタラクティブUI） -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zm-10-7h9v6h-9z"/></svg>
+      3. アルゴリズム・メカニズムの視覚的プロセス
+    </h2>
+
+    <div class="stepper-controls">
+      <button class="btn primary" onclick="goToStep(1)">Step 1: データ取得</button>
+      <button class="btn" onclick="goToStep(2)">Step 2: 粗画像の個別SENSE復元</button>
+      <button class="btn" onclick="goToStep(3)">Step 3: ショット間位相誤差推定</button>
+      <button class="btn" onclick="goToStep(4)">Step 4: 正則化統合再構成</button>
+      <button class="btn" onclick="resetStepper()">リセット</button>
+    </div>
+
+    <div class="step-display" id="step-description">
+      Step 1: 4ショット等のインターリーブk空間サンプリング（各ショットは折り返しを含む間引きデータ）
+    </div>
+
+    <div class="svg-wrapper">
+      <svg viewBox="0 0 800 320" width="100%" height="auto">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0366d6"/>
+          </marker>
+          <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/>
+          </filter>
+        </defs>
+
+        <!-- Step 1 Nodes: K-space shots -->
+        <g id="node-step1" transition="opacity 0.3s">
+          <rect x="20" y="40" width="140" height="90" rx="6" fill="#f1f8ff" stroke="#0366d6" stroke-width="2" filter="url(#shadow)"/>
+          <text x="90" y="65" font-size="13" font-weight="bold" fill="#0366d6" text-anchor="middle">Shot 1..N (k空間)</text>
+          <text x="90" y="88" font-size="11" fill="#586069" text-anchor="middle">アンダーサンプリング</text>
+          <text x="90" y="106" font-size="11" fill="#d73a49" text-anchor="middle">+ 非線形位相誤差</text>
+        </g>
+
+        <!-- Arrow 1->2 -->
+        <path id="arrow1" d="M 160 85 L 215 85" stroke="#0366d6" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Step 2 Nodes: SENSE Unfolding per shot -->
+        <g id="node-step2" opacity="0.4" transition="opacity 0.3s">
+          <rect x="220" y="40" width="150" height="90" rx="6" fill="#f6f8fa" stroke="#0366d6" stroke-width="2" filter="url(#shadow)"/>
+          <text x="295" y="65" font-size="13" font-weight="bold" fill="#0366d6" text-anchor="middle">個別SENSE展開</text>
+          <text x="295" y="88" font-size="11" fill="#24292e" text-anchor="middle">多chコイル感度利用</text>
+          <text x="295" y="106" font-size="11" fill="#586069" text-anchor="middle">低分解能画像復元</text>
+        </g>
+
+        <!-- Arrow 2->3 -->
+        <path id="arrow2" d="M 370 85 L 425 85" stroke="#0366d6" stroke-width="2" marker-end="url(#arrow)" opacity="0.4"/>
+
+        <!-- Step 3 Nodes: Phase Error Map Extraction -->
+        <g id="node-step3" opacity="0.4" transition="opacity 0.3s">
+          <rect x="430" y="40" width="160" height="90" rx="6" fill="#fffbdd" stroke="#f66a0a" stroke-width="2" filter="url(#shadow)"/>
+          <text x="510" y="65" font-size="13" font-weight="bold" fill="#f66a0a" text-anchor="middle">位相誤差マップ抽出</text>
+          <text x="510" y="88" font-size="11" fill="#24292e" text-anchor="middle">Navパルスなしで自己算出</text>
+          <text x="510" y="106" font-size="11" font-weight="bold" fill="#d73a49" text-anchor="middle">exp(i &theta;m) の特定</text>
+        </g>
+
+        <!-- Arrow 3->4 -->
+        <path id="arrow3" d="M 590 85 L 645 85" stroke="#0366d6" stroke-width="2" marker-end="url(#arrow)" opacity="0.4"/>
+
+        <!-- Step 4 Nodes: Joint Inversion -->
+        <g id="node-step4" opacity="0.4" transition="opacity 0.3s">
+          <rect x="650" y="30" width="130" height="110" rx="6" fill="#dcffe4" stroke="#28a745" stroke-width="2" filter="url(#shadow)"/>
+          <text x="715" y="55" font-size="13" font-weight="bold" fill="#28a745" text-anchor="middle">最終逆再構成</text>
+          <text x="715" y="78" font-size="11" fill="#155724" text-anchor="middle">全ショット統合</text>
+          <text x="715" y="96" font-size="11" fill="#155724" text-anchor="middle">正準SENSEモデル</text>
+          <text x="715" y="120" font-size="12" font-weight="bold" fill="#28a745" text-anchor="middle">高精細DWI完成</text>
+        </g>
+
+        <!-- Bottom Diagram: Artifact Comparison (Before vs After) -->
+        <g transform="translate(100, 180)">
+          <!-- Before Box -->
+          <rect x="0" y="0" width="260" height="110" rx="6" fill="#ffeef0" stroke="#d73a49" stroke-width="1.5"/>
+          <text x="130" y="24" font-size="12" font-weight="bold" fill="#d73a49" text-anchor="middle">補正なし ms-EPI (Before)</text>
+          <circle cx="130" cy="65" r="28" fill="#d73a49" opacity="0.2"/>
+          <!-- Wave interference artifact lines -->
+          <line x1="50" y1="50" x2="210" y2="50" stroke="#d73a49" stroke-width="2" stroke-dasharray="4"/>
+          <line x1="50" y1="80" x2="210" y2="80" stroke="#d73a49" stroke-width="2" stroke-dasharray="4"/>
+          <text x="130" y="100" font-size="10" fill="#86181d" text-anchor="middle">激烈な位相干渉・N/2状ゴースト</text>
+        </g>
+
+        <g transform="translate(440, 180)">
+          <!-- After Box -->
+          <rect x="0" y="0" width="260" height="110" rx="6" fill="#dcffe4" stroke="#28a745" stroke-width="1.5"/>
+          <text x="130" y="24" font-size="12" font-weight="bold" fill="#28a745" text-anchor="middle">MUSE再構成 DWI (After)</text>
+          <circle cx="130" cy="65" r="28" fill="#28a745" opacity="0.3"/>
+          <circle cx="130" cy="65" r="10" fill="#28a745" opacity="0.8"/>
+          <text x="130" y="100" font-size="10" fill="#155724" text-anchor="middle">ゴースト消退・解剖構造に完全一致</text>
+        </g>
+      </svg>
+      <div class="figure-caption">図1：MUSEアルゴリズムの4ステップ展開と位相補正によるゴースト除去メカニズム</div>
+    </div>
+  </section>
+
+  <!-- 7. 臨床適応・留意点 (Clinical Scenarios & Trade-offs) -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+      4. 臨床応用と実践トレードオフ（現場判断基準）
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <div style="padding: 16px; background: #fafbfc; border-radius: 6px; border: 1px solid #e1e4e8;">
+        <h3 style="font-size: 1rem; color: #0366d6; margin-bottom: 8px;">推奨される臨床適応領域</h3>
+        <ul style="font-size: 0.9rem; margin-left: 16px;">
+          <li><strong>頭蓋底近傍病変：</strong>錐体骨・後頭蓋窩近傍の聴神経鞘腫、類上皮腫、下垂体腫瘍の境界評価（磁化率アーチファクト激減）。</li>
+          <li><strong>超急性期ラクナ梗塞：</strong>穿通枝領域や大脳皮質の微小虚血を、ボケのないシャープな高マトリクスで抽出。</li>
+          <li><strong>高精度DTI（トラクトグラフィ）：</strong>歪みを抑制することで、解剖学的3D T1WI（BRAVO/MPRAGE等）と完全に一致させ、術中ナビゲーションの信頼性を担保。</li>
+        </ul>
+      </div>
+
+      <div style="padding: 16px; background: #fffbdd; border-radius: 6px; border: 1px solid #d1d5da;">
+        <h3 style="font-size: 1rem; color: #735c0f; margin-bottom: 8px;">留意すべきトレードオフ</h3>
+        <ul style="font-size: 0.9rem; margin-left: 16px;">
+          <li><strong>撮像時間とSNR：</strong>ショット数倍（2〜4倍）撮像時間が延長。スキャン時間延長による被写体動意リスクとの兼ね合いを考慮。</li>
+          <li><strong>多チャンネルコイル必須：</strong>SENSE逆展開を解くため、16ch/32ch以上の多チャンネルPhased Array Coilが必須。</li>
+          <li><strong>剛体運動への脆弱性：</strong>大きな頭部体動がある場合、SENSE感度行列と位相方程式の整合性が破綻し、再構成が崩壊。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Complete Offline JavaScript: Stepper Interaction
+  const steps = [
+    {
+      title: "Step 1: データ取得（k空間の分割サンプリング）",
+      desc: "各ショットで間引かれたk空間データを取得。ショットごとに心拍動・脳実質拍動に起因する空間的・非線形な位相誤差 exp(i θm) が重畳しています。",
+      activeId: "node-step1",
+      arrows: []
+    },
+    {
+      title: "Step 2: 各ショット粗画像の個別SENSE展開",
+      desc: "マルチチャンネルアレイコイル（phased array coil）の既知の空間感度分布行列を用いて、ショットごとに折り返しを解き、粗い複素画像を復元します。",
+      activeId: "node-step2",
+      arrows: ["arrow1"]
+    },
+    {
+      title: "Step 3: ナビゲーターなしでの位相誤差マップ自己推定",
+      desc: "追加パルス（ナビゲーターエコー）を照射することなく、復元された粗い画像情報から各ショット固有の空間的位相誤差マップ θm(r) を直接算出・抽出します。",
+      activeId: "node-step3",
+      arrows: ["arrow1", "arrow2"]
+    },
+    {
+      title: "Step 4: 正則化結合SENSEモデルによる統合再構成",
+      desc: "推定された位相誤差マップをコイル感度行列と結合。全ショットのk空間データを同時に満たす正準方程式を逆問題として解き、位相ゴーストを完全除去した高精細画像を合成します。",
+      activeId: "node-step4",
+      arrows: ["arrow1", "arrow2", "arrow3"]
+    }
+  ];
+
+  function goToStep(stepNumber) {
+    const s = steps[stepNumber - 1];
+    document.getElementById("step-description").innerHTML = "<strong>" + s.title + "</strong><br>" + s.desc;
+
+    // Reset nodes opacity
+    for (let i = 1; i <= 4; i++) {
+      const node = document.getElementById("node-step" + i);
+      if (node) {
+        node.setAttribute("opacity", i <= stepNumber ? "1" : "0.3");
+      }
+    }
+    // Update arrows
+    for (let i = 1; i <= 3; i++) {
+      const arr = document.getElementById("arrow" + i);
+      if (arr) {
+        arr.setAttribute("opacity", i < stepNumber ? "1" : "0.2");
+      }
+    }
+  }
+
+  function resetStepper() {
+    goToStep(1);
+  }
+</script>
+</body>
+</html>

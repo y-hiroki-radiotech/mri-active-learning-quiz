@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材 - bSSFPにおける「k空間の原点帰還（完全バランス）」の物理的意義</title>
+<style>
+  :root {
+    --primary: #1e3a8a;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+    --secondary: #0284c7;
+    --secondary-light: #f0f9ff;
+    --success: #059669;
+    --success-bg: #ecfdf5;
+    --warning: #d97706;
+    --warning-bg: #fffbeb;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --neutral-dark: #0f172a;
+    --neutral-mid: #475569;
+    --neutral-light: #f8fafc;
+    --border: #e2e8f0;
+    --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    color: var(--neutral-dark);
+    background-color: #f1f5f9;
+    padding: 1.5rem 1rem;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  /* MathML 完全オフライン最適化レンダリング */
+  math {
+    font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", "Times New Roman", serif;
+  }
+  math[display="inline"] {
+    font-size: 1.05em;
+    vertical-align: -0.06em;
+  }
+  math[display="block"] {
+    font-size: 1.22rem;
+    display: block;
+    margin: 0.6rem auto;
+  }
+
+  /* カード共通レイアウト */
+  .card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* 採点サマリー */
+  .score-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .score-box {
+    background: var(--primary-light);
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    text-align: center;
+    min-width: 140px;
+  }
+
+  .score-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .score-val {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+  }
+
+  .eval-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .eval-badge.success {
+    background-color: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .priority-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: #dbeafe;
+    color: var(--primary);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .summary-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .summary-full {
+      grid-column: span 2;
+    }
+  }
+
+  .summary-item {
+    background: var(--neutral-light);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+  }
+
+  .summary-item.good {
+    border-left-color: var(--success);
+    background: var(--success-bg);
+  }
+
+  .summary-item.fix {
+    border-left-color: var(--danger);
+    background: var(--danger-bg);
+  }
+
+  .summary-item-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--neutral-mid);
+    margin-bottom: 0.35rem;
+  }
+
+  .summary-item-content {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  /* 理論・ステップブロック */
+  .step-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .step-header {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .step-badge {
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+
+  .formula-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.15rem;
+    margin: 1rem 0;
+  }
+
+  .formula-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.1rem;
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    border-radius: 8px;
+    margin: 0.85rem 0;
+    overflow-x: auto;
+  }
+
+  .math-variable-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .math-variable-table th, .math-variable-table td {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .math-variable-table th {
+    background: #f8fafc;
+    font-weight: 600;
+  }
+
+  /* SVG描画エリア */
+  .svg-container {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    padding: 0.75rem 0;
+    text-align: center;
+  }
+
+  .svg-container svg {
+    max-width: 100%;
+    height: auto;
+    vertical-align: middle;
+  }
+
+  /* インタラクティブUI */
+  .interactive-panel {
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    appearance: none;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background 0.15s ease;
+  }
+
+  .btn:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-outline {
+    background: #ffffff;
+    color: var(--neutral-dark);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-outline:hover {
+    background: #f1f5f9;
+  }
+
+  .readout-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    background: #ffffff;
+    padding: 0.85rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    margin-top: 0.75rem;
+  }
+
+  .readout-item {
+    text-align: center;
+  }
+
+  .readout-item .label {
+    font-size: 0.75rem;
+    color: var(--neutral-mid);
+    font-weight: 600;
+  }
+
+  .readout-item .val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  /* 印刷用CSS */
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      color: #000000;
+    }
+    .card {
+      border: 1px solid #cccccc;
+      box-shadow: none;
+      margin-bottom: 1.25rem;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .interactive-panel .controls-row, .btn {
+      display: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 1. 採点サマリーカード -->
+  <section class="card" aria-label="採点サマリー">
+    <div class="card-header">
+      <h2 class="card-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        採点サマリー
+      </h2>
+      <span class="priority-tag">最重要コンセプト（完全バランス定常状態の核心）</span>
+    </div>
+
+    <div class="score-badge-container">
+      <div class="score-box">
+        <div class="score-label">重要度理解スコア</div>
+        <div class="score-val">95 <span style="font-size: 1rem; font-weight: normal; color: var(--neutral-mid);">/ 100</span></div>
+      </div>
+      <div class="eval-badge success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        判定: シーケンス物理の最重要命題
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-item summary-full">
+        <div class="summary-item-label">出題された問い</div>
+        <div class="summary-item-content"><strong>「bSSFPで毎TR終了時にk空間の原点に戻る（完全バランス）と、具体的に何が良いのか？」</strong></div>
+      </div>
+
+      <div class="summary-item summary-full">
+        <div class="summary-item-label">結論（正答）</div>
+        <div class="summary-item-content">
+          k空間の原点に戻ること（<math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>=</mo><mn mathvariant="bold">0</mn></math>）の最大の利点は、<strong>「傾斜磁場による空間的な位相ねじれ（ディフェーズ）をボクセル内で完全にゼロにリセットし、残留横磁化を次のTRへ100%可干渉（コヒーレント）に引き継いでリサイクルできること」</strong>である。これにより、①横磁化が打ち消し合わず超高SNRが得られる、②位相エンコード履歴によるゴースト破綻を完全に防ぐ、③FID成分とエコー成分が共鳴合一して特異な <math display="inline"><msub><mi>T</mi><mn>2</mn></msub><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></math> コントラストが確立される。
+        </div>
+      </div>
+
+      <div class="summary-item good">
+        <div class="summary-item-label">&#10004; 物理的な本質</div>
+        <div class="summary-item-content">
+          もし原点に戻らない（傾斜磁場面積の総和がゼロでない）場合、ボクセル内のスピンは位置依存の位相差を抱えたまま次パルスを受け、巨視的信号は瞬時に打ち消し合って消失します。「原点帰還」こそが横磁化を破壊せず温存する唯一の数学的条件です。
+        </div>
+      </div>
+
+      <div class="summary-item fix">
+        <div class="summary-item-label">&#9888; 他シーケンスとの決定的違い</div>
+        <div class="summary-item-content">
+          ・<strong>SPGR/FLASH</strong>：残留横磁化を「邪魔者」としてRF/傾斜磁場スポイラーで故意に抹殺する。<br>
+          ・<strong>bSSFP</strong>：残留横磁化を「主役」として原点に引き戻し、永遠にリサイクルして超高速・高SNR・高輝度液体コントラストを生み出す。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 原点復帰がもたらす4大メリット（理論・数式解説） -->
+  <section class="card" aria-label="原点復帰の4大メリット">
+    <div class="card-header">
+      <h3 class="card-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        k空間の原点に戻ると何が良いのか？【4大物理メリット】
+      </h3>
+    </div>
+
+    <!-- メリット 1 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-badge">メリット 1</span>
+        ボクセル内位相分散の完全リセット（巨視的横磁化の死守）
+      </div>
+      <p style="font-size: 0.93rem;">
+        位置 <math display="inline"><mi mathvariant="bold">r</mi><mo>=</mo><mo stretchy="false">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>z</mi><mo stretchy="false">)</mo></math> にあるスピンが、1TRの間に受ける傾斜磁場による位相変化 <math display="inline"><mi>&Delta;</mi><msub><mi>&phi;</mi><mi>G</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo></math> は、空間周波数ベクトル <math display="inline"><mi mathvariant="bold">k</mi></math> を用いて次のように書けます：
+      </p>
+      <div class="formula-display">
+        <math display="block">
+          <mi>&Delta;</mi><msub><mi>&phi;</mi><mi>G</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mn>2</mn><mi>&pi;</mi><mspace width="0.167em"/><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>&sdot;</mo><mi mathvariant="bold">r</mi>
+          <mo>=</mo>
+          <mi>&gamma;</mi><mspace width="0.167em"/><mi mathvariant="bold">r</mi><mo>&sdot;</mo><msubsup><mo>&int;</mo><mn>0</mn><mi>TR</mi></msubsup><mi mathvariant="bold">G</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mspace width="0.167em"/><mi mathvariant="normal">d</mi><mi>t</mi>
+        </math>
+      </div>
+      <p style="font-size: 0.93rem;">
+        もし1TR終了時に原点に戻らない（<math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>&ne;</mo><mn mathvariant="bold">0</mn></math>）場合、ボクセル内の位置によって位相がバラバラになり、ボクセル積分（ベクトル和）をとると横磁化は打ち消し合ってゼロになります（ディフェーズ）。<br>
+        <strong>原点に戻る（<math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>=</mo><mn mathvariant="bold">0</mn></math>）ことで、位置依存の位相分散が全空間で完全にゼロとなり、全スピンが同位相（同方向）で手を取り合って次パルスを迎えられます。</strong>
+      </p>
+    </div>
+
+    <!-- メリット 2 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-badge">メリット 2</span>
+        位相エンコード履歴の完全消去（ゴーストアーチファクトの防止）
+      </div>
+      <p style="font-size: 0.93rem;">
+        通常、MRIでは画像を作るためにTRごとに異なる強さの位相エンコード傾斜磁場 <math display="inline"><msub><mi>G</mi><mi>p</mi></msub></math> を印加します。
+      </p>
+      <ul style="padding-left: 1.3rem; font-size: 0.92rem; margin-top: 0.4rem;">
+        <li>もしリワインダー（逆位相傾斜磁場）が無く原点に戻らない場合、前のTRで印加された位相ねじれがそのまま残り、<strong>「前の行のエンコード量」が次のTRに悪影響を及ぼします。</strong></li>
+        <li>各TRの開始時点で磁化の位相がステップごとにバラバラになり、定常状態が完全に破壊され、画像全体に強烈なゴーストアーチファクト（偽像）が充満します。</li>
+        <li><strong>原点に戻す（リワインドする）ことで、各TRの開始状態を「位相エンコードの履歴から完全に独立」させ、安定した定常状態を維持できます。</strong></li>
+      </ul>
+    </div>
+
+    <!-- メリット 3 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-badge">メリット 3</span>
+        FIDとEchoの完全合一（超高SNRの実現）
+      </div>
+      <p style="font-size: 0.93rem;">
+        短いTRで連続してRFパルスを打つと、磁化は2つの成分に分かれます：
+      </p>
+      <ol style="padding-left: 1.3rem; font-size: 0.92rem; margin-top: 0.4rem;">
+        <li>直前のパルスで作られたばかりの成分（<strong>FID成分 / <math display="inline"><msup><mi>S</mi><mo>+</mo></msup></math></strong>）</li>
+        <li>過去の複数のRFパルスによって反転・リフォーカスされ続けてきた成分（<strong>RFエコー成分 / <math display="inline"><msup><mi>S</mi><mo>&minus;</mo></msup></math></strong>）</li>
+      </ol>
+      <p style="font-size: 0.93rem; margin-top: 0.5rem;">
+        完全バランス（原点帰還）構造をとると、周波数エンコードの中心（<math display="inline"><mi>TE</mi><mo>=</mo><mi>TR</mi><mo>/</mo><mn>2</mn></math>）において、<strong>このFID成分とRFエコー成分が完全に同位相で合体（コヒーレント重畳）</strong>します。これにより、極めて短い撮像時間でありながら、あらゆる高速GREシーケンスの中で最も高いSNR（信号雑音比）を叩き出します。
+      </p>
+    </div>
+
+    <!-- メリット 4 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-badge">メリット 4</span>
+        真の横緩和時間 <math display="inline"><msub><mi>T</mi><mn>2</mn></msub></math> に支配されるコントラスト（水・血液の超高輝度化）
+      </div>
+      <p style="font-size: 0.93rem;">
+        原点に戻ることで、静磁場の巨視的不均一に起因する位相分散がRFパルス列によって打ち消され、信号減衰が <math display="inline"><msubsup><mi>T</mi><mn>2</mn><mo>*</mo></msubsup></math> ではなく<strong>組織固有の真の横緩和時間 <math display="inline"><msub><mi>T</mi><mn>2</mn></msub></math></strong> に近づきます。
+      </p>
+      <div class="formula-display" style="background: #e0f2fe; border: 1px solid #7dd3fc;">
+        <math display="block">
+          <msub><mi>M</mi><mrow><mi>x</mi><mi>y</mi><mo>,</mo><mo movablelimits="true">max</mo></mrow></msub>
+          <mo>=</mo>
+          <mfrac><msub><mi>M</mi><mn>0</mn></msub><mn>2</mn></mfrac>
+          <msqrt>
+            <mfrac>
+              <msub><mi>T</mi><mn>2</mn></msub>
+              <msub><mi>T</mi><mn>1</mn></msub>
+            </mfrac>
+          </msqrt>
+        </math>
+      </div>
+      <p style="font-size: 0.9rem; color: #0369a1;">
+        原点に戻らなければこの美しい定常解は成立せず、水や血液が光る「シネMRI」や「非造影MRA」の明瞭なコントラストは得られません。
+      </p>
+    </div>
+
+    <!-- 変数テーブル -->
+    <table class="math-variable-table">
+      <thead>
+        <tr>
+          <th>物理量 / 条件</th>
+          <th>数理表現</th>
+          <th>原点に戻らない場合（非バランス）</th>
+          <th>原点に戻る場合（bSSFP）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1TR正味のk空間位置</strong></td>
+          <td><math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mi>&gamma;</mi><mrow><mn>2</mn><mi>&pi;</mi></mrow></mfrac><msubsup><mo>&int;</mo><mn>0</mn><mi>TR</mi></msubsup><mi mathvariant="bold">G</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mi mathvariant="normal">d</mi><mi>t</mi></math></td>
+          <td><math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>&ne;</mo><mn mathvariant="bold">0</mn></math>（位相ねじれが残存）</td>
+          <td><strong><math display="inline"><mi mathvariant="bold">k</mi><mo stretchy="false">(</mo><mi>TR</mi><mo stretchy="false">)</mo><mo>=</mo><mn mathvariant="bold">0</mn></math>（完全リフェーズ）</strong></td>
+        </tr>
+        <tr>
+          <td><strong>ボクセル内横磁化</strong></td>
+          <td><math display="inline"><msub><mi>M</mi><mrow><mi>x</mi><mi>y</mi></mrow></msub><mo>=</mo><msub><mo>&int;</mo><mi>V</mi></msub><mi>m</mi><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo><msup><mi>e</mi><mrow><mi>i</mi><mi>&Delta;</mi><mi>&phi;</mi><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo></mrow></msup><mi mathvariant="normal">d</mi><mi mathvariant="bold">r</mi></math></td>
+          <td>打ち消し合って大幅減衰または消失</td>
+          <td><strong>全スピンが同相重畳して最大化</strong></td>
+        </tr>
+        <tr>
+          <td><strong>エコー形成</strong></td>
+          <td>FID成分とEcho成分の位相関係</td>
+          <td>分離または破壊される</td>
+          <td><strong>TE=TR/2 で完全同相合一（超高SNR）</strong></td>
+        </tr>
+        <tr>
+          <td><strong>臨床応用</strong></td>
+          <td>利用価値</td>
+          <td>スポイル型GRE（FLASH等）：T1強調のみ</td>
+          <td><strong>心臓シネ、非造影MRA、内耳・脊髄腔水強調</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 3. 直感比較図（SVG）：原点に戻る vs 戻らない -->
+  <section class="card" aria-label="スピン位相比較図">
+    <div class="card-header">
+      <h3 class="card-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        スピンの挙動比較：原点に戻らない場合 vs 原点に戻る場合（bSSFP）
+      </h3>
+    </div>
+    <p style="font-size: 0.95rem; margin-bottom: 1rem;">
+      1つのボクセル内部に含まれる微小スピン群が、1TRの終了時（次パルス直前）にどのような位相状態になっているかを比較します。
+    </p>
+
+    <div class="svg-container">
+      <svg viewBox="0 0 760 300" width="100%" height="300" xmlns="http://www.w3.org/2000/svg">
+        <!-- 左側：原点に戻らない場合（ディフェーズして全滅） -->
+        <rect x="30" y="20" width="330" height="260" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" rx="8"/>
+        <text x="195" y="45" font-size="14" font-weight="bold" fill="#991b1b" text-anchor="middle">【原点に戻らない場合】（非バランス / スポイル）</text>
+        <text x="195" y="65" font-size="11" fill="#7f1d1d" text-anchor="middle">&int; G dt &ne; 0 &rArr; k(TR) &ne; 0</text>
+
+        <!-- 左円盤（横平面） -->
+        <circle cx="195" cy="145" r="55" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <line x1="195" y1="90" x2="195" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="140" y1="145" x2="250" y2="145" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- バラバラのスピンベクトル -->
+        <line x1="195" y1="145" x2="235" y2="125" stroke="#ef4444" stroke-width="2"/>
+        <polygon points="235,125 226,125 230,131" fill="#ef4444"/>
+        <line x1="195" y1="145" x2="160" y2="115" stroke="#ef4444" stroke-width="2"/>
+        <polygon points="160,115 169,118 165,124" fill="#ef4444"/>
+        <line x1="195" y1="145" x2="155" y2="170" stroke="#ef4444" stroke-width="2"/>
+        <polygon points="155,170 162,163 165,170" fill="#ef4444"/>
+        <line x1="195" y1="145" x2="225" y2="175" stroke="#ef4444" stroke-width="2"/>
+        <polygon points="225,175 218,170 217,177" fill="#ef4444"/>
+        <circle cx="195" cy="145" r="4" fill="#991b1b"/>
+
+        <text x="195" y="225" font-size="12" font-weight="bold" fill="#b91c1c" text-anchor="middle">位相が分散（ディフェーズ）</text>
+        <text x="195" y="245" font-size="12" font-weight="bold" fill="#b91c1c" text-anchor="middle">合算横磁化 Mxy &approx; 0 （信号消失）</text>
+        <text x="195" y="265" font-size="10" fill="#64748b" text-anchor="middle">※次のTRで再利用できず捨てられる</text>
+
+        <!-- 右側：原点に戻る場合（完全リフェーズで最強信号） -->
+        <rect x="400" y="20" width="330" height="260" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1.5" rx="8"/>
+        <text x="565" y="45" font-size="14" font-weight="bold" fill="#065f46" text-anchor="middle">【原点に戻る場合】（bSSFP / 完全バランス）</text>
+        <text x="565" y="65" font-size="11" fill="#047857" text-anchor="middle">&int; G dt = 0 &rArr; k(TR) = 0</text>
+
+        <!-- 右円盤（横平面） -->
+        <circle cx="565" cy="145" r="55" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <line x1="565" y1="90" x2="565" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="510" y1="145" x2="620" y2="145" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- 完全に揃ったスピン束（強力な1本の太いベクトル） -->
+        <line x1="565" y1="145" x2="615" y2="145" stroke="#059669" stroke-width="4.5"/>
+        <polygon points="618,145 606,139 606,151" fill="#059669"/>
+        <circle cx="565" cy="145" r="4" fill="#065f46"/>
+
+        <text x="565" y="225" font-size="12" font-weight="bold" fill="#047857" text-anchor="middle">位相が完全合致（リフェーズ）</text>
+        <text x="565" y="245" font-size="12" font-weight="bold" fill="#047857" text-anchor="middle">合算横磁化 Mxy は最大値（超高SNR）</text>
+        <text x="565" y="265" font-size="10" fill="#047857" text-anchor="middle">※次TRの縦・横磁化として100%リサイクル</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4. インタラクティブ・シミュレータ -->
+  <section class="card interactive-panel" aria-label="対話型原点帰還シミュレータ">
+    <div class="card-header" style="border-bottom-color: #cbd5e1;">
+      <h3 class="card-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        k空間位置とボクセル内スピン位相の連動シミュレータ
+      </h3>
+      <span style="font-size: 0.85rem; color: var(--neutral-mid); font-weight: 600;">完全オフラインJavaScript</span>
+    </div>
+
+    <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+      1TRの進行に伴い、傾斜磁場によってk空間を移動したスピンが「いかにして原点に戻り、横磁化を完全回復させるか」を体感してください。
+    </p>
+
+    <div class="controls-row">
+      <label for="timeRange" style="font-size: 0.9rem; font-weight: 700;">TR内タイムライン:</label>
+      <input type="range" id="timeRange" min="0" max="100" value="100" step="1" style="width: 240px; cursor: pointer;">
+      <span id="timeText" style="font-weight: bold; width: 70px; color: var(--primary);">4.00 ms (TR)</span>
+
+      <button id="btnPlay" class="btn btn-outline" style="margin-left: auto;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        アニメーション再生
+      </button>
+      <button id="btnToggleBalance" class="btn">
+        モード切替: 完全バランス (原点復帰)
+      </button>
+    </div>
+
+    <div class="svg-container" style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <svg id="simSvg" viewBox="0 0 740 240" width="100%" height="240" xmlns="http://www.w3.org/2000/svg">
+        <!-- 左半分: k空間 (中心: 180, 120) -->
+        <text x="180" y="22" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">k空間上の位置 k(t)</text>
+        <rect x="70" y="30" width="220" height="180" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5" rx="6"/>
+        <line x1="70" y1="120" x2="290" y2="120" stroke="#cbd5e1" stroke-width="1.5"/>
+        <line x1="180" y1="30" x2="180" y2="210" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="280" y="135" font-size="11" fill="#64748b">kx</text>
+        <text x="185" y="45" font-size="11" fill="#64748b">ky</text>
+        <circle cx="180" cy="120" r="3" fill="#94a3b8"/>
+        <text x="185" y="115" font-size="10" fill="#94a3b8">原点(0,0)</text>
+
+        <!-- k空間の軌跡線と現在点 -->
+        <path id="kPathSvg" d="M 180 120" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+        <circle id="kPointSvg" cx="180" cy="120" r="6" fill="#dc2626"/>
+
+        <!-- 右半分: ボクセル内の横磁化ベクトル和 (中心: 540, 120) -->
+        <text x="540" y="22" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">ボクセル内スピン群の位相と合算磁化 Mxy</text>
+        <circle cx="540" cy="120" r="70" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <line x1="540" y1="40" x2="540" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="460" y1="120" x2="620" y2="120" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- 個別スピン群（5本） -->
+        <line id="spin1" x1="540" y1="120" x2="600" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+        <line id="spin2" x1="540" y1="120" x2="600" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+        <line id="spin3" x1="540" y1="120" x2="600" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+        <line id="spin4" x1="540" y1="120" x2="600" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+        <line id="spin5" x1="540" y1="120" x2="600" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+
+        <!-- 合算ベクトル Mxy -->
+        <line id="sumVector" x1="540" y1="120" x2="605" y2="120" stroke="#059669" stroke-width="4"/>
+        <polygon id="sumArrow" points="610,120 600,115 600,125" fill="#059669"/>
+        <circle cx="540" cy="120" r="4" fill="#0f172a"/>
+      </svg>
+    </div>
+
+    <div class="readout-card">
+      <div class="readout-item">
+        <div class="label">シーケンスモード</div>
+        <div class="readout-val" id="dispMode" style="font-size: 1rem; color: var(--success);">完全バランス (bSSFP)</div>
+      </div>
+      <div class="readout-item">
+        <div class="label">現在位置 k(t)</div>
+        <div class="readout-val" id="dispKpos">(0.00, 0.00)</div>
+      </div>
+      <div class="readout-item">
+        <div class="label">ボクセル内位相差</div>
+        <div class="readout-val" id="dispPhaseDiff">0&deg; (同相)</div>
+      </div>
+      <div class="readout-item">
+        <div class="label">正味の横磁化 |Mxy|</div>
+        <div class="readout-val" id="dispMxy" style="color: var(--success);">100% (最大)</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var timeRange = document.getElementById('timeRange');
+  var timeText = document.getElementById('timeText');
+  var btnPlay = document.getElementById('btnPlay');
+  var btnToggleBalance = document.getElementById('btnToggleBalance');
+
+  var kPointSvg = document.getElementById('kPointSvg');
+  var kPathSvg = document.getElementById('kPathSvg');
+
+  var spin1 = document.getElementById('spin1');
+  var spin2 = document.getElementById('spin2');
+  var spin3 = document.getElementById('spin3');
+  var spin4 = document.getElementById('spin4');
+  var spin5 = document.getElementById('spin5');
+  var sumVector = document.getElementById('sumVector');
+  var sumArrow = document.getElementById('sumArrow');
+
+  var dispMode = document.getElementById('dispMode');
+  var dispKpos = document.getElementById('dispKpos');
+  var dispPhaseDiff = document.getElementById('dispPhaseDiff');
+  var dispMxy = document.getElementById('dispMxy');
+
+  var isBalanced = true; // 完全バランスか非バランス(スポイル)か
+  var animTimer = null;
+
+  // k空間座標計算 (0~100)
+  // t=0: 原点(0,0)
+  // t=30: プリフェーズ (-0.8, 0.4)
+  // t=60: リードアウト中心 (0, 0.4)
+  // t=80: リードアウト終点 (+0.8, 0.4)
+  // t=100 (バランス時): 原点(0,0) へリワインド
+  // t=100 (非バランス時): 終点 (+0.8, 0.4) のまま放置
+  function getK(t, balanced) {
+    var kx = 0, ky = 0;
+    if (t <= 30) {
+      var f = t / 30;
+      kx = -0.8 * f;
+      ky = 0.4 * f;
+    } else if (t <= 80) {
+      var f = (t - 30) / 50;
+      kx = -0.8 + 1.6 * f;
+      ky = 0.4;
+    } else {
+      var f = (t - 80) / 20;
+      if (balanced) {
+        kx = 0.8 * (1 - f);
+        ky = 0.4 * (1 - f);
+      } else {
+        kx = 0.8;
+        ky = 0.4;
+      }
+    }
+    return { kx: kx, ky: ky };
+  }
+
+  function update() {
+    var t = parseInt(timeRange.value, 10);
+    timeText.textContent = (t * 0.04).toFixed(2) + " ms";
+
+    var k = getK(t, isBalanced);
+
+    // SVG k空間描画 (中心: 180, 120, スケール: 80px)
+    var cx = 180, cy = 120;
+    var px = cx + k.kx * 80;
+    var py = cy - k.ky * 80;
+    kPointSvg.setAttribute('cx', px);
+    kPointSvg.setAttribute('cy', py);
+
+    // 軌跡パス
+    var pD = "M " + cx + " " + cy;
+    for (var step = 0; step <= t; step += 2) {
+      var kp = getK(step, isBalanced);
+      pD += " L " + (cx + kp.kx * 80).toFixed(1) + " " + (cy - kp.ky * 80).toFixed(1);
+    }
+    kPathSvg.setAttribute('d', pD);
+
+    // ボクセル内スピン位相分散量（kの大きさ・原点からの距離に比例）
+    var dist = Math.sqrt(k.kx * k.kx + k.ky * k.ky);
+    var maxDephDeg = dist * 180; // 最大位相差
+
+    // 5本のスピンの角度設定
+    var angles = [-1.0, -0.5, 0, 0.5, 1.0].map(function(w){
+      return w * maxDephDeg * Math.PI / 180;
+    });
+
+    var spins = [spin1, spin2, spin3, spin4, spin5];
+    var sumX = 0, sumY = 0;
+    var vLen = 50;
+
+    for (var i = 0; i < 5; i++) {
+      var rad = angles[i];
+      var sx = 540 + Math.cos(rad) * vLen;
+      var sy = 120 - Math.sin(rad) * vLen;
+      spins[i].setAttribute('x2', sx);
+      spins[i].setAttribute('y2', sy);
+      sumX += Math.cos(rad);
+      sumY += Math.sin(rad);
+    }
+
+    sumX /= 5;
+    sumY /= 5;
+    var mag = Math.sqrt(sumX * sumX + sumY * sumY);
+    var sumLen = mag * 65;
+    var sumAngle = Math.atan2(sumY, sumX);
+
+    var endX = 540 + Math.cos(sumAngle) * sumLen;
+    var endY = 120 - Math.sin(sumAngle) * sumLen;
+
+    sumVector.setAttribute('x2', endX);
+    sumVector.setAttribute('y2', endY);
+
+    var headSize = 8;
+    var hx1 = endX - headSize * Math.cos(sumAngle - Math.PI / 6);
+    var hy1 = endY + headSize * Math.sin(sumAngle - Math.PI / 6);
+    var hx2 = endX - headSize * Math.cos(sumAngle + Math.PI / 6);
+    var hy2 = endY + headSize * Math.sin(sumAngle + Math.PI / 6);
+    sumArrow.setAttribute('points', endX + ',' + endY + ' ' + hx1 + ',' + hy1 + ' ' + hx2 + ',' + hy2);
+
+    if (mag > 0.6) {
+      sumVector.setAttribute('stroke', '#059669');
+      sumArrow.setAttribute('fill', '#059669');
+      dispMxy.style.color = 'var(--success)';
+    } else {
+      sumVector.setAttribute('stroke', '#dc2626');
+      sumArrow.setAttribute('fill', '#dc2626');
+      dispMxy.style.color = 'var(--danger)';
+    }
+
+    // 表示更新
+    dispKpos.textContent = "(" + (k.kx>=0?"+":"") + k.kx.toFixed(2) + ", " + (k.ky>=0?"+":"") + k.ky.toFixed(2) + ")";
+    dispPhaseDiff.textContent = Math.round(maxDephDeg * 2) + "° (" + (maxDephDeg < 10 ? "同相" : "分散") + ")";
+    dispMxy.textContent = Math.round(mag * 100) + "%";
+  }
+
+  timeRange.addEventListener('input', update);
+
+  btnToggleBalance.addEventListener('click', function() {
+    isBalanced = !isBalanced;
+    if (isBalanced) {
+      btnToggleBalance.textContent = "モード切替: 完全バランス (原点復帰)";
+      btnToggleBalance.style.background = "var(--primary)";
+      dispMode.textContent = "完全バランス (bSSFP)";
+      dispMode.style.color = "var(--success)";
+    } else {
+      btnToggleBalance.textContent = "モード切替: 非バランス (原点放置)";
+      btnToggleBalance.style.background = "#64748b";
+      dispMode.textContent = "非バランス (FLASH/SPGR型)";
+      dispMode.style.color = "var(--danger)";
+    }
+    update();
+  });
+
+  btnPlay.addEventListener('click', function() {
+    if (animTimer) {
+      clearInterval(animTimer);
+      animTimer = null;
+      btnPlay.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> アニメーション再生';
+      return;
+    }
+
+    btnPlay.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 一時停止';
+    timeRange.value = 0;
+
+    animTimer = setInterval(function() {
+      var v = parseInt(timeRange.value, 10) + 1;
+      if (v > 100) {
+        v = 0;
+      }
+      timeRange.value = v;
+      update();
+    }, 35);
+  });
+
+  // 初回描画
+  update();
+})();
+</script>
+
+</body>
+</html>

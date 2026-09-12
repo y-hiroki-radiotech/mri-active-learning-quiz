@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MRI N/2（エヌハーフ）ゴースト｜図解・アニメーション解説</title>
+<style>
+:root{
+  --ink:#0d2438; --muted:#52687a; --blue:#0b6fb8; --blue2:#118fd1;
+  --cyan:#dff5ff; --navy:#0b3f69; --green:#0e9f6e; --red:#d84a63;
+  --yellow:#fff4c9; --panel:#fff; --line:#d6e6ef; --bg:#f4f9fc;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:linear-gradient(180deg,#edf8ff 0,#f8fbfd 28rem,#f6f9fb 100%);
+  color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN",
+  "Yu Gothic",Meiryo,sans-serif;line-height:1.75;
+}
+.hero{
+  color:#fff;padding:56px 22px 44px;text-align:center;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(73,196,255,.35),transparent 30%),
+    linear-gradient(135deg,#073e70,#0a76ba 58%,#0f93c9);
+}
+.hero .tag{display:inline-block;padding:6px 13px;border:1px solid rgba(255,255,255,.45);border-radius:999px;font-size:.9rem}
+.hero h1{font-size:clamp(2rem,5vw,4.2rem);line-height:1.15;margin:18px auto 12px;letter-spacing:.02em}
+.hero h1 b{color:#ffd84a}
+.hero p{max-width:900px;margin:auto;font-size:clamp(1rem,2vw,1.25rem);opacity:.95}
+.wrap{max-width:1180px;margin:auto;padding:28px 18px 70px}
+nav{
+  position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap
+}
+nav .inner{max-width:1180px;margin:auto;padding:9px 18px}
+nav a{display:inline-block;color:var(--navy);text-decoration:none;padding:7px 10px;border-radius:8px;font-size:.92rem}
+nav a:hover{background:#e8f5fd}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;
+  box-shadow:0 12px 36px rgba(9,55,87,.07);margin:18px 0
+}
+.card h2{font-size:1.5rem;margin:0 0 12px;color:var(--navy)}
+.card h3{color:var(--blue);margin:18px 0 8px}
+.lead{font-size:1.08rem}
+.note{
+  border-left:5px solid var(--blue2);background:#eef9ff;border-radius:10px;padding:14px 16px;margin:14px 0
+}
+.warn{border-left-color:#e6a800;background:#fff8dd}
+.key{background:linear-gradient(135deg,#fff7cd,#fffdf0);border:1px solid #f3df87;border-radius:14px;padding:18px;font-weight:700}
+.badge{display:inline-block;background:#e4f4ff;color:#075f9b;border-radius:999px;padding:4px 10px;font-size:.85rem;font-weight:700}
+svg{max-width:100%;height:auto}
+.diagram{
+  background:#fbfdff;border:1px solid #dcebf3;border-radius:14px;padding:12px;overflow:hidden
+}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+button{
+  appearance:none;border:0;border-radius:10px;background:#0b73b9;color:#fff;padding:10px 15px;
+  font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(11,115,185,.22)
+}
+button.secondary{background:#e7f3fa;color:#135778}
+button:hover{filter:brightness(1.03)}
+.small{font-size:.91rem;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+.step{border:1px solid var(--line);background:#fbfdff;border-radius:12px;padding:15px;position:relative}
+.step b{display:block;color:var(--blue)}
+.step:not(:last-child)::after{content:"→";position:absolute;right:-15px;top:40%;font-size:1.5rem;color:#58a9d6;z-index:2}
+.causes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cause{background:#eef8fd;border-radius:12px;padding:15px;border:1px solid #d8ebf4}
+.cause .icon{font-size:2rem}
+.cause b{display:block;color:#0c4e79}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.check{background:#edf9f4;border:1px solid #cfeddf;border-radius:10px;padding:11px}
+.check::before{content:"✓";display:inline-grid;place-items:center;width:1.4em;height:1.4em;border-radius:4px;background:#10a36f;color:#fff;margin-right:8px;font-weight:900}
+.eq{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0c2638;color:#e9f7ff;
+  border-radius:12px;padding:16px;overflow:auto;font-size:.95rem
+}
+.summary{font-size:1.15rem;background:linear-gradient(135deg,#fff6c7,#fffdf4);border:1px solid #f4df83;border-radius:16px;padding:20px}
+.footer{text-align:center;color:#688092;padding:35px 0}
+@media(max-width:800px){
+  .grid2,.causes,.checks{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .step:not(:last-child)::after{content:"↓";right:auto;left:48%;top:auto;bottom:-24px}
+  .card{padding:18px}
+}
+/* animations */
+#scanLine{animation:scan 3.2s linear infinite}
+@keyframes scan{0%{transform:translateX(-180px)}50%{transform:translateX(180px)}100%{transform:translateX(-180px)}}
+.echoOdd{stroke-dasharray:8 7;animation:dash 1.7s linear infinite}
+.echoEven{stroke-dasharray:8 7;animation:dash2 1.7s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-30}}
+@keyframes dash2{to{stroke-dashoffset:30}}
+#ghostImg{animation:ghost 2.6s ease-in-out infinite}
+@keyframes ghost{0%,100%{opacity:.12;transform:translateY(0)}50%{opacity:.58;transform:translateY(55px)}}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+body.paused *{animation-play-state:paused !important}
+</style>
+</head>
+<body>
+<header class="hero">
+  <span class="tag">MRI / EPI / DWI アーチファクト</span>
+  <h1>N/2（エヌハーフ）<b>ゴースト</b>を<br>「なぜ半分ずれるのか」から理解する</h1>
+  <p>奇数・偶数エコーの位相ずれが、なぜ位相エンコード方向のFOV/2シフトとして現れるのか。k空間→位相誤差→画像再構成の順に、動く図で理解します。</p>
+</header>
+
+<nav><div class="inner">
+<a href="#overview">見え方</a><a href="#why">N/2の意味</a><a href="#mechanism">発生機序</a>
+<a href="#math">数式で理解</a><a href="#cause">原因</a><a href="#te">TEとの関係</a><a href="#solution">対策</a>
+</div></nav>
+
+<main class="wrap">
+<section id="overview" class="card">
+  <span class="badge">まず結論</span>
+  <h2>1. N/2ゴーストとは？</h2>
+  <p class="lead"><b>EPI（Echo Planar Imaging）</b>で、元の像をコピーしたような偽像が、<b>位相エンコード方向にFOVの1/2</b>ずれて現れる代表的なアーチファクトです。DWIで特に目にする機会が多い現象です。</p>
+  <div class="grid2">
+    <div class="diagram">
+      <svg viewBox="0 0 520 330" aria-label="N/2ゴーストの模式図">
+        <defs>
+          <radialGradient id="brain" cx="50%" cy="45%"><stop offset="0" stop-color="#e6edf1"/><stop offset="1" stop-color="#6e7c84"/></radialGradient>
+          <filter id="blur"><feGaussianBlur stdDeviation="1.7"/></filter>
+        </defs>
+        <rect width="520" height="330" rx="14" fill="#0a1117"/>
+        <text x="84" y="34" fill="white" font-size="18" font-weight="700">本来の画像</text>
+        <text x="337" y="34" fill="#ffced8" font-size="18" font-weight="700">N/2ゴースト</text>
+        <g transform="translate(105 68)">
+          <ellipse cx="90" cy="90" rx="72" ry="86" fill="url(#brain)"/>
+          <ellipse cx="65" cy="88" rx="14" ry="34" fill="#394852"/>
+          <ellipse cx="115" cy="88" rx="14" ry="34" fill="#394852"/>
+          <path d="M90 18 C82 55 82 120 90 164" stroke="#c9d3d9" fill="none" stroke-width="4"/>
+          <path d="M35 48 Q90 90 145 48 M28 80 Q90 112 152 80 M36 124 Q90 94 144 124" stroke="#cbd5da" fill="none" opacity=".65"/>
+        </g>
+        <g id="ghostImg" transform="translate(355 70)" filter="url(#blur)">
+          <ellipse cx="58" cy="63" rx="50" ry="59" fill="#b6c5ce"/>
+          <ellipse cx="42" cy="62" rx="10" ry="23" fill="#54646f"/>
+          <ellipse cx="75" cy="62" rx="10" ry="23" fill="#54646f"/>
+        </g>
+        <line x1="46" y1="85" x2="46" y2="265" stroke="#55c2ff" stroke-width="4"/>
+        <polygon points="46,72 39,88 53,88" fill="#55c2ff"/><polygon points="46,278 39,262 53,262" fill="#55c2ff"/>
+        <text x="18" y="305" fill="#9ee0ff" font-size="15">位相エンコード方向</text>
+      </svg>
+    </div>
+    <div>
+      <div class="key">覚える像：<br>「同じ形の影が、PE方向にちょうど半分ずれる」</div>
+      <p>一般的な呼吸・拍動によるゴーストとは違い、N/2ゴーストは主として<b>EPIの読み取り極性反転と、それに伴う奇数・偶数エコー間の位相差</b>に由来します。</p>
+      <div class="note">名称の「N/2」を「収集データの半分が壊れるから」と覚えるより、<b>1行おきの交互誤差が画像空間でFOV/2のシフトを作る</b>と理解する方が本質的です。</div>
+    </div>
+  </div>
+</section>
+
+<section id="why" class="card">
+<h2>2. なぜ「N/2」＝FOVの半分に出るのか？</h2>
+<div class="grid2">
+<div class="diagram">
+<svg viewBox="0 0 520 360">
+  <rect x="55" y="25" width="410" height="300" rx="10" fill="#fff" stroke="#aac4d5" stroke-width="2"/>
+  <g stroke="#e5eef4">
+    <path d="M55 75H465 M55 125H465 M55 175H465 M55 225H465 M55 275H465"/>
+    <path d="M105 25V325 M155 25V325 M205 25V325 M255 25V325 M305 25V325 M355 25V325 M405 25V325"/>
+  </g>
+  <ellipse cx="260" cy="100" rx="47" ry="58" fill="#657985"/>
+  <ellipse cx="260" cy="250" rx="47" ry="58" fill="#657985" opacity=".42"/>
+  <text x="78" y="105" fill="#153b56" font-size="18" font-weight="700">本来の像</text>
+  <text x="78" y="255" fill="#b03f55" font-size="18" font-weight="700">ゴースト</text>
+  <line x1="380" y1="105" x2="380" y2="245" stroke="#0b78bd" stroke-width="5"/>
+  <polygon points="380,95 372,112 388,112" fill="#0b78bd"/>
+  <polygon points="380,255 372,238 388,238" fill="#0b78bd"/>
+  <text x="391" y="175" fill="#0b78bd" font-size="21" font-weight="800">FOV/2</text>
+  <text x="173" y="350" fill="#52687a" font-size="15">位相エンコード方向に半周期シフト</text>
+</svg>
+</div>
+<div>
+<p>k空間の位相エンコード行を <b>n = 0,1,2,3...</b> とすると、奇数行と偶数行の間に一定の位相差がある状態は、行ごとに交互に符号や位相が変化する「周期2」の誤差になります。</p>
+<div class="eq">1, −1, 1, −1, 1, −1, …  =  exp(iπn)</div>
+<p>フーリエ変換では、k空間にこのような交互変調 <b>exp(iπn)</b> を掛けることは、画像空間では<b>FOV/2だけ平行移動した成分</b>を作ることに対応します。</p>
+</div>
+</div>
+</section>
+
+<section id="mechanism" class="card">
+<h2>3. 発生のしくみ：EPIのジグザグ収集から追う</h2>
+<div class="controls">
+<button onclick="document.body.classList.remove('paused')">▶ アニメーション再生</button>
+<button class="secondary" onclick="document.body.classList.add('paused')">Ⅱ 一時停止</button>
+</div>
+<div class="steps">
+<div class="step"><b>① EPIで高速収集</b>読み取り傾斜磁場を＋/−に高速反転し、1回の励起で多数のk空間ラインを取得。</div>
+<div class="step"><b>② 極性が交互</b>奇数エコーは左→右、偶数エコーは右→左のように、読み取り方向が交互。</div>
+<div class="step"><b>③ 位相差が生じる</b>勾配遅延、渦電流、B0不均一などで奇数・偶数エコーの位相が完全に一致しない。</div>
+<div class="step"><b>④ FOV/2ゴースト</b>1行おきの位相誤差が、再構成後にPE方向へ半FOVシフトしたコピー像を生む。</div>
+</div>
+
+<div class="grid2">
+<div class="diagram">
+<h3>アニメーション①：EPIのk空間収集</h3>
+<svg viewBox="0 0 560 390">
+  <rect width="560" height="390" fill="#fbfdff"/>
+  <line x1="70" y1="315" x2="510" y2="315" stroke="#14364e" stroke-width="2"/>
+  <line x1="70" y1="330" x2="70" y2="40" stroke="#14364e" stroke-width="2"/>
+  <text x="475" y="345" font-size="18" fill="#14364e">kₓ（readout）</text>
+  <text x="14" y="55" font-size="18" fill="#14364e">kᵧ</text>
+  <g stroke-width="5" fill="none">
+    <path class="echoOdd" d="M100 80 H475" stroke="#087bc1"/>
+    <path class="echoEven" d="M475 125 H100" stroke="#e4506c"/>
+    <path class="echoOdd" d="M100 170 H475" stroke="#087bc1"/>
+    <path class="echoEven" d="M475 215 H100" stroke="#e4506c"/>
+    <path class="echoOdd" d="M100 260 H475" stroke="#087bc1"/>
+  </g>
+  <text x="355" y="70" fill="#087bc1" font-size="15">奇数エコー：→</text>
+  <text x="355" y="120" fill="#e4506c" font-size="15">偶数エコー：←</text>
+  <circle id="scanLine" cx="275" cy="80" r="10" fill="#ffd038" stroke="#7b6200"/>
+</svg>
+<p class="small">黄色い点は「いま読み取っている場所」のイメージです。実際にはk空間を直線的に往復しながら、位相エンコード方向へ少しずつ移動します。</p>
+</div>
+
+<div class="diagram">
+<h3>アニメーション②：奇数・偶数エコーの位相ずれ</h3>
+<svg viewBox="0 0 560 390">
+  <rect width="560" height="390" fill="#fbfdff"/>
+  <text x="40" y="55" font-size="18" fill="#087bc1" font-weight="700">奇数エコー</text>
+  <text x="40" y="180" font-size="18" fill="#e4506c" font-weight="700">偶数エコー</text>
+  <path d="M80 105 C110 65 140 145 170 105 S230 65 260 105 S320 145 350 105 S410 65 440 105" fill="none" stroke="#087bc1" stroke-width="5"/>
+  <g class="pulse">
+    <path d="M112 230 C142 190 172 270 202 230 S262 190 292 230 S352 270 382 230 S442 190 472 230" fill="none" stroke="#e4506c" stroke-width="5"/>
+  </g>
+  <line x1="170" y1="70" x2="170" y2="275" stroke="#78909c" stroke-dasharray="6 6"/>
+  <line x1="202" y1="70" x2="202" y2="275" stroke="#e4506c" stroke-dasharray="6 6"/>
+  <line x1="170" y1="305" x2="202" y2="305" stroke="#d84a63" stroke-width="4"/>
+  <polygon points="170,305 181,298 181,312" fill="#d84a63"/><polygon points="202,305 191,298 191,312" fill="#d84a63"/>
+  <text x="132" y="340" font-size="18" fill="#b4344c" font-weight="700">位相・タイミング差 Δφ</text>
+</svg>
+<p class="small">重要なのは「逆向きに読んだエコーを並べ直しても、位相が完全には一致しない」ことです。</p>
+</div>
+</div>
+</section>
+
+<section id="math" class="card">
+<h2>4. 数式で見ると、なぜFOV/2になる？</h2>
+<p>簡略化して、奇数/偶数行に <b>±φ/2</b> の位相誤差があるとします。各kᵧラインの信号は、概念的に次のように表せます。</p>
+<div class="eq">S'(n) = S(n) · exp{i·(-1)^n φ/2}</div>
+<p>この交互位相は、次の2成分に分解できます。</p>
+<div class="eq">exp{i·(-1)^n φ/2}
+= cos(φ/2) + i·(-1)^n sin(φ/2)
+
+したがって
+S'(n) = cos(φ/2)·S(n)
+      + i·sin(φ/2)·[(-1)^n S(n)]</div>
+<p>ここで <b>(−1)<sup>n</sup> = exp(iπn)</b> は、画像空間ではFOV/2シフトに対応します。つまり、再構成像は概念的に：</p>
+<div class="eq">I'(y) = cos(φ/2)·I(y)
+       + i·sin(φ/2)·I(y + FOV/2)</div>
+<div class="note"><b>ここが本質：</b> 位相差 φ がゼロならゴースト成分は消えます。φ が大きくなるほど <b>sin(φ/2)</b> に応じてFOV/2のゴーストが強くなります。</div>
+</section>
+
+<section id="cause" class="card">
+<h2>5. 主な原因</h2>
+<div class="causes">
+<div class="cause"><div class="icon">🌀</div><b>渦電流</b>急峻な傾斜磁場切替により生じ、勾配波形や位相に誤差を与える。</div>
+<div class="cause"><div class="icon">📐</div><b>傾斜磁場の遅延・不完全性</b>正負の極性で時間応答が完全に対称でないと、奇数/偶数エコーがずれる。</div>
+<div class="cause"><div class="icon">🧲</div><b>B0不均一</b>オフレゾナンスによりEPIの長い読み取り中に位相が蓄積し、奇数/偶数差を増悪させる。</div>
+<div class="cause"><div class="icon">⏱️</div><b>読み取りタイミング誤差</b>ADCサンプリングと勾配中心のわずかな不一致が位相ランプを生む。</div>
+</div>
+<div class="note warn"><b>区別：</b> 呼吸・拍動などの周期運動でもゴーストは出ますが、典型的なN/2ゴーストの中心原因はEPIの奇数・偶数エコー不整合です。</div>
+</section>
+
+<section id="te" class="card">
+<h2>6. TEとの関係：『TEは関係ない』は少し注意</h2>
+<p>「N/2ゴーストはTEの長短そのものが直接原因ではない」という理解は概ね正しいです。ただし、<b>TEを変えることがEPI readout、echo spacing、オフレゾナンスの位相蓄積などを間接的に変える場合</b>は、ゴーストの程度が変化する可能性があります。</p>
+<div class="key">安全な覚え方：<br>「主因は奇数/偶数エコー間の位相不整合。TEそのものを原因とみなさない。ただしシーケンス全体の条件変更による間接影響はあり得る」</div>
+</section>
+
+<section id="solution" class="card">
+<h2>7. 対策・臨床での考え方</h2>
+<div class="checks">
+<div class="check"><b>Nyquist ghost / phase correction</b><br><span class="small">reference scanやnavigatorで奇数・偶数エコーの位相差を推定して補正。</span></div>
+<div class="check"><b>傾斜磁場キャリブレーション</b><br><span class="small">gradient delay、pre-emphasis、eddy current補正など装置側調整。</span></div>
+<div class="check"><b>シミングの最適化</b><br><span class="small">B0不均一を減らし、EPI中のオフレゾナンス位相蓄積を抑える。</span></div>
+<div class="check"><b>受信・システム点検</b><br><span class="small">継続して強い場合は、装置QC・サービスキャリブレーションの対象。</span></div>
+<div class="check"><b>parallel imaging等でecho trainを短縮</b><br><span class="small">主対策ではないが、EPIの読み取り時間短縮でB0影響や歪みを軽減できることがある。</span></div>
+<div class="check"><b>撮像条件を比較して切り分ける</b><br><span class="small">PE方向変更、shim、reference correctionの有無などで原因を推定。</span></div>
+</div>
+</section>
+
+<section class="card">
+<h2>8. 初学者向け「1分まとめ」</h2>
+<div class="summary">
+① EPIはk空間を右→左、左→右と交互に高速収集する。<br>
+② 装置のわずかな遅延や渦電流などで、奇数・偶数エコーの位相がずれる。<br>
+③ その誤差はk空間で「1行おき」に現れる。<br>
+④ 1行おきの交互誤差は、フーリエ変換すると<b>FOV/2シフトした成分</b>になる。<br>
+⑤ だから、位相エンコード方向に「半分ずれた幽霊像」が出る。
+</div>
+</section>
+
+<div class="footer">MRI EPI N/2 Ghost Artifact — 図解・アニメーション学習資料</div>
+</main>
+</body>
+</html>

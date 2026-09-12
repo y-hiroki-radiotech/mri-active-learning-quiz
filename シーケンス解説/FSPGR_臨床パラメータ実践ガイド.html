@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FSPGR 臨床パラメータ実践ガイド | GE MRI</title>
+<style>
+:root{
+  --bg:#f4f7fb; --paper:#fff; --ink:#172033; --muted:#5d6677;
+  --line:#dbe2ec; --accent:#2156d9; --accent2:#0a8f73; --warn:#b35a00;
+  --soft:#edf3ff; --good:#eaf8f3; --bad:#fff4e9; --shadow:0 10px 30px rgba(30,50,80,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.75}
+header{background:linear-gradient(135deg,#173579,#2463e8);color:#fff;padding:44px 22px 34px}
+header .wrap,main,.foot{max-width:1100px;margin:auto}
+h1{font-size:clamp(28px,4vw,46px);line-height:1.2;margin:0 0 10px}
+.subtitle{opacity:.9;font-size:16px}
+.badge{display:inline-block;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:5px 10px;margin:3px 5px 0 0;font-size:12px}
+nav{position:sticky;top:0;z-index:8;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav .navin{max-width:1100px;margin:auto;padding:8px 10px}
+nav a{display:inline-block;padding:7px 11px;color:#32405b;text-decoration:none;border-radius:8px;font-size:13px}
+nav a:hover{background:var(--soft);color:var(--accent)}
+main{padding:24px 16px 70px}
+section{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:26px;margin:0 0 20px;box-shadow:var(--shadow)}
+h2{font-size:25px;margin:0 0 18px;border-left:5px solid var(--accent);padding-left:12px}
+h3{font-size:19px;margin:24px 0 10px}
+p{margin:9px 0}
+.note,.key,.warn{border-radius:12px;padding:14px 16px;margin:15px 0}
+.note{background:var(--soft);border-left:4px solid var(--accent)}
+.key{background:var(--good);border-left:4px solid var(--accent2)}
+.warn{background:var(--bad);border-left:4px solid var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}
+.card h3,.card h4{margin-top:0}
+.kpi{font-size:26px;font-weight:750;color:var(--accent)}
+.small{font-size:12px;color:var(--muted)}
+.eq{font-family:"SFMono-Regular",Consolas,monospace;background:#101827;color:#f5f8ff;border-radius:12px;padding:16px;overflow:auto;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}
+th{background:#f0f4fa;text-align:left}
+tr:nth-child(even) td{background:#fbfcfe}
+.goodtxt{color:#08735e;font-weight:700}.warntxt{color:#a65200;font-weight:700}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.control{padding:14px;border:1px solid var(--line);border-radius:12px}
+input[type=range]{width:100%}
+output{font-weight:700;color:var(--accent)}
+canvas{max-width:100%;border:1px solid var(--line);border-radius:12px;background:#fff}
+svg{max-width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+.timeline text{font-size:12px;fill:#26334d}
+.timeline .axis{stroke:#c7d1df;stroke-width:1}
+.timeline .rf{fill:#d9485f}.timeline .read{fill:#2156d9}.timeline .spoil{fill:#0a8f73}.timeline .grad{fill:#7d5bd1}
+.pill{display:inline-block;border-radius:999px;padding:4px 9px;background:#eef2f8;color:#34405a;font-size:12px;margin:2px 3px}
+.scenario{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed var(--line)}
+.scenario:last-child{border-bottom:0}
+.num{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:white;font-weight:700}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 13px;margin:10px 0}
+summary{cursor:pointer;font-weight:700}
+.ref li{margin-bottom:8px}
+.ref a{color:var(--accent);word-break:break-all}
+.footer-note{font-size:12px;color:var(--muted);padding:12px 0 0}
+@media(max-width:780px){
+ .grid2,.grid3,.controls{grid-template-columns:1fr}
+ section{padding:18px;border-radius:14px}
+ table{font-size:12px}
+ th,td{padding:7px}
+}
+@media print{
+ body{background:#fff;font-size:10.5pt}
+ nav{display:none}
+ header{padding:20px;background:#fff!important;color:#000;border-bottom:2px solid #333}
+ main{max-width:none;padding:0}
+ section{box-shadow:none;border:0;border-radius:0;margin:0;padding:12mm 10mm;break-inside:avoid}
+ .page{break-before:page}
+ a{color:#000;text-decoration:none}
+ .no-print{display:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <h1>FSPGR 臨床パラメータ実践ガイド</h1>
+  <div class="subtitle">Fast Spoiled Gradient Recalled Echo — 原理からLAVA / BRAVO / TOF / TRICKS / LGEの調整戦略まで</div>
+  <div style="margin-top:12px">
+   <span class="badge">GE MRI</span><span class="badge">RF-spoiled GRE</span><span class="badge">臨床トラブルシュート</span><span class="badge">完全オフライン</span>
+  </div>
+ </div>
+</header>
+
+<nav><div class="navin">
+ <a href="#core">原理</a><a href="#timeline">1TRタイムライン</a><a href="#signal">信号式</a>
+ <a href="#sim">パラメータ操作</a><a href="#clinical">臨床用途別</a><a href="#trouble">トラブル対応</a><a href="#refs">文献</a>
+</div></nav>
+
+<main>
+<section id="core">
+<h2>1. FSPGRの臨床的な本質</h2>
+<div class="key"><b>一言でいうと：</b> FSPGRは、短いTRで繰り返すGREにRF/gradient spoilingを加えて残留横磁化のコヒーレンスを崩し、縦磁化回復差を主体としたT1コントラストを高速3D収集するシーケンス。</div>
+
+<div class="grid3">
+ <div class="card"><div class="kpi">TR × FA</div><b>T1コントラスト</b><p class="small">短TRほど飽和が増えるため、FAとの組み合わせで考える。</p></div>
+ <div class="card"><div class="kpi">TE</div><b>T2*・磁化率</b><p class="small">spoiling後も取得中のT2*減衰は残る。通常T1目的ならminimum TEが基本。</p></div>
+ <div class="card"><div class="kpi">BW / Matrix / ARC</div><b>SNR・分解能・時間</b><p class="small">臨床ではこの3者の交換条件を調整して息止め・高分解能を成立させる。</p></div>
+</div>
+
+<h3>誤解しやすい点</h3>
+<table>
+<tr><th>項目</th><th>単純化しすぎた理解</th><th>臨床上より正確な理解</th></tr>
+<tr><td>RF spoiling</td><td>RF位相をランダムにする</td><td>RF位相を規則的に進めるquadratic phase cyclingが基本。GE系では115.4°前後のphase incrementが報告されている。</td></tr>
+<tr><td>T2*</td><td>spoilingでT2*成分が消える</td><td>前TR由来の横磁化コヒーレンスを壊す。現在の励起からTEまでの信号にはT2*減衰が残る。</td></tr>
+<tr><td>FA</td><td>大きいほどT1強調</td><td>大きくするとT1差が増える範囲はあるが、過剰なFAは強い飽和・SNR低下・B1依存を招く。</td></tr>
+<tr><td>Ernst角</td><td>最適T1コントラスト角</td><td>特定T1/TRで定常状態信号を最大化するFA。最大CNRと一致するとは限らない。</td></tr>
+</table>
+
+<div class="note"><b>他社との概念対応：</b> GE SPGR/FSPGR ≈ Siemens FLASH系 ≈ Philips T1-FFE系。IR-prepared 3D T1ではGE BRAVO/IR-FSPGR、Siemens MPRAGE、Philips IR-TFE/TFE系という対応で理解すると実践的。</div>
+</section>
+
+<section id="timeline" class="page">
+<h2>2. 1TRタイムライン：何をspoilingしているのか</h2>
+<svg class="timeline" viewBox="0 0 980 310" role="img" aria-label="FSPGR 1TR timeline">
+ <line x1="95" y1="55" x2="940" y2="55" class="axis"/>
+ <line x1="95" y1="110" x2="940" y2="110" class="axis"/>
+ <line x1="95" y1="165" x2="940" y2="165" class="axis"/>
+ <line x1="95" y1="220" x2="940" y2="220" class="axis"/>
+ <line x1="95" y1="275" x2="940" y2="275" class="axis"/>
+ <text x="20" y="60">RF</text><text x="20" y="115">Gz</text><text x="20" y="170">Gy</text><text x="20" y="225">Gx</text><text x="20" y="280">ADC</text>
+
+ <polygon points="145,55 162,15 179,55" class="rf"/>
+ <text x="130" y="12">α, phase φₙ</text>
+ <rect x="137" y="92" width="52" height="18" rx="3" class="grad"/>
+ <rect x="235" y="150" width="90" height="15" rx="3" class="grad"/>
+ <rect x="330" y="205" width="80" height="15" rx="3" class="grad"/>
+ <rect x="410" y="185" width="155" height="35" rx="4" class="read"/>
+ <rect x="435" y="260" width="110" height="14" rx="3" class="read"/>
+ <rect x="650" y="92" width="120" height="18" rx="3" class="spoil"/>
+ <rect x="650" y="205" width="120" height="18" rx="3" class="spoil"/>
+ <text x="430" y="180">gradient echo</text><text x="452" y="255">readout</text>
+ <text x="660" y="86">spoiler gradients</text>
+ <line x1="162" y1="294" x2="770" y2="294" stroke="#26334d" stroke-width="2"/>
+ <line x1="162" y1="288" x2="162" y2="300" stroke="#26334d"/><line x1="770" y1="288" x2="770" y2="300" stroke="#26334d"/>
+ <text x="430" y="308">TR</text>
+</svg>
+<div class="grid2">
+ <div class="card"><h3>RF spoiling</h3><p>励起RFの位相 φₙ をTRごとに規則的に変化させ、過去の横磁化経路が次のechoに整合して寄与しにくくする。</p></div>
+ <div class="card"><h3>Gradient spoiling</h3><p>readout後に十分なgradient momentを与え、残留横磁化を空間的にdephaseさせる。両者を併用することでideal spoiled GREへ近づける。</p></div>
+</div>
+<div class="warn"><b>重要：</b> spoilingは「横磁化を物理的に消滅させる」というより、残留横磁化の位相をばらしてcoherentな信号寄与を抑える操作と考えると理解しやすい。</div>
+</section>
+
+<section id="signal" class="page">
+<h2>3. 信号式とErnst角</h2>
+<div class="eq">Ideal spoiled GRE:
+S ∝ M₀ × [(1 − e^(−TR/T1)) sin α / (1 − e^(−TR/T1) cos α)] × e^(−TE/T2*)
+
+Ernst angle:
+αE = arccos(e^(−TR/T1))</div>
+
+<div class="grid2" style="margin-top:16px">
+ <div class="card">
+  <h3>Ernst角計算</h3>
+  <label>T1 <input id="t1" type="number" value="900" min="50" max="5000" step="10"> ms</label><br><br>
+  <label>TR <input id="trCalc" type="number" value="5" min="0.5" max="100" step="0.1"> ms</label><br><br>
+  <div>Ernst角 = <span class="kpi" id="ernst">—</span>°</div>
+  <p class="small">SNR最大化の目安。臨床の最大CNRや造影コントラストの最適FAとは一致しないことがある。</p>
+ </div>
+ <div class="card">
+  <h3>短TRで起こること</h3>
+  <p>TRを短くすると縦磁化が回復する前に次のRFが来るため、同じFAでも飽和が強くなる。</p>
+  <div class="key"><b>したがって：</b> TRを短縮したらFAも再評価する。TRだけを変更して「同じコントラスト」と考えない。</div>
+ </div>
+</div>
+</section>
+
+<section id="sim" class="page">
+<h2>4. パラメータを動かした時の臨床的影響</h2>
+<div class="controls no-print">
+ <div class="control"><b>TR</b> <output id="trOut">5.0 ms</output><input id="tr" type="range" min="2" max="30" step=".5" value="5"></div>
+ <div class="control"><b>TE</b> <output id="teOut">1.8 ms</output><input id="te" type="range" min=".8" max="12" step=".2" value="1.8"></div>
+ <div class="control"><b>FA</b> <output id="faOut">12°</output><input id="fa" type="range" min="2" max="45" step="1" value="12"></div>
+</div>
+<div class="grid3" style="margin-top:16px">
+ <div class="card"><h3>T1飽和</h3><div class="kpi" id="satTxt">中</div><p id="satDesc"></p></div>
+ <div class="card"><h3>T2* / 磁化率</h3><div class="kpi" id="t2Txt">低い</div><p id="t2Desc"></p></div>
+ <div class="card"><h3>臨床的注意</h3><div id="clinicalMsg"></div></div>
+</div>
+
+<h3>各パラメータの操作則</h3>
+<table>
+<tr><th>パラメータ</th><th>↑した場合</th><th>↓した場合</th><th>臨床での代表的な意図</th></tr>
+<tr><td><b>TR</b></td><td>回復↑、信号↑傾向、時間↑</td><td>高速化、飽和↑</td><td>通常は短く保つ。変更時はFAも見直す。</td></tr>
+<tr><td><b>TE</b></td><td>T2*・磁化率・dephasing↑</td><td>T1主体、磁化率artifact↓</td><td>通常T1 FSPGRはminimum TE。Dixonは例外。</td></tr>
+<tr><td><b>FA</b></td><td>T1差↑→過剰なら飽和↑</td><td>飽和↓、inflow維持</td><td>LAVAとTOFでは目的が異なる。</td></tr>
+<tr><td><b>Receiver BW</b></td><td>TE↓、chemical shift↓、SNR↓</td><td>SNR↑、TE↑、chemical shift↑</td><td>金属・高速化・短TEはBW↑。</td></tr>
+<tr><td><b>Matrix</b></td><td>resolution↑、SNR/時間に不利</td><td>高速、SNR↑、resolution↓</td><td>時間短縮ではphase matrixを優先して調節。</td></tr>
+<tr><td><b>Phase FOV</b></td><td>wrapに強い、時間/coverage↑</td><td>高速化、wrap risk↑</td><td>腹部息止め短縮に有効。</td></tr>
+<tr><td><b>ARC/ASSET</b></td><td>加速↑、SNR↓、g-factor↑</td><td>SNR↑、時間↑</td><td>息止めを成立させる主要ノブ。</td></tr>
+<tr><td><b>Slice/partition</b></td><td>厚く→SNR↑</td><td>薄く→resolution↑、SNR↓</td><td>3D isotropic化ではSNRとの交換。</td></tr>
+</table>
+</section>
+
+<section id="clinical" class="page">
+<h2>5. 臨床用途別：どこを触るか</h2>
+
+<h3>LAVA / LAVA-Flex — 腹部dynamic</h3>
+<div class="grid2">
+ <div class="card">
+  <b>文献・GE例</b><br>
+  <span class="pill">TR 約4–6 ms</span><span class="pill">TE minimum / Dixon指定</span>
+  <span class="pill">FA 約10–15°</span><span class="pill">3–5 mm前後</span>
+  <p>GEのLAVA-Flex臨床例では TR 4.1 ms、TE 1.2 ms、FA 12°、BW 166.67 kHz、288×288、phase FOV 0.9 の例がある。</p>
+ </div>
+ <div class="card">
+  <b>画質が悪い時</b>
+  <p><span class="goodtxt">息止め不足：</span> phase matrix↓ → phase FOV↓ → ARC↑ → fractional acquisition。</p>
+  <p><span class="goodtxt">SNR不足：</span> BW↓ / voxel↑ / ARC↓。NEX増加は息止め延長になるため優先度は低め。</p>
+  <p><span class="goodtxt">脂肪抑制ムラ：</span> Dixon/LAVA-Flex + 適切なshimを優先。</p>
+ </div>
+</div>
+
+<h3>BRAVO / IR-FSPGR — 頭部3D T1</h3>
+<div class="grid2">
+ <div class="card">
+  <span class="pill">TR 約8–10 ms</span><span class="pill">TE 約3–4 ms / min</span>
+  <span class="pill">FA 約8–13°</span><span class="pill">TI 約400–650 ms（実装依存）</span>
+  <p>IR preparation + segmented FSPGR readout。GM/WMコントラストはTIだけでなく、FA・segmentation・k-space orderingの影響を受ける。</p>
+ </div>
+ <div class="card">
+  <b>GM/WMコントラスト不足</b>
+  <p>まず <b>TI → FA → TR</b> の順で考える。IR回復曲線とreadout中の飽和を分けて考える。</p>
+ </div>
+</div>
+
+<h3>3D TOF-MRA</h3>
+<div class="grid2">
+ <div class="card">
+  <span class="pill">TR 約20–40 ms</span><span class="pill">TE shortest</span><span class="pill">FA 約18–25°</span>
+  <p>目的は単純T1強調ではなく、静止組織を飽和させながらfresh blood inflowを高信号化すること。</p>
+ </div>
+ <div class="card">
+  <p><span class="goodtxt">末梢血管が消える：</span> FA↓ / slabを薄く / MOTSAを検討。</p>
+  <p><span class="goodtxt">stentや磁化率：</span> shortest TE、BW↑、FA最適化。</p>
+  <p><span class="goodtxt">静脈が邪魔：</span> venous SATの位置を確認。</p>
+ </div>
+</div>
+
+<h3>造影3D-MRA / TRICKS</h3>
+<div class="grid2">
+ <div class="card">
+  <span class="pill">TR minimum</span><span class="pill">TE minimum</span><span class="pill">比較的大きいFA</span>
+  <p>GdによるT1短縮を最大限利用。TRICKSの臨床例ではTR 4.5 ms、TE 1.97 ms、FA 35°の報告がある。</p>
+ </div>
+ <div class="card"><b>優先順位</b><p>bolus timing / temporal resolution → TR・TE短縮 → acceleration → spatial resolution。</p></div>
+</div>
+
+<h3>LGE — 心筋遅延造影</h3>
+<div class="grid2">
+ <div class="card">
+  <span class="pill">IR + spoiled GRE</span><span class="pill">TI scout重要</span>
+  <p>正常心筋のMz≈0となるTIを合わせ、線維化・梗塞を相対的高信号として描出。</p>
+ </div>
+ <div class="card"><b>最初に触るのはTI</b><p>正常心筋が残っている場合、FAやBWより先にnull pointを再評価。造影後時間経過でも最適TIは変化する。</p></div>
+</div>
+
+<div class="warn"><b>注意：</b> 上記の数値は文献・メーカー臨床例を理解するための代表レンジであり、装置世代、1.5T/3T、coil、parallel imaging、造影条件、施設プロトコルにより変化する。実運用は装置上の承認済みプロトコルを基準に調整する。</div>
+</section>
+
+<section id="trouble" class="page">
+<h2>6. 困った時のトラブルシュート</h2>
+<div class="scenario"><div class="num">1</div><div><b>T1コントラスト不足</b><br>TRとFAをセットで評価。短TRでFAが高すぎると両組織が強く飽和し、期待したCNRが出ない場合がある。</div></div>
+<div class="scenario"><div class="num">2</div><div><b>T2*感・磁化率artifact</b><br><b>TE↓ / BW↑</b>を第一候補。GREなので180° refocusingがなく、SEより磁場不均一に弱い。</div></div>
+<div class="scenario"><div class="num">3</div><div><b>SNR不足</b><br><b>BW↓ / voxel↑ / acceleration↓</b>。腹部ではNEX↑による息止め延長に注意。</div></div>
+<div class="scenario"><div class="num">4</div><div><b>息止め時間が長い</b><br><b>phase matrix↓ → phase FOV↓ → ARC/ASSET↑</b>。frequency matrixを先に落とすより、位相方向の削減が効率的。</div></div>
+<div class="scenario"><div class="num">5</div><div><b>脂肪抑制ムラ</b><br>Dixon系（LAVA-Flex等）とshimを検討。特に3TではB0/B1不均一を意識。</div></div>
+<div class="scenario"><div class="num">6</div><div><b>BRAVOのGM/WM分離不良</b><br><b>TI → FA → TR</b>。readout trainとk-space orderingも含めて考える。</div></div>
+<div class="scenario"><div class="num">7</div><div><b>TOF末梢血管が消える</b><br><b>FA↓ / slab↓ / MOTSA</b>。血液のslab内滞在時間を短くしてsaturationを減らす。</div></div>
+<div class="scenario"><div class="num">8</div><div><b>造影MRAの血管信号不足</b><br><b>bolus timing、FA、TE、temporal footprint</b>を確認。単なるFA不足と決めつけない。</div></div>
+<div class="scenario"><div class="num">9</div><div><b>LGEで正常心筋が明るい</b><br><b>TI scout / null point</b>を再評価。造影後の時間経過でTIが変わる。</div></div>
+
+<h3>臨床思考の最短ルール</h3>
+<div class="eq">T1 contrast problem → TR × FA
+Susceptibility / T2* problem → TE ↓, BW ↑
+SNR problem → voxel ↑, BW ↓, acceleration ↓
+Scan-time problem → phase matrix/FOV ↓, acceleration ↑
+IR-prepared problem → TI first
+Flow problem → FA + slab + flow direction</div>
+</section>
+
+<section id="refs" class="page">
+<h2>7. 参考文献・出典</h2>
+<ol class="ref">
+ <li>Epstein FH, Mugler JP 3rd, Brookeman JR. Spoiling of transverse magnetization in gradient-echo imaging during the approach to steady state. <i>Magn Reson Med.</i> 1996. PMID: 8622589.</li>
+ <li>Leupold J, et al. On the choice of the phase difference increment in RF-spoiled GRE MRI. <i>PLOS One.</i> 2025. GEのRF phase incrementとして115.4°を含む各vendor実装を比較。</li>
+ <li>GE Healthcare. SIGNA Pulse / LAVA-Flex clinical examples. LAVA-Flex例：TR 4.1 ms, TE 1.2 ms, FA 12°, BW 166.67 kHz。</li>
+ <li>Optimization of MR Parameters of 3D TOF-MRA for Various Intracranial Stents at 3.0T MRI. 3D TOF例：TR/TE/FA 24 ms/2.7 ms/20°、ASSET 2。</li>
+ <li>日本放射線技術学会誌：3T MRIにおける3D-FSPGR T1強調の最適化。脳3D-FSPGR例：TR/TE 9/2 ms、FA 13°。</li>
+</ol>
+<details>
+ <summary>Webリンク</summary>
+ <ul class="ref">
+  <li><a href="https://pubmed.ncbi.nlm.nih.gov/8622589/">PubMed: Spoiling of transverse magnetization...</a></li>
+  <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12124847/">PMC: RF phase increment in RF-spoiled GRE</a></li>
+  <li><a href="https://www.gehealthcare.com/content/dam/gehc/sitecore-migrated-assets/widen/2018/01/25/0204/gehealthcarecom/migrated/2018/02/19/0835/ing-abstracts-magazine-signapulse-spring2010-gehealthcare-signapulse-magazine-20100401_pdf.pdf">GE Healthcare SIGNA Pulse PDF</a></li>
+  <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3214815/">PMC: 3D TOF-MRA parameter optimization</a></li>
+  <li><a href="https://www.jstage.jst.go.jp/article/jjrt/62/2/62_2_297/_article">J-STAGE: 3T 3D-FSPGR optimal parameters</a></li>
+ </ul>
+</details>
+<div class="footer-note">作成日：2026-09-11｜教育・プロトコル検討用。患者ごとの撮像条件は施設基準、装置仕様、医師の診断目的を優先してください。</div>
+</section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+function calcErnst(){
+  const t1=parseFloat($('t1').value), tr=parseFloat($('trCalc').value);
+  const a=Math.acos(Math.exp(-tr/t1))*180/Math.PI;
+  $('ernst').textContent=isFinite(a)?a.toFixed(1):'—';
+}
+$('t1').addEventListener('input',calcErnst);
+$('trCalc').addEventListener('input',calcErnst);
+calcErnst();
+
+function updateSim(){
+ const tr=+$('tr').value, te=+$('te').value, fa=+$('fa').value;
+ $('trOut').textContent=tr.toFixed(1)+' ms';
+ $('teOut').textContent=te.toFixed(1)+' ms';
+ $('faOut').textContent=fa.toFixed(0)+'°';
+
+ let satScore=(fa/15)*(6/tr);
+ let sat = satScore<0.65?'低':satScore<1.4?'中':'高';
+ $('satTxt').textContent=sat;
+ $('satDesc').textContent = sat==='高' ? '短TR＋高FAで強いsaturation。T1差は強調され得るが信号低下に注意。'
+ : sat==='中' ? '一般的なT1 FSPGRで使いやすい領域。目的組織のT1とCNRで最適化。'
+ : 'saturationが弱い。TOFのinflow維持などには有利な場合がある。';
+
+ let t2 = te<2.5?'低い':te<5?'中等度':'高い';
+ $('t2Txt').textContent=t2;
+ $('t2Desc').textContent = te<2.5 ? '短TEでT2*減衰・磁化率の影響を抑えやすい。'
+ : te<5 ? 'T2*影響が増える。用途・BWとのバランスを確認。'
+ : 'GREではdephasingが目立ちやすい領域。T1目的ならTE短縮を検討。';
+
+ let msg=[];
+ if(tr<4 && fa>18) msg.push('強い飽和：FAを下げる余地を確認。');
+ if(te>4) msg.push('T1目的ならTE短縮/BW増加を検討。');
+ if(fa>25) msg.push('高FA：造影MRA等では有効だがSAR/B1/飽和を確認。');
+ if(!msg.length) msg.push('一般的なspoiled GREの範囲。目的に応じてSNR・CNR・時間を調整。');
+ $('clinicalMsg').innerHTML=msg.map(x=>'<p>• '+x+'</p>').join('');
+}
+['tr','te','fa'].forEach(id=>$(id).addEventListener('input',updateSim));
+updateSim();
+</script>
+</body>
+</html>

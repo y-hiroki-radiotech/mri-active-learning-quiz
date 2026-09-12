@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FIESTA（bSSFP）徹底解説 ― 原理・臨床応用・頚椎Axial</title>
+<style>
+:root{
+  --ink:#142033;--muted:#607086;--line:#d9e2ee;--paper:#fff;--bg:#f4f7fb;
+  --navy:#17345e;--blue:#2f6fd6;--blue2:#eef4ff;--cyan:#10859b;--cyan2:#edfafd;
+  --green:#27764f;--green2:#eef9f3;--orange:#c86b28;--orange2:#fff4e9;
+  --red:#a53d45;--red2:#fff0f1;--violet:#6550b9;--violet2:#f2efff;
+  --shadow:0 10px 30px rgba(22,36,61,.08)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.82
+}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1140px;margin:auto;padding:28px 22px 70px}
+.hero{
+  background:linear-gradient(135deg,#0e2039,#183e6f 55%,#116878);
+  color:#fff;border-radius:26px;padding:44px;box-shadow:var(--shadow);overflow:hidden;position:relative
+}
+.hero:after{
+  content:"";position:absolute;right:-100px;top:-150px;width:380px;height:380px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 44px rgba(255,255,255,.04),0 0 0 88px rgba(255,255,255,.025)
+}
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;opacity:.8}
+h1{font-size:clamp(31px,5vw,54px);line-height:1.12;margin:.26em 0 .36em}
+.hero p{font-size:17px;color:#e7f2ff;max-width:900px;margin:0}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:19px}
+.badge{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.08);font-size:12px}
+nav{
+  margin:22px 0 0;padding:19px 21px;background:#fff;border:1px solid var(--line);border-radius:20px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px;box-shadow:var(--shadow)
+}
+nav a{color:#24344f;font-weight:700;padding:8px 10px;border-radius:10px}
+nav a:hover{background:#f2f6fb;text-decoration:none}
+section{
+  margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:var(--shadow)
+}
+h2{font-size:29px;line-height:1.3;margin:0 0 18px}
+h3{font-size:20px;margin:25px 0 10px}
+h4{font-size:16px;margin:18px 0 7px}
+.lead{font-size:17px;color:#33445f}
+.grid2,.grid3,.grid4{display:grid;gap:16px}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+.card h3,.card h4{margin-top:0}
+.blue{background:var(--blue2)} .green{background:var(--green2)} .orange{background:var(--orange2)} .violet{background:var(--violet2)}
+.callout{border-left:5px solid var(--blue);background:var(--blue2);padding:16px 18px;border-radius:10px;margin:16px 0}
+.callout.good{border-color:var(--green);background:var(--green2)}
+.callout.warn{border-color:var(--orange);background:var(--orange2)}
+.callout.danger{border-color:var(--red);background:var(--red2)}
+.math{
+  font-family:"Times New Roman","Yu Mincho",serif;text-align:center;font-size:20px;
+  background:#fbfcff;border:1px solid #dae3ee;border-radius:14px;padding:17px 20px;margin:14px 0;overflow:auto
+}
+.small{font-size:13px;color:var(--muted)}
+.big{font-size:29px;font-weight:800;line-height:1.2}
+table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;font-size:14px}
+th,td{padding:12px 13px;vertical-align:top;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+th{background:#edf3fa;text-align:left}
+th:first-child,td:first-child{border-left:1px solid var(--line)}
+tr:first-child th{border-top:1px solid var(--line)}
+tr:first-child th:first-child{border-top-left-radius:12px}
+tr:first-child th:last-child{border-top-right-radius:12px}
+tr:last-child td:first-child{border-bottom-left-radius:12px}
+tr:last-child td:last-child{border-bottom-right-radius:12px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+.node{border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:140px;text-align:center;font-weight:750;background:#fff}
+.arrow{font-size:23px;color:#77869b}
+.check{list-style:none;padding:0}.check li{position:relative;padding:6px 0 6px 27px}.check li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:900}
+.warnlist{list-style:none;padding:0}.warnlist li{position:relative;padding:6px 0 6px 27px}.warnlist li:before{content:"!";position:absolute;left:4px;color:var(--orange);font-weight:900}
+.steps{counter-reset:n;display:grid;gap:12px}
+.step{position:relative;padding:14px 16px 14px 54px;border:1px solid var(--line);border-radius:14px}
+.step:before{counter-increment:n;content:counter(n);position:absolute;left:14px;top:12px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--navy);color:#fff;font-weight:800}
+.tag{display:inline-block;font-size:11px;font-weight:800;background:#edf2f8;color:#40516a;border-radius:999px;padding:3px 7px;margin:2px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.controls button{border:1px solid #bfcbd9;background:#fff;padding:8px 11px;border-radius:9px;cursor:pointer;font-weight:700}
+.controls button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.figure{border:1px solid var(--line);border-radius:17px;padding:15px;background:#fbfdff}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.ref{font-size:13px;color:#44536c}.ref li{margin:8px 0}
+.footer{text-align:center;font-size:12px;color:#738095;padding:18px 0 0}
+@media(max-width:820px){
+  .wrap{padding:14px 12px 40px}.hero{padding:30px 23px}section{padding:22px 18px}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}.flow{flex-direction:column;align-items:stretch}.arrow{text-align:center;transform:rotate(90deg)}
+}
+@media print{
+  body{background:#fff;font-size:10.5pt}.wrap{max-width:none;padding:0}.hero,section,nav{box-shadow:none}
+  .hero{border-radius:0}section{margin-top:12px;padding:18px;border-radius:10px}nav{display:none}
+  h2,h3{break-after:avoid}.card,.figure,.callout,table{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">MRI BALANCED STEADY-STATE FREE PRECESSION</div>
+  <h1>FIESTA（bSSFP）徹底解説</h1>
+  <p>
+    GEのFIESTAを、単なる「高速GRE」としてではなく、
+    <b>なぜ横磁化を捨てずに使えるのか、なぜT₂/T₁コントラストになるのか、
+    なぜCSFと神経根が見やすいのか、そしてなぜbanding artifactが出るのか</b>まで、
+    頚椎Axialの臨床判断につながる形で解説します。
+  </p>
+  <div class="badges">
+    <span class="badge">FIESTA = GE bSSFP</span>
+    <span class="badge">Steady State</span>
+    <span class="badge">T₂/T₁ contrast</span>
+    <span class="badge">Bright blood / Bright fluid</span>
+    <span class="badge">Cervical axial</span>
+    <span class="badge">Banding artifact</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#summary">1. まず結論</a>
+  <a href="#names">2. 名称と位置づけ</a>
+  <a href="#steady">3. 定常状態の原理</a>
+  <a href="#balance">4. Balancedの意味</a>
+  <a href="#contrast">5. T₂/T₁コントラスト</a>
+  <a href="#banding">6. Bandingの原理</a>
+  <a href="#clinical">7. 臨床応用</a>
+  <a href="#cspine">8. 頚椎Axial</a>
+  <a href="#compare">9. 他sequenceとの比較</a>
+  <a href="#practice">10. 撮像時の実務</a>
+  <a href="#refs">11. 参考文献</a>
+</nav>
+
+<section id="summary">
+  <h2>1. まず結論：FIESTAとは何か</h2>
+  <p class="lead">
+    <b>FIESTA（Fast Imaging Employing Steady-State Acquisition）</b>はGEの
+    <b>balanced steady-state free precession（bSSFP）</b>です。
+    各TR内でimaging gradientによる位相分散を打ち消し、残った横磁化を次のRFへ引き継ぐことで、
+    極めて短いTRでも高いsignal efficiencyを得ます。
+  </p>
+
+  <div class="flow">
+    <div class="node">短いTR<br><span class="small">T₂より十分短い</span></div>
+    <div class="arrow">→</div>
+    <div class="node">横磁化が残る<br><span class="small">捨てない</span></div>
+    <div class="arrow">→</div>
+    <div class="node">gradientをbalance<br><span class="small">位相を再収束</span></div>
+    <div class="arrow">→</div>
+    <div class="node blue">steady state<br><span class="small">縦＋横磁化が一定へ</span></div>
+    <div class="arrow">→</div>
+    <div class="node green">高SNR効率<br><span class="small">T₂/T₁ contrast</span></div>
+  </div>
+
+  <div class="grid3">
+    <div class="card blue">
+      <div class="big">Bright fluid</div>
+      <p>CSFなどT₂/T₁比が高い組織は非常に高信号になりやすい。</p>
+    </div>
+    <div class="card green">
+      <div class="big">Bright blood</div>
+      <p>心腔内血液・血管を高信号として描きやすく、cine MRIに非常に適する。</p>
+    </div>
+    <div class="card orange">
+      <div class="big">Banding</div>
+      <p>最大の弱点。B₀不均一やoff-resonanceで暗い帯状signal voidが生じる。</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>元の説明からの重要な修正：</b>
+    「RFパルスも次のサイクルまでに位相がゼロへ戻る」のではなく、
+    <b>各TR内でgradientの0次モーメント（面積）がbalancedになる</b>ことが本質です。
+    RFは一定または交互のphase cyclingでcoherent steady stateを維持します。
+  </div>
+</section>
+
+<section id="names">
+  <h2>2. 名称と位置づけ</h2>
+  <table>
+    <tr><th>メーカー / 一般名</th><th>呼称</th><th>意味</th></tr>
+    <tr><td>一般名</td><td><b>bSSFP</b></td><td>balanced Steady-State Free Precession</td></tr>
+    <tr><td>GE</td><td><b>FIESTA</b></td><td>Fast Imaging Employing Steady-State Acquisition</td></tr>
+    <tr><td>GE</td><td><b>FIESTA-C</b></td><td>dual-excitation系のhigh-resolution steady-state imaging</td></tr>
+    <tr><td>Siemens</td><td><b>TrueFISP</b></td><td>balanced SSFPの製品呼称</td></tr>
+    <tr><td>Philips</td><td><b>bFFE</b></td><td>balanced Fast Field Echo</td></tr>
+    <tr><td>Siemens系高分解能3D</td><td><b>CISS</b></td><td>phase-cycled bSSFPを組み合わせbandingを低減する系統</td></tr>
+  </table>
+
+  <div class="callout">
+    <b>区別したい点：</b>
+    FIESTAとFISPは名前が似ますが、現代のメーカー呼称では同一視しない方が安全です。
+    FIESTAはGEの<b>balanced GRE / bSSFP</b>として理解するのが実務的です。
+  </div>
+</section>
+
+<section id="steady">
+  <h2>3. 原理①：Steady Stateはどう作られるのか</h2>
+
+  <h3>3-1. 通常のspoiled GREとの最大の違い</h3>
+  <div class="grid2">
+    <div class="card">
+      <h3>Spoiled GRE</h3>
+      <p>TR終了時に残った横磁化をgradient/RF spoilingで意図的にばらして捨てる。</p>
+      <div class="math">M<sub>xy</sub> → dephase → ほぼ利用しない</div>
+    </div>
+    <div class="card blue">
+      <h3>FIESTA / bSSFP</h3>
+      <p>残った横磁化を再びそろえて、次のRFでも利用する。</p>
+      <div class="math">M<sub>xy</sub>(n) → refocus → M<sub>xy</sub>(n+1)</div>
+    </div>
+  </div>
+
+  <h3>3-2. TRがT₂より短いと何が起きるか</h3>
+  <p>
+    RF後の横磁化はT₂で減衰します。しかしTRが数ms程度と非常に短ければ、
+    次のRFが来る時点でも横磁化はかなり残っています。
+    FIESTAではそれをspoilingせず、縦磁化との間で毎TR交換し続けます。
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 960 300" width="100%" aria-label="steady state形成模式図">
+      <line x1="50" y1="230" x2="910" y2="230" stroke="#9aa8bb" stroke-width="2"/>
+      <g fill="#17345e" font-size="14" font-weight="700">
+        <text x="75" y="258">RF1</text><text x="245" y="258">RF2</text><text x="415" y="258">RF3</text><text x="585" y="258">RF4</text><text x="755" y="258">RF5</text>
+      </g>
+      <g stroke="#2f6fd6" stroke-width="8">
+        <line x1="85" y1="230" x2="85" y2="100"/><line x1="255" y1="230" x2="255" y2="100"/>
+        <line x1="425" y1="230" x2="425" y2="100"/><line x1="595" y1="230" x2="595" y2="100"/>
+        <line x1="765" y1="230" x2="765" y2="100"/>
+      </g>
+      <path d="M90 130 C130 135 165 160 215 177 C235 183 245 170 252 151" fill="none" stroke="#10859b" stroke-width="5"/>
+      <path d="M260 145 C300 150 340 163 390 171 C410 174 418 163 423 151" fill="none" stroke="#10859b" stroke-width="5"/>
+      <path d="M430 148 C475 151 515 159 560 165 C580 168 589 160 594 151" fill="none" stroke="#10859b" stroke-width="5"/>
+      <path d="M600 150 C645 152 684 157 730 162 C748 164 759 158 764 151" fill="none" stroke="#10859b" stroke-width="5"/>
+      <path d="M770 151 C810 153 855 158 900 161" fill="none" stroke="#10859b" stroke-width="5"/>
+      <text x="490" y="48" text-anchor="middle" font-size="20" font-weight="800" fill="#142033">繰り返すうちにMxyとMzが一定の周期状態へ</text>
+      <text x="490" y="80" text-anchor="middle" font-size="14" fill="#607086">最初の数TRはtransient、やがてsteady state</text>
+      <text x="110" y="125" font-size="13" fill="#10859b">残存Mxy</text>
+      <text x="790" y="138" font-size="13" fill="#10859b">ほぼ一定へ</text>
+    </svg>
+  </div>
+
+  <h3>3-3. 「定常状態」とは磁化が止まることではない</h3>
+  <p>
+    磁化ベクトルはRFのたびに動いています。steady stateとは、
+    <b>あるTRの同じ時点を毎回見たとき、MzとMxyの大きさ・位相が同じ周期状態に落ち着く</b>ことです。
+  </p>
+</section>
+
+<section id="balance">
+  <h2>4. 原理②：“Balanced”とは何をbalanceしているのか</h2>
+  <p class="lead">
+    bSSFPの核心は、slice-select・phase-encode・frequency-encodeの各方向で、
+    <b>1TR終了時のgradient area（0次モーメント）が0になる</b>よう設計することです。
+  </p>
+
+  <div class="math">
+    ∫<sub>TR</sub> G<sub>x</sub>(t)dt = 0,
+    &nbsp; ∫<sub>TR</sub> G<sub>y</sub>(t)dt = 0,
+    &nbsp; ∫<sub>TR</sub> G<sub>z</sub>(t)dt = 0
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 980 430" width="100%" aria-label="balanced gradient timing diagram">
+      <text x="35" y="55" font-size="15" font-weight="800">RF</text>
+      <text x="35" y="135" font-size="15" font-weight="800">Gz</text>
+      <text x="35" y="215" font-size="15" font-weight="800">Gy</text>
+      <text x="35" y="295" font-size="15" font-weight="800">Gx</text>
+      <text x="35" y="375" font-size="15" font-weight="800">Signal</text>
+
+      <line x1="100" y1="65" x2="920" y2="65" stroke="#b5c0cf"/>
+      <line x1="100" y1="145" x2="920" y2="145" stroke="#b5c0cf"/>
+      <line x1="100" y1="225" x2="920" y2="225" stroke="#b5c0cf"/>
+      <line x1="100" y1="305" x2="920" y2="305" stroke="#b5c0cf"/>
+      <line x1="100" y1="385" x2="920" y2="385" stroke="#b5c0cf"/>
+
+      <path d="M160 65 q30 -70 60 0 q-30 70 -60 0" fill="none" stroke="#6550b9" stroke-width="5"/>
+      <rect x="140" y="105" width="120" height="40" fill="#2f6fd6" opacity=".8"/>
+      <rect x="260" y="145" width="120" height="40" fill="#2f6fd6" opacity=".45"/>
+      <rect x="470" y="185" width="90" height="40" fill="#c86b28" opacity=".8"/>
+      <rect x="560" y="225" width="90" height="40" fill="#c86b28" opacity=".45"/>
+      <rect x="320" y="265" width="120" height="40" fill="#10859b" opacity=".8"/>
+      <rect x="440" y="305" width="120" height="40" fill="#10859b" opacity=".45"/>
+      <path d="M380 385 q95 -60 190 0 q-95 60 -190 0" fill="none" stroke="#27764f" stroke-width="5"/>
+
+      <text x="694" y="120" font-size="14" fill="#607086">各axisで＋areaと−areaを相殺</text>
+      <text x="694" y="145" font-size="14" fill="#607086">→ TR終了時にgradient由来phase ≈ 0</text>
+      <text x="395" y="415" font-size="13" fill="#607086">echoは通常TRの中央付近（TE ≈ TR/2）</text>
+    </svg>
+  </div>
+
+  <div class="callout good">
+    これにより、静止spinではimaging gradientによるdephasingが毎TRで巻き戻され、
+    <b>coherentな横磁化を次のTRへ持ち越しやすくなります。</b>
+  </div>
+
+  <div class="callout warn">
+    ただし「すべての位相差が消える」わけではありません。
+    <b>B₀不均一、chemical shift、susceptibility、flow</b>などによるoff-resonance phaseは残るため、
+    それがFIESTA特有のbandingやsignal変化につながります。
+  </div>
+</section>
+
+<section id="contrast">
+  <h2>5. 原理③：なぜT₂/T₁コントラストになるのか</h2>
+
+  <p>
+    on-resonanceでTRがT₁・T₂に比べ十分短い条件では、
+    bSSFPのsignal intensityは大まかに<b>T₂/T₁比が高い組織ほど強くなる</b>方向に働きます。
+    厳密な式はflip angleとoff-resonanceにも依存しますが、臨床的にはこの比が最も重要な直感です。
+  </p>
+
+  <div class="math">
+    S<sub>bSSFP</sub> ≈ f(T₁, T₂, α, TR, Δf)
+    &nbsp;&nbsp;→&nbsp;&nbsp;
+    TRが十分短くon-resonanceなら「T₂/T₁比」がcontrastの主要因
+  </div>
+
+  <table>
+    <tr><th>組織</th><th>T₂/T₁のイメージ</th><th>FIESTAでの見え方</th><th>臨床的意味</th></tr>
+    <tr><td>CSF</td><td>高い</td><td><b>非常に高信号</b></td><td>神経・脊髄・靱帯の背景contrastになる</td></tr>
+    <tr><td>血液</td><td>比較的高い＋flow</td><td><b>高信号</b></td><td>bright-blood cine、血管描出</td></tr>
+    <tr><td>脂肪</td><td>比較的高い</td><td>高信号になり得る</td><td>CSFと同様に明るくなる場合がある</td></tr>
+    <tr><td>脊髄・神経</td><td>CSFより低い</td><td>中〜低信号</td><td>白いCSF中に輪郭が浮く</td></tr>
+    <tr><td>皮質骨・靱帯</td><td>低い / proton不足</td><td>低信号</td><td>形態の境界として見える</td></tr>
+  </table>
+
+  <div class="callout">
+    <b>ポイント：</b>
+    FIESTAは「T2強調像」ではありません。
+    CSFが白いためT2WIのように見えますが、contrast mechanismは<b>T₂/T₁ ratio + off-resonance + flip angle</b>の組み合わせです。
+  </div>
+</section>
+
+<section id="banding">
+  <h2>6. 原理④：なぜbanding artifactが出るのか</h2>
+
+  <h3>6-1. off-resonance spinはTRごとに余分なphaseをためる</h3>
+  <div class="math">
+    φ = 2π · Δf · TR
+  </div>
+  <p>
+    Δfは局所B₀ずれです。bSSFP signalはこのphaseに周期的に依存するため、
+    ある周波数ではsignalが急激に落ち、画像上では暗い帯になります。
+  </p>
+
+  <h3>6-2. bandingの間隔は1/TR</h3>
+  <div class="math">
+    SSFPの周波数profileの周期 ≈ 1 / TR
+  </div>
+
+  <div class="controls">
+    <b>TRを切替：</b>
+    <button id="tr3" class="active" onclick="setTR(3)">3 ms</button>
+    <button id="tr5" onclick="setTR(5)">5 ms</button>
+    <button id="tr8" onclick="setTR(8)">8 ms</button>
+    <span id="bandText" class="small">profile周期：約333 Hz</span>
+  </div>
+
+  <div class="figure">
+    <svg id="bandSvg" viewBox="0 0 940 300" width="100%" aria-label="bSSFP周波数profile模式図">
+      <line x1="80" y1="240" x2="890" y2="240" stroke="#9eabba"/>
+      <line x1="80" y1="45" x2="80" y2="240" stroke="#9eabba"/>
+      <text x="485" y="280" text-anchor="middle" font-size="14" fill="#607086">off-resonance frequency</text>
+      <text x="28" y="145" transform="rotate(-90 28 145)" text-anchor="middle" font-size="14" fill="#607086">signal</text>
+      <path id="bandCurve" d="" fill="none" stroke="#2f6fd6" stroke-width="5"/>
+      <line x1="485" y1="45" x2="485" y2="240" stroke="#c86b28" stroke-dasharray="7 7"/>
+      <text x="500" y="70" font-size="13" fill="#c86b28">on-resonance</text>
+    </svg>
+  </div>
+
+  <div class="grid3">
+    <div class="card orange">
+      <h3>TRを短くする</h3>
+      <p>1/TRが大きくなり、pass-bandが広がる → bandingを起こしにくくなる。</p>
+    </div>
+    <div class="card blue">
+      <h3>良好なshim</h3>
+      <p>B₀分布を狭くして、組織をtransition bandから遠ざける。</p>
+    </div>
+    <div class="card violet">
+      <h3>phase cycling</h3>
+      <p>band位置をずらした複数撮像を組み合わせるCISS/FIESTA-C系の発想。</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <b>重要：</b>
+    FIESTAは「位相分散に強い」のではなく、むしろ<b>off-resonanceに非常に敏感</b>です。
+    短TRとbalanced gradientによって実用化できている、と理解する方が正確です。
+  </div>
+</section>
+
+<section id="clinical">
+  <h2>7. 臨床での代表的な活用</h2>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>① 心臓cine MRI</h3>
+      <ul class="check">
+        <li>血液がbright → 心筋との境界が明瞭</li>
+        <li>高いSNR efficiency</li>
+        <li>短TRで高い時間分解能</li>
+        <li>壁運動、EDV/ESV、EF、心筋重量を評価</li>
+      </ul>
+      <p class="small">FIESTA cineはbSSFPの代表的臨床用途。</p>
+    </div>
+
+    <div class="card">
+      <h3>② 脳神経・頭蓋底</h3>
+      <ul class="check">
+        <li>CSFが高信号、脳神経が低〜中信号</li>
+        <li>三叉神経、顔面神経、内耳道など微細構造</li>
+        <li>神経と血管の位置関係</li>
+        <li>HFS / TNのneurovascular contact評価</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>③ 内耳・CPA</h3>
+      <ul class="check">
+        <li>内耳液がbright</li>
+        <li>蝸牛・半規管・前庭の高分解能描出</li>
+        <li>小さな神経や膜構造をCSF contrastで描く</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>④ 脊椎・脊髄</h3>
+      <ul class="check">
+        <li>CSFと脊髄・rootletの高contrast</li>
+        <li>薄いslice / 3Dでpartial volumeを低減</li>
+        <li>denticulate ligament、rootlet、cyst wallなどを描出</li>
+        <li>通常T2 FSEの補助として使用</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>⑤ 非造影MRA</h3>
+      <ul class="check">
+        <li>bright-blood特性を利用</li>
+        <li>GE Inhance Inflow IRなどで3D FIESTAを基盤に利用</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>⑥ 胎児・腹部など高速撮像</h3>
+      <ul class="check">
+        <li>高SNRを短時間で取得しやすい</li>
+        <li>液体とsolid tissueのcontrast</li>
+        <li>ただし腹部ではB₀不均一とbandingに注意</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="cspine">
+  <h2>8. なぜ頚椎AxialでFIESTAが選ばれるのか</h2>
+
+  <div class="callout good">
+    頚椎での最大の価値は、<b>「椎間板をT2らしく評価する」ことより、
+    白いCSFを背景にして、脊髄・rootlet・thecal sacの形態を高分解能で見ること</b>です。
+  </div>
+
+  <h3>8-1. Axialで見たい構造</h3>
+  <div class="figure">
+    <svg viewBox="0 0 800 560" width="100%" aria-label="頚椎axial FIESTA模式図">
+      <ellipse cx="400" cy="285" rx="210" ry="170" fill="#d9e5f7" stroke="#8aa1bd" stroke-width="3"/>
+      <ellipse cx="400" cy="285" rx="135" ry="105" fill="#ffffff" stroke="#7ea4d8" stroke-width="4"/>
+      <ellipse cx="400" cy="285" rx="65" ry="80" fill="#58697e"/>
+      <path d="M335 275 C290 250 265 225 238 208" stroke="#58697e" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M465 275 C510 250 535 225 562 208" stroke="#58697e" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <rect x="315" y="445" width="170" height="48" rx="20" fill="#bac2cd"/>
+      <path d="M270 360 Q400 410 530 360" fill="none" stroke="#8a7664" stroke-width="26"/>
+      <circle cx="330" cy="285" r="10" fill="#6550b9"/><circle cx="470" cy="285" r="10" fill="#6550b9"/>
+
+      <text x="400" y="288" text-anchor="middle" fill="#fff" font-size="17" font-weight="800">Spinal cord</text>
+      <text x="400" y="185" text-anchor="middle" fill="#2f6fd6" font-size="17" font-weight="800">CSF：高信号</text>
+      <text x="185" y="180" fill="#58697e" font-size="15" font-weight="700">Nerve root</text>
+      <line x1="275" y1="205" x2="205" y2="185" stroke="#58697e" stroke-width="2"/>
+      <text x="610" y="260" fill="#6550b9" font-size="15" font-weight="700">rootlet / denticulate ligament</text>
+      <line x1="477" y1="285" x2="600" y2="265" stroke="#6550b9" stroke-width="2"/>
+      <text x="400" y="530" text-anchor="middle" fill="#607086" font-size="14">模式図：FIESTAでは白いCSFの中に神経構造が浮かぶ</text>
+    </svg>
+  </div>
+
+  <h3>8-2. なぜ狭窄評価に役立つか</h3>
+  <div class="steps">
+    <div class="step">
+      <b>正常では脊髄周囲に高信号CSF rimが見える。</b><br>
+      その白い隙間がどこで薄くなる・消えるかを見ることでthecal sacの圧迫を直感的に把握しやすい。
+    </div>
+    <div class="step">
+      <b>rootletやnerve rootの輪郭を追いやすい。</b><br>
+      lateral recessやforaminal側へ向かう神経成分と圧迫構造との位置関係を理解しやすい。
+    </div>
+    <div class="step">
+      <b>薄いslice / 3D acquisitionならpartial volumeを減らせる。</b><br>
+      axialだけでなくsagittal・coronal・oblique MPRを作成できる場合があり、複雑な解剖を追跡しやすい。
+    </div>
+    <div class="step">
+      <b>CSF pulsation artifactを抑えたmyelographic contrastが得られる。</b><br>
+      CISS/FIESTA-C系ではflow compensationの性質もあり、通常spin echoで問題になるCSF pulsationの影響を軽減できる。
+    </div>
+  </div>
+
+  <h3>8-3. ただし「FIESTAだけで頚椎症を診断する」わけではない</h3>
+  <div class="callout warn">
+    FIESTAではdisc annulus・osteophyte・ligament・boneなどが似た低信号になりやすく、
+    <b>圧迫の“原因組織の性状”を分ける能力はT1/T2 FSEやCTに劣ることがあります。</b>
+    したがってroutine T2WIなどを置き換えるのではなく、
+    <b>神経・CSF・圧迫の幾何学的関係を補うsequence</b>として理解するのが適切です。
+  </div>
+
+  <h3>8-4. Axialで特に価値が出やすい問い</h3>
+  <table>
+    <tr><th>臨床的な問い</th><th>FIESTAで見やすい理由</th></tr>
+    <tr><td>脊髄周囲のCSF spaceは残っているか？</td><td>CSFが非常に高信号でthecal sac contourが明瞭</td></tr>
+    <tr><td>神経根はどちら側で圧迫されているか？</td><td>CSF背景に神経構造を追いやすい</td></tr>
+    <tr><td>細いarachnoid adhesion / cyst wallはあるか？</td><td>高空間分解能とmyelographic contrast</td></tr>
+    <tr><td>通常T2で曖昧な微細なintradural anatomyは？</td><td>submillimeter 3Dでpartial volumeを軽減可能</td></tr>
+  </table>
+</section>
+
+<section id="compare">
+  <h2>9. FIESTAと他sequenceをどう使い分けるか</h2>
+
+  <table>
+    <tr><th>Sequence</th><th>得意</th><th>弱点</th><th>頚椎での役割</th></tr>
+    <tr>
+      <td><b>FIESTA / bSSFP</b></td>
+      <td>CSF–neural contrast、薄切、高SNR効率、高速</td>
+      <td>banding、B₀不均一、組織characterizationが限定的</td>
+      <td>rootlet/thecal sac/微細形態</td>
+    </tr>
+    <tr>
+      <td><b>T2 FSE</b></td>
+      <td>髄内病変、disc、浮腫、一般的T2 contrast</td>
+      <td>CSF pulsation、薄切では時間延長</td>
+      <td>routineの中心</td>
+    </tr>
+    <tr>
+      <td><b>MERGE / multi-echo GRE</b></td>
+      <td>高空間分解能、disc/osteophyteとの境界、T2*系contrast</td>
+      <td>susceptibility、metal</td>
+      <td>頚椎axialで形態評価に頻用</td>
+    </tr>
+    <tr>
+      <td><b>STIR / T2 FS</b></td>
+      <td>骨髄浮腫・軟部炎症</td>
+      <td>FIESTAのようなCSF-neural微細contrastではない</td>
+      <td>病変検出・炎症評価</td>
+    </tr>
+    <tr>
+      <td><b>CT</b></td>
+      <td>骨棘・石灰化・骨性狭窄</td>
+      <td>神経/CSF contrast、被ばく</td>
+      <td>骨性原因の評価</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>頚椎Axialの考え方：</b>
+    T2 FSEやMERGEで「病変・disc・bone/ligamentの情報」を取り、
+    FIESTA系で「CSFと神経の細かい位置関係」を補完する、と考えると整理しやすいです。
+  </div>
+</section>
+
+<section id="practice">
+  <h2>10. 撮像技師として知っておきたい実務ポイント</h2>
+
+  <h3>10-1. bandingが出たとき</h3>
+  <ul class="check">
+    <li>まずshimmingとcenter frequencyを確認</li>
+    <li>可能ならTRを短縮する</li>
+    <li>FOV / matrix / bandwidth / resolution設定を見直し、最小TRを狙う</li>
+    <li>装置で利用可能ならphase-cycled / FIESTA-C系を検討</li>
+    <li>金属近傍ではbSSFPに固執しない</li>
+  </ul>
+
+  <h3>10-2. 高分解能化したいときのtrade-off</h3>
+  <div class="grid3">
+    <div class="card blue">
+      <h3>薄いslice</h3>
+      <p>rootlet描出↑<br>SNR↓</p>
+    </div>
+    <div class="card green">
+      <h3>matrix↑</h3>
+      <p>in-plane resolution↑<br>SNR↓ / scan time↑</p>
+    </div>
+    <div class="card orange">
+      <h3>TR↑</h3>
+      <p>scan設計に余裕<br><b>banding risk↑</b></p>
+    </div>
+  </div>
+
+  <h3>10-3. 1.5Tと3T</h3>
+  <table>
+    <tr><th></th><th>1.5T</th><th>3T</th></tr>
+    <tr><td>B₀不均一 / susceptibility</td><td>比較的穏やか</td><td><b>より問題になりやすい</b></td></tr>
+    <tr><td>SNR</td><td>標準</td><td>高いSNRをresolutionへ振り分けやすい</td></tr>
+    <tr><td>banding対策</td><td>比較的容易</td><td>shim・short TRがより重要</td></tr>
+    <tr><td>SAR</td><td>比較的低い</td><td>高flip angle・短TRで制約に注意</td></tr>
+  </table>
+
+  <h3>10-4. 頚椎Axialでのチェックリスト</h3>
+  <div class="steps">
+    <div class="step"><b>CSF rimが均一か？</b> 不自然な暗帯なら病変ではなくbandingを疑う。</div>
+    <div class="step"><b>神経根を左右比較。</b> 片側だけCSF spaceが消えているかを見る。</div>
+    <div class="step"><b>原因組織は他sequenceで確認。</b> disc / osteophyte / ligamentをFIESTAだけで決めない。</div>
+    <div class="step"><b>3DならMPRを活用。</b> nerve rootの走行に沿ったoblique reconstructionが有用。</div>
+  </div>
+</section>
+
+<section id="refs">
+  <h2>11. 参考文献・根拠</h2>
+  <ol class="ref">
+    <li>GE HealthCare. SIGNA Artist Datasheet. FIESTAについて、low T2/T1とhigh T2/T1組織のcontrast、高SNR・短時間、Neuro/Cardiac/Abdominalへの応用を記載。<br>
+      <a href="https://landing1.gehealthcare.com/rs/005-SHS-767/images/Artist_Datasheet.pdf">GE SIGNA Artist Datasheet</a></li>
+    <li>GE HealthCare. Pulse of MR: commonly used MR terms and acronyms. Balanced Gradient Echo = FIESTA、FIESTA with Dual Excitation = FIESTA-Cと整理。<br>
+      <a href="https://www.gehealthcare.com/-/media/946ad77c008741d8a720d2b4e40bf4f1.pdf">GE Pulse of MR</a></li>
+    <li>GE HealthCare. Inhance Suite. Inhance Inflow IRが3D FIESTAを基盤とし、高SNR・bright bloodを利用することを記載。<br>
+      <a href="https://www.gehealthcare.com/en/products/magnetic-resonance-imaging/applications/inhance-suite">GE Inhance Suite</a></li>
+    <li>Chavhan GB, et al. Steady-state MR imaging sequences: physics, classification, and clinical applications. <i>Radiographics</i>. 2008.</li>
+    <li>Bangerter NK, et al. Analysis of multiple-acquisition SSFP. bSSFP frequency response / phase cyclingに関する基礎文献。</li>
+    <li>Ben-Eliezer N, et al. / review literature on balanced SSFP physiology and off-resonance. bSSFPのbanding、short TRとshimmingの重要性。</li>
+    <li>Practical applications of CISS MRI in spine imaging. <i>European Journal of Radiology Open</i>. 2019. CISS/FIESTA-Cによるsubmillimeter spatial resolution、myelographic contrast、nerve root・denticulate ligament・adhesion bandの描出を解説。</li>
+    <li>Body MR Imaging: Artifacts, k-Space, and Solutions. <i>Radiographics</i>. bSSFPにおけるB₀-sensitive banding artifactを解説。</li>
+  </ol>
+
+  <div class="callout warn">
+    <b>装置依存性：</b>
+    FIESTA / FIESTA-Cの具体的TR、TE、flip angle、phase cycling方式、3D prescription、
+    User CVの名称や可否はGE software releaseによって異なります。
+    実機条件を変更する場合は、施設のSIGNA Artist / SIGNA Heroの該当releaseのOperator Manual / Application Guideを最終根拠にしてください。
+  </div>
+</section>
+
+<div class="footer">
+  Educational reference • FIESTA / balanced SSFP • Physics → artifacts → cervical spine clinical use
+</div>
+</div>
+
+<script>
+function setTR(tr){
+  document.getElementById('tr3').classList.toggle('active',tr===3);
+  document.getElementById('tr5').classList.toggle('active',tr===5);
+  document.getElementById('tr8').classList.toggle('active',tr===8);
+  const period=1000/tr;
+  document.getElementById('bandText').textContent='profile周期：約'+Math.round(period)+' Hz';
+  drawCurve(tr);
+}
+function drawCurve(tr){
+  const path=document.getElementById('bandCurve');
+  const xmin=-600,xmax=600;
+  let d='';
+  for(let i=0;i<=500;i++){
+    const f=xmin+(xmax-xmin)*i/500;
+    const phase=2*Math.PI*f*(tr/1000);
+    // educational schematic: periodic pass band with deep transition nulls
+    const s=0.12+0.88*Math.abs(Math.cos(phase/2));
+    const x=80+810*i/500;
+    const y=240-180*s;
+    d+=(i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' ';
+  }
+  path.setAttribute('d',d);
+}
+drawCurve(3);
+</script>
+</body>
+</html>

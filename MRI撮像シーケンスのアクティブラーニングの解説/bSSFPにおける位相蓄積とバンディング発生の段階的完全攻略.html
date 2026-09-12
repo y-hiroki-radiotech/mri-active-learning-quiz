@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>復習教材：bSSFPにおける位相蓄積とバンディング発生の段階的完全攻略</title>
+  <style>
+    /* ==========================================================================
+       1. 基本スタイル & CSS変数 (完全オフライン・システムフォント仕様)
+       ========================================================================== */
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #334155;
+      --text-sub: #64748b;
+
+      --primary-blue: #1d4ed8;
+      --primary-blue-light: #eff6ff;
+      --primary-blue-border: #bfdbfe;
+
+      --accent-green: #15803d;
+      --accent-green-bg: #f0fdf4;
+      --accent-green-border: #bbf7d0;
+
+      --accent-amber: #b45309;
+      --accent-amber-bg: #fffbeb;
+      --accent-amber-border: #fde68a;
+
+      --accent-red: #b91c1c;
+      --accent-red-bg: #fef2f2;
+      --accent-red-border: #fecaca;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.7;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* ==========================================================================
+       2. ヘッダー & ナビゲーションバッジ
+       ========================================================================== */
+    .header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .badge-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.03em;
+    }
+    .badge-blue {
+      background-color: var(--primary-blue-light);
+      color: var(--primary-blue);
+      border: 1px solid var(--primary-blue-border);
+    }
+    .badge-slate {
+      background-color: #f8fafc;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+
+    /* ==========================================================================
+       3. 採点サマリーカード
+       ========================================================================== */
+    .score-card {
+      background: var(--bg-card);
+      border: 2px solid var(--primary-blue-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+    .score-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: var(--primary-blue);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .score-headline-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1.5rem;
+      align-items: center;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 600px) {
+      .score-headline-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .score-dial {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+    .score-pts {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--primary-blue);
+      line-height: 1;
+    }
+    .score-max {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.85rem;
+      font-weight: 800;
+      border-radius: 9999px;
+      background-color: var(--accent-green-bg);
+      color: var(--accent-green);
+      border: 1px solid var(--accent-green-border);
+    }
+    .score-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+    .meta-item {
+      font-size: 0.9rem;
+    }
+    .meta-title {
+      font-weight: 700;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .meta-desc {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .ans-box-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 700px) {
+      .ans-box-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ans-pane {
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+    }
+    .ans-user {
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+    }
+    .ans-model {
+      background-color: var(--primary-blue-light);
+      border: 1px solid var(--primary-blue-border);
+    }
+    .ans-header {
+      font-weight: 800;
+      font-size: 0.8rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .ans-user .ans-header { color: #475569; }
+    .ans-model .ans-header { color: var(--primary-blue); }
+
+    .review-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.25rem;
+      font-size: 0.875rem;
+    }
+    .review-table th, .review-table td {
+      border: 1px solid var(--border-color);
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+    }
+    .review-table th {
+      background-color: #f8fafc;
+      color: var(--text-muted);
+      width: 26%;
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       4. 一般カードレイアウト
+       ========================================================================== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .step-badge {
+      background-color: var(--primary-blue);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    /* ==========================================================================
+       5. インタラクティブ・スピン合算シミュレーター
+       ========================================================================== */
+    .sim-box {
+      background-color: #0b1120;
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      color: #f8fafc;
+      margin: 1.25rem 0;
+    }
+    .sim-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #1e293b;
+    }
+    .sim-mode-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      padding: 0.45rem 0.9rem;
+      font-size: 0.825rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.15s ease;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+    .btn-secondary {
+      background-color: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+    .btn-secondary:hover {
+      background-color: #334155;
+    }
+    .btn-secondary.active {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
+    .sim-display-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 680px) {
+      .sim-display-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .sim-stage {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sim-stage-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+    }
+    .sim-svg {
+      width: 100%;
+      max-width: 240px;
+      height: 240px;
+      overflow: visible;
+    }
+    .sim-feedback {
+      background: #1e293b;
+      border-left: 4px solid #38bdf8;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .sim-feedback strong {
+      color: #38bdf8;
+    }
+
+    /* ==========================================================================
+       6. MathML 数式カード & 変数定義表
+       ========================================================================== */
+    .formula-box {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary-blue);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .formula-title {
+      font-size: 0.825rem;
+      font-weight: 800;
+      color: var(--primary-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .formula-render {
+      font-size: 1.35rem;
+      text-align: center;
+      padding: 0.6rem 0;
+      overflow-x: auto;
+    }
+    math {
+      font-family: "Latin Modern Math", "Cambria Math", STIXTwoMath, Georgia, serif;
+    }
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.85rem;
+    }
+    .param-table th, .param-table td {
+      border: 1px solid #e2e8f0;
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+    }
+    .param-table th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+    }
+    .sym-mono {
+      font-weight: 700;
+      font-family: Georgia, serif;
+      color: var(--primary-blue);
+    }
+
+    /* ==========================================================================
+       7. 思考の段階的ステップ展開
+       ========================================================================== */
+    .concept-step {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+    }
+    .concept-num {
+      width: 30px;
+      height: 30px;
+      background-color: var(--primary-blue);
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 0.2rem;
+    }
+    .concept-body {
+      flex: 1;
+    }
+    .concept-heading {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+    .concept-text {
+      font-size: 0.925rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+    .concept-alert {
+      background-color: var(--accent-amber-bg);
+      border: 1px solid var(--accent-amber-border);
+      border-left: 4px solid var(--accent-amber);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #78350f;
+      margin-top: 0.75rem;
+    }
+
+    /* ==========================================================================
+       8. 印刷対応 (@media print)
+       ========================================================================== */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+      .container {
+        max-width: 100% !important;
+        gap: 1rem !important;
+      }
+      .header-card, .score-card, .card, .formula-box, .sim-box {
+        border: 1px solid #94a3b8 !important;
+        box-shadow: none !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .sim-nav {
+        display: none !important;
+      }
+      .sim-box {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      .sim-stage {
+        background-color: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+      }
+      .sim-stage-title {
+        color: #0f172a !important;
+      }
+      .sim-svg text {
+        fill: #0f172a !important;
+      }
+      .sim-feedback {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-left-color: #2563eb !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ================= 1. 問題ヘッダー ================= -->
+  <header class="header-card">
+    <div class="badge-container">
+      <span class="badge badge-blue">Q019 詳細原理解説</span>
+      <span class="badge badge-slate">シーケンス物理</span>
+      <span class="badge badge-slate">bSSFP (TrueFISP / FIESTA / Balanced FFE)</span>
+      <span class="badge badge-slate">バンディング完全攻略</span>
+    </div>
+    <h1 class="header-title">
+      bSSFPにおける位相蓄積角 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> と暗線（バンディング）発生の数理的・直観的機序
+    </h1>
+  </header>
+
+  <!-- ================= 2. 採点サマリー ================= -->
+  <section class="score-card">
+    <div class="score-headline-grid">
+      <div class="score-dial">
+        <span class="score-pts">88</span>
+        <span class="score-max">/ 100 点</span>
+        <span class="grade-badge">合格 (A判定)</span>
+      </div>
+      <div class="score-meta-grid">
+        <div class="meta-item">
+          <div class="meta-title">判定</div>
+          <div class="meta-desc">概念の因果関係を正確に把握</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-title">学習優先度</div>
+          <div class="meta-desc" style="color: var(--primary-blue);">中（幾何学的ベクトルの相殺機序の補強）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 解答の対比 -->
+    <div class="ans-box-grid">
+      <div class="ans-pane ans-user">
+        <div class="ans-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+          ユーザーの解答
+        </div>
+        <p>「TRを短縮することによって、位相蓄積を減らすことができるのと、シミングをすることによって、局所磁場不均一による影響を減らすため。」</p>
+      </div>
+      <div class="ans-pane ans-model">
+        <div class="ans-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          模範解答（定量的完全解）
+        </div>
+        <p>1TR間の位相蓄積角 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> が <math><mo>±</mo><mi>π</mi></math>（180°）奇数倍となる周波数で、残留横磁化と新励起磁化が逆位相となり定常横磁化が相殺（ゼロ）される。暗線の周期は <math><mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub><mo>=</mo><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> で決まるため、<strong>TR短縮は暗線間隔を拡大して関心領域外へ退避させ、シミングは局所周波数差 <math><mi>Δ</mi><mi>f</mi></math> 自体を極小化して位相が180°に達するのを防ぐ</strong>。</p>
+      </div>
+    </div>
+
+    <!-- 項目別評価テーブル -->
+    <table class="review-table">
+      <tbody>
+        <tr>
+          <th>正しく理解できた点</th>
+          <td>「TR短縮 $\rightarrow$ 位相蓄積抑制」「シミング $\rightarrow$ 磁場不均一抑制」という2大パラメータ（<math><mi mathvariant="normal">TR</mi></math> と <math><mi>Δ</mi><mi>f</mi></math>）の定性的な役割分担が完璧に整理されている。</td>
+        </tr>
+        <tr>
+          <th>最大の修正点</th>
+          <td>「1TRで位相が180°回るとなぜ信号が消えるのか？」および「なぜ一定周期の黒い縞模様になるのか？」という<strong>幾何学的ベクトルの合成・相殺メカニズム</strong>の理解を言語化すること。</td>
+        </tr>
+        <tr>
+          <th>根本的誤概念</th>
+          <td><strong>誤概念なし。</strong>方向性は完全に正しいため、数理モデルと直観的イメージの結合を図る。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================= 3. 段階的ブレークダウン解説 ================= -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-badge">徹底分解</span>
+      <h2 class="card-title">初学者でも直感でわかる！「4つのステップ」で紐解く暗線発生の物理</h2>
+    </div>
+
+    <!-- ステップ 1 -->
+    <div class="concept-step">
+      <div class="concept-num">1</div>
+      <div class="concept-body">
+        <h3 class="concept-heading">前提：bSSFPは「横磁化を捨てずに再利用する」超高効率シーケンス</h3>
+        <p class="concept-text">
+          通常の高速GRE法（SPGRやFLASHなど）では、毎回のTRの終わりにスポイラー傾斜磁場やRF位相を狂わせて、残った横磁化（<math><msub><mi>M</mi><mrow><mi>x</mi><mi>y</mi></mrow></msub></math>）をわざとバラバラに消去（スポイル）します。
+          しかし、bSSFP（TrueFISP / FIESTA）では真逆のことを行います。<strong>「全軸の傾斜磁場を完全にリフェーズ（面積ゼロ）にし、前のTRで残った横磁化を次のTRへそのまま持ち越す」</strong>のです。
+        </p>
+        <p class="concept-text" style="margin-top:0.5rem;">
+          持ち越された「古い横磁化」と、次のRFパルスで倒された「新しい横磁化」が<strong>同じ向き（同位相）で合流すれば、信号は2倍・3倍と増幅</strong>され、驚異的な高SNRと「液体が白く光るコントラスト（T2/T1強調）」が生まれます。
+        </p>
+      </div>
+    </div>
+
+    <!-- ステップ 2 -->
+    <div class="concept-step">
+      <div class="concept-num">2</div>
+      <div class="concept-body">
+        <h3 class="concept-heading">スピンの周回遅れ：なぜ1TRで位相角 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> が蓄積するのか？</h3>
+        <p class="concept-text">
+          静磁場が完全均一なら、すべてのスピンは同じ周波数（ラーモア周波数 <math><msub><mi>f</mi><mn>0</mn></msub></math>）で整然と回転します。
+          しかし、人間の身体には「空気と組織の境界（肺や副鼻腔）」や「骨・脂肪境界」があり、局所的に磁場がズレます（<math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math>）。
+        </p>
+        <div class="formula-box">
+          <div class="formula-title">位相蓄積角の定量的導出</div>
+          <div class="formula-render">
+            <math display="block">
+              <mi>θ</mi>
+              <mo>=</mo>
+              <mn>2</mn><mi>π</mi><mo>·</mo><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi>
+              <mo>=</mo>
+              <mi>γ</mi><mo>·</mo><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub><mo>·</mo><mi mathvariant="normal">TR</mi>
+            </math>
+          </div>
+          <table class="param-table">
+            <thead>
+              <tr><th>記号</th><th>名称</th><th>単位</th><th>直観的意味</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="sym-mono">Δf</td><td>周波数オフセット</td><td>Hz (回/秒)</td><td>基準スピンより「1秒間に何回転余分に回るか」</td></tr>
+              <tr><td class="sym-mono">TR</td><td>繰返し時間</td><td>s (秒)</td><td>1回のサイクルの待ち時間（例: 0.004 s）</td></tr>
+              <tr><td class="sym-mono">θ</td><td>位相蓄積角</td><td>rad (または度)</td><td><strong>「1回のTRの間に、基準スピンから何度ズレたか」</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="concept-text">
+          例えば、<math><mi>Δ</mi><mi>f</mi><mo>=</mo><mn>125</mn><mi mathvariant="normal">Hz</mi></math>（1秒に125回転ズレる場所）で、<math><mi mathvariant="normal">TR</mi><mo>=</mo><mn>4.0</mn><mi mathvariant="normal">ms</mi></math>（0.004秒）とします。
+          このとき、1TRの間に進む余分な回転は：
+          <br>
+          <math display="inline">
+            <mn>125</mn><mo>·</mo><mn>0.004</mn><mo>=</mo><mn>0.5</mn><mtext> 回転</mtext><mo>=</mo><mn>180</mn><mi>°</mi><mtext> (</mtext><mi>π</mi><mtext> rad)</mtext>
+          </math>
+          <br>
+          つまり、たった1TRの間にスピンの針は<strong>「真逆の方向（180°）」</strong>を向いてしまいます！
+        </p>
+      </div>
+    </div>
+
+    <!-- ステップ 3 -->
+    <div class="concept-step">
+      <div class="concept-num">3</div>
+      <div class="concept-body">
+        <h3 class="concept-heading">致命的な打ち消し合い：なぜ <math><mi>θ</mi><mo>=</mo><mo>±</mo><mn>180</mn><mi>°</mi></math> で信号がゼロ（暗線）になるのか？</h3>
+        <p class="concept-text">
+          bSSFPでは定常状態を保つため、RFパルスの位相を1回ごとに 180° 反転させて照射します（RF交番照射: <math><mo>+</mo><mi>α</mi><mo>,</mo><mo>−</mo><mi>α</mi><mo>,</mo><mo>+</mo><mi>α</mi><mo>…</mo></math>）。
+          このシーケンスの回転座標系において：
+        </p>
+        <ul style="margin-left: 1.25rem; font-size: 0.925rem; color: var(--text-muted); margin-top: 0.5rem;">
+          <li><strong>共鳴スピン（<math><mi>Δ</mi><mi>f</mi><mo>=</mo><mn>0</mn><mo>,</mo><mi>θ</mi><mo>=</mo><mn>0</mn><mi>°</mi></math>）：</strong> 1TR経ってもズレません。新しく励起された横磁化と、前のTRから残った横磁化が<strong>完全に同じ向きで重なり合い、巨大な横磁化（最大信号）</strong>となります。</li>
+          <li><strong>周波数ズレが180°のスピン（<math><mi>θ</mi><mo>=</mo><mo>±</mo><mi>π</mi></math>）：</strong> 1TRの間にちょうど半周（180°）余分に回って真後ろを向きます。次にRFパルスで倒された磁化と、前のTRから運ばれてきた磁化が<strong>「完全に真逆（180°反対）」を向くため、綱引きのように打ち消し合って合成磁化がゼロ</strong>になります。</li>
+        </ul>
+        <div class="concept-alert">
+          <strong>ここが核心：</strong>
+          「スピンが消失した」のではありません。<strong>「新しく倒された横磁化ベクトル」と「前回のTRから残っていた横磁化ベクトル」が完全に逆向きになって相殺された（ベクトルの引き算で合計がゼロになった）</strong>から黒く抜けるのです。
+        </div>
+      </div>
+    </div>
+
+    <!-- ステップ 4 -->
+    <div class="concept-step">
+      <div class="concept-num">4</div>
+      <div class="concept-body">
+        <h3 class="concept-heading">なぜ「縞模様（バンディング）」として現れるのか？</h3>
+        <p class="concept-text">
+          位相が真逆を向くのは、180°（<math><mi>π</mi></math>）のときだけではありません。
+          1周半回った <math><mn>540</mn><mi>°</mi></math>（<math><mn>3</mn><mi>π</mi></math>）、2周半回った <math><mn>900</mn><mi>°</mi></math>（<math><mn>5</mn><mi>π</mi></math>）… つまり<strong>「<math><mi>θ</mi></math> が <math><mi>π</mi></math> の奇数倍」</strong>になる周波数ごとに、全く同じ完全相殺が繰り返されます。
+        </p>
+        <p class="concept-text" style="margin-top:0.5rem;">
+          暗線と暗線の間の周波数間隔は、きれいに1周分（360°＝<math><mn>2</mn><mi>π</mi></math>）離れているため、
+          <math display="inline">
+            <mn>2</mn><mi>π</mi><mo>·</mo><mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub><mo>·</mo><mi mathvariant="normal">TR</mi><mo>=</mo><mn>2</mn><mi>π</mi>
+          </math>
+          より、
+        </p>
+        <div class="formula-box" style="margin: 0.75rem 0;">
+          <div class="formula-render">
+            <math display="block">
+              <mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub>
+              <mo>=</mo>
+              <mfrac><mn>1</mn><mi mathvariant="normal">TR</mi></mfrac>
+            </math>
+          </div>
+        </div>
+        <p class="concept-text">
+          生体内では静磁場が空間的になだらかに傾斜しているため、この周波数の周期性が画像上に<strong>「等高線のような幾何学的な黒い縞模様（バンディング）」</strong>として描出されることになります。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. インタラクティブ・ベクトル相殺シミュレーター ================= -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-badge">動的シミュレーター</span>
+      <h2 class="card-title">視覚的検証：なぜ180°ズレるとベクトルが相殺されるのか？</h2>
+    </div>
+
+    <div class="sim-box">
+      <div class="sim-nav">
+        <div class="sim-mode-group">
+          <button class="btn btn-secondary active" id="btnModeResonance">ケースA: 共鳴スピン (θ = 0°)</button>
+          <button class="btn btn-secondary" id="btnModeDephase">ケースB: 暗線スピン (θ = 180°)</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnPlayStep">1TR進める (合成実行)</button>
+          <button class="btn btn-secondary" id="btnResetSim">初期状態</button>
+        </div>
+      </div>
+
+      <div class="sim-display-grid">
+        <!-- SVG パネル1: 前TRからの持ち越し横磁化 -->
+        <div class="sim-stage">
+          <div class="sim-stage-title">① 1TR経過後の残留横磁化 (M_prev)</div>
+          <svg class="sim-svg" viewBox="-120 -120 240 240" id="svgPrev">
+            <!-- 座標軸 -->
+            <line x1="-100" y1="0" x2="100" y2="0" stroke="#334155" stroke-width="1.5" />
+            <line x1="0" y1="-100" x2="0" y2="100" stroke="#334155" stroke-width="1.5" />
+            <!-- 円軌道 -->
+            <circle cx="0" cy="0" r="80" fill="none" stroke="#1e293b" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- 矢印 -->
+            <defs>
+              <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#38bdf8"/>
+              </marker>
+              <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#4ade80"/>
+              </marker>
+              <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#f87171"/>
+              </marker>
+            </defs>
+            <line id="vecPrev" x1="0" y1="0" x2="0" y2="-75" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#arrowBlue)"/>
+            <text id="txtPrevAngle" x="0" y="110" font-size="11" fill="#94a3b8" text-anchor="middle">位相角 θ = 0° (上向き)</text>
+          </svg>
+        </div>
+
+        <!-- SVG パネル2: 新しい励起とのベクトル合成 -->
+        <div class="sim-stage">
+          <div class="sim-stage-title">② 新励起磁化との合成 (定常横磁化 M_ss)</div>
+          <svg class="sim-svg" viewBox="-120 -120 240 240" id="svgCombined">
+            <line x1="-100" y1="0" x2="100" y2="0" stroke="#334155" stroke-width="1.5" />
+            <line x1="0" y1="-100" x2="0" y2="100" stroke="#334155" stroke-width="1.5" />
+            <circle cx="0" cy="0" r="80" fill="none" stroke="#1e293b" stroke-width="1" stroke-dasharray="3 3"/>
+            
+            <!-- 新規励起ベクトル (基準: 上向き) -->
+            <line id="vecNew" x1="0" y1="0" x2="0" y2="-75" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4 2" />
+            <!-- 合成結果ベクトル -->
+            <line id="vecResult" x1="0" y1="0" x2="0" y2="-75" stroke="#4ade80" stroke-width="4.5" marker-end="url(#arrowGreen)"/>
+            <!-- ゼロ点相殺マーカー -->
+            <circle id="nullPointCircle" cx="0" cy="0" r="8" fill="#ef4444" style="display:none;"/>
+            <text id="txtCombinedResult" x="0" y="110" font-size="11" fill="#4ade80" font-weight="bold" text-anchor="middle">横磁化が同位相合流：信号大！</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sim-feedback" id="simFeedbackText">
+        <strong>【ケースA: 共鳴スピン】</strong> 1TRの間にスピンの回転ズレがありません（<math><mi>θ</mi><mo>=</mo><mn>0</mn></math>）。前のTRから持ち越された横磁化と、新しいRFで倒された横磁化が綺麗に同じ向きに足し合わされ、極めて高い信号（高SNR）を維持します。
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. パラメータ対策の論理的帰結 ================= -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-badge">臨床実践</span>
+      <h2 class="card-title">数式から即答できる！なぜ「TR短縮」と「シミング」が有効なのか？</h2>
+    </div>
+
+    <table class="review-table" style="margin-top:0;">
+      <thead>
+        <tr>
+          <th style="width: 20%;">対策手法</th>
+          <th style="width: 25%;">操作する物理変数</th>
+          <th style="width: 30%;">数式上の変化</th>
+          <th style="width: 25%;">画像上で起こる結果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:700; color:var(--primary-blue);">TR 短縮</td>
+          <td>繰返し時間 <math><mi mathvariant="normal">TR</mi></math> を最小化</td>
+          <td>
+            暗線周期 <math><mi>Δ</mi><msub><mi>f</mi><mi mathvariant="normal">band</mi></msub><mo>=</mo><mfrac><mn>1</mn><mi mathvariant="normal">TR</mi></mfrac></math> が拡大
+            <br>
+            位相蓄積 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> が縮小
+          </td>
+          <td>暗線同士の間隔が劇的に広がり、<strong>関心領域（ROI）の外側へ暗線が追いやられる</strong>。</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700; color:var(--primary-blue);">シミング</td>
+          <td>局所磁場不均一 <math><mi>Δ</mi><msub><mi>B</mi><mn>0</mn></msub></math> を補正</td>
+          <td>
+            周波数オフセット <math><mi>Δ</mi><mi>f</mi></math> がゼロに近づく
+            <br>
+            空間磁場勾配 <math><mo>∇</mo><mo stretchy="false">(</mo><mi>Δ</mi><mi>f</mi><mo stretchy="false">)</mo></math> が平坦化
+          </td>
+          <td>組織内で位相蓄積が 180°（<math><mi>π</mi></math>）に達する場所がなくなり、<strong>暗線の本数自体が消滅する</strong>。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="concept-alert" style="margin-top:1.25rem;">
+      <strong>まとめ（試験・臨床での言語化テンプレート）：</strong><br>
+      「bSSFPの暗線は、1TR間にスピンが蓄積する位相角 <math><mi>θ</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>Δ</mi><mi>f</mi><mo>·</mo><mi mathvariant="normal">TR</mi></math> が180°（<math><mi>π</mi></math>）奇数倍となり、先行磁化と新励起磁化が相殺されることで生じる。したがって、<strong>TR短縮により暗線周期 <math><mn>1</mn><mo>/</mo><mi mathvariant="normal">TR</mi></math> を広げて暗線をROI外へ排斥し、シミングにより <math><mi>Δ</mi><mi>f</mi></math> そのものを抑制して位相が180°に達するのを防ぐ</strong>ことが極めて有効となる。」
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= 6. インラインJavaScript (完全オフライン対話制御) ================= -->
+<script>
+  (function() {
+    let currentMode = 'resonance'; // 'resonance' or 'dephase'
+    let isCombined = false;
+
+    // DOM要素
+    const btnModeResonance = document.getElementById('btnModeResonance');
+    const btnModeDephase = document.getElementById('btnModeDephase');
+    const btnPlayStep = document.getElementById('btnPlayStep');
+    const btnResetSim = document.getElementById('btnResetSim');
+
+    const vecPrev = document.getElementById('vecPrev');
+    const txtPrevAngle = document.getElementById('txtPrevAngle');
+    const vecResult = document.getElementById('vecResult');
+    const nullPointCircle = document.getElementById('nullPointCircle');
+    const txtCombinedResult = document.getElementById('txtCombinedResult');
+    const simFeedbackText = document.getElementById('simFeedbackText');
+
+    function updateSim() {
+      if (currentMode === 'resonance') {
+        btnModeResonance.classList.add('active');
+        btnModeDephase.classList.remove('active');
+
+        // 残留磁化 (θ = 0°: 上向き (0, -75))
+        vecPrev.setAttribute('x2', '0');
+        vecPrev.setAttribute('y2', '-75');
+        vecPrev.setAttribute('stroke', '#38bdf8');
+        txtPrevAngle.textContent = '位相角 θ = 0° (同位相・上向き)';
+
+        if (!isCombined) {
+          // 合成前
+          vecResult.style.display = 'block';
+          nullPointCircle.style.display = 'none';
+          vecResult.setAttribute('x2', '0');
+          vecResult.setAttribute('y2', '-75');
+          vecResult.setAttribute('stroke', '#38bdf8');
+          txtCombinedResult.textContent = '待機中：1TR進めると新旧磁化が合流します';
+          txtCombinedResult.setAttribute('fill', '#94a3b8');
+        } else {
+          // 合成後 (同じ向きに足し算 -> 長さ2倍の巨大ベクトル (0, -95))
+          vecResult.style.display = 'block';
+          nullPointCircle.style.display = 'none';
+          vecResult.setAttribute('x2', '0');
+          vecResult.setAttribute('y2', '-95');
+          vecResult.setAttribute('stroke', '#4ade80');
+          txtCombinedResult.textContent = '★ 横磁化が同位相合流：信号大！（高SNR）';
+          txtCombinedResult.setAttribute('fill', '#4ade80');
+        }
+
+        simFeedbackText.innerHTML = '<strong>【ケースA: 共鳴スピン (θ = 0°)】</strong> 1TRの間にスピンの回転ズレがありません。前のTRから持ち越された横磁化と、新しいRFで倒された横磁化が同一方向（同位相）で綺麗に重なり合い、信号が飛躍的に強化されます。';
+
+      } else {
+        btnModeResonance.classList.remove('active');
+        btnModeDephase.classList.add('active');
+
+        // 残留磁化 (θ = 180°: 下向き (0, +75))
+        vecPrev.setAttribute('x2', '0');
+        vecPrev.setAttribute('y2', '75');
+        vecPrev.setAttribute('stroke', '#f87171');
+        txtPrevAngle.textContent = '位相角 θ = 180° (真逆・下向き)';
+
+        if (!isCombined) {
+          vecResult.style.display = 'block';
+          nullPointCircle.style.display = 'none';
+          vecResult.setAttribute('x2', '0');
+          vecResult.setAttribute('y2', '75');
+          vecResult.setAttribute('stroke', '#f87171');
+          txtCombinedResult.textContent = '待機中：1TR進めると真逆の新旧磁化が衝突します';
+          txtCombinedResult.setAttribute('fill', '#94a3b8');
+        } else {
+          // 合成後 (上向きの新励起 vs 下向きの持ち越し -> 完全相殺ゼロ)
+          vecResult.style.display = 'none';
+          nullPointCircle.style.display = 'block';
+          txtCombinedResult.textContent = '★ 完全相殺：横磁化ゼロ（暗線・バンディング発生！）';
+          txtCombinedResult.setAttribute('fill', '#f87171');
+        }
+
+        simFeedbackText.innerHTML = '<strong>【ケースB: 暗線スピン (θ = 180°)】</strong> 1TRの間にちょうど半周（180°）余分に回って真下を向きました。ここで次のRFパルスによって新しく作られた横磁化（上向き）と衝突し、綱引きのように<strong>完全に打ち消し合って合成ベクトルがゼロ（シグナルボイド）</strong>になります！';
+      }
+    }
+
+    // イベント登録
+    btnModeResonance.addEventListener('click', function() {
+      currentMode = 'resonance';
+      isCombined = false;
+      updateSim();
+    });
+
+    btnModeDephase.addEventListener('click', function() {
+      currentMode = 'dephase';
+      isCombined = false;
+      updateSim();
+    });
+
+    btnPlayStep.addEventListener('click', function() {
+      isCombined = true;
+      updateSim();
+    });
+
+    btnResetSim.addEventListener('click', function() {
+      isCombined = false;
+      updateSim();
+    });
+
+    // 初期化
+    updateSim();
+  })();
+</script>
+
+</body>
+</html>

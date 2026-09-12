@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q007 復習教材：造影後T1評価におけるSTIRの不適性</title>
+<style>
+  /* --------------------------------------------------
+     1. 基本リセット & 変数定義（完全オフライン対応）
+  -------------------------------------------------- */
+  :root {
+    --bg-main: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+    --border-light: #e2e8f0;
+    
+    --primary: #1e40af;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e3a8a;
+    
+    --success: #15803d;
+    --success-bg: #dcfce7;
+    --success-border: #86efac;
+    
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+    --danger-border: #fca5a5;
+    
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
+    --warning-border: #fcd34d;
+    
+    --accent: #6d28d9;
+    --accent-bg: #ede9fe;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.65;
+    padding: 24px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* --------------------------------------------------
+     2. カードレイアウト & タイポグラフィ
+  -------------------------------------------------- */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-light);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-primary { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-success { background: var(--success-bg); color: var(--success); }
+  .badge-danger  { background: var(--danger-bg); color: var(--danger); }
+  .badge-warning { background: var(--warning-bg); color: var(--warning); }
+  .badge-accent  { background: var(--accent-bg); color: var(--accent); }
+
+  /* --------------------------------------------------
+     3. 採点サマリーセクション
+  -------------------------------------------------- */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  @media (max-width: 640px) {
+    .score-grid { grid-template-columns: 1fr; }
+  }
+
+  .score-box {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .score-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: 0.05em;
+  }
+
+  .score-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 8px 0;
+  }
+
+  .score-denom {
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  .score-verdict {
+    margin-top: 10px;
+    padding: 4px 14px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .summary-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .summary-item {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+
+  .summary-item-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .summary-item-content {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* --------------------------------------------------
+     4. 解答比較カード
+  -------------------------------------------------- */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .comparison-grid { grid-template-columns: 1fr; }
+  }
+
+  .answer-panel {
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid transparent;
+  }
+
+  .user-answer {
+    background: #f8fafc;
+    border-color: var(--border-color);
+  }
+
+  .model-answer {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+  }
+
+  .answer-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .user-answer .answer-title { color: var(--text-secondary); }
+  .model-answer .answer-title { color: var(--success); }
+
+  .answer-body {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .highlight-fix {
+    background: #fef08a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 700;
+    color: #854d0e;
+    text-decoration: underline wavy #ca8a04;
+  }
+
+  /* --------------------------------------------------
+     5. 数式カード（MathML & 整形ボックス）
+  -------------------------------------------------- */
+  .formula-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-left: 5px solid var(--primary);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin: 16px 0;
+  }
+
+  .formula-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    overflow-x: auto;
+  }
+
+  math {
+    font-size: 1.25rem;
+    font-family: "Cambria Math", "Latin Modern Math", STIXGeneral, serif;
+  }
+
+  .formula-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .formula-breakdown-table th,
+  .formula-breakdown-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    text-align: left;
+  }
+
+  .formula-breakdown-table th {
+    background: #f1f5f9;
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+
+  /* --------------------------------------------------
+     6. インタラクティブ・シミュレーター (SVG + JS)
+  -------------------------------------------------- */
+  .sim-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+  }
+
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+  }
+
+  .btn {
+    appearance: none;
+    border: 1px solid transparent;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s ease;
+  }
+
+  .btn:hover { background: var(--primary-dark); }
+  .btn-outline {
+    background: #ffffff;
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+  }
+  .btn-outline:hover {
+    background: #f1f5f9;
+    color: var(--text-primary);
+  }
+
+  .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .slider-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .slider-group input[type="range"] {
+    width: 140px;
+    cursor: pointer;
+  }
+
+  .sim-value-badge {
+    font-family: monospace;
+    font-weight: 700;
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    min-width: 65px;
+    text-align: center;
+  }
+
+  .sim-svg-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .sim-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .sim-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    padding-top: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  /* --------------------------------------------------
+     7. 比較対照表
+  -------------------------------------------------- */
+  .comparison-table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    text-align: left;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 10px 14px;
+    border: 1px solid var(--border-light);
+  }
+
+  .comparison-table th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .comparison-table tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .comparison-table td strong {
+    color: var(--primary-dark);
+  }
+
+  .table-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .tag-ng { background: var(--danger-bg); color: var(--danger); }
+  .tag-ok { background: var(--success-bg); color: var(--success); }
+
+  /* --------------------------------------------------
+     8. 印刷対応スタイル (@media print)
+  -------------------------------------------------- */
+  @media print {
+    body {
+      background: #ffffff;
+      color: #000000;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    .container {
+      max-width: 100%;
+      gap: 12pt;
+    }
+
+    .card {
+      box-shadow: none;
+      border: 1pt solid #94a3b8;
+      padding: 12pt;
+      border-radius: 4pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .btn, .slider-group {
+      display: none !important;
+    }
+
+    .sim-controls {
+      display: none !important;
+    }
+
+    .score-box {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: 2pt solid #000000;
+      box-shadow: none;
+    }
+
+    .score-number {
+      color: #000000;
+    }
+
+    .highlight-fix {
+      background: #e2e8f0;
+      color: #000000;
+      text-decoration: underline;
+    }
+  }
+
+  /* 動きの抑制対応 */
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .sim-line {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 1. 問題カード -->
+  <header class="card">
+    <div class="card-header">
+      <span class="badge badge-primary">Q007 臨床</span>
+      <span class="badge badge-accent">IR・FLAIR・STIR</span>
+      <span class="badge badge-warning">出題頻度：高</span>
+    </div>
+    <h1 style="font-size: 1.15rem; font-weight: 700; line-height: 1.5; color: var(--text-primary);">
+      造影後T1評価でSTIRが不適とされるのはなぜですか。「脂肪だけを消す方法ではない」という視点から説明してください。
+    </h1>
+  </header>
+
+  <!-- 2. 採点サマリー -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        採点サマリー & 総合判定
+      </h2>
+      <span class="badge badge-success">概念理解：概ね良好</span>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-box">
+        <div class="score-label">獲得得点</div>
+        <div class="score-number">86</div>
+        <div class="score-denom">/ 100 点</div>
+        <div class="score-verdict">判定：合格水準 (A-)</div>
+      </div>
+
+      <div class="summary-details">
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            正しく理解できた点
+          </div>
+          <div class="summary-item-content">
+            ガドリニウムによる局所T1短縮と、それによって病変のT1値が脂肪のT1値に近似し、STIRの反転時間（TI）で病変信号が一緒に消えてしまう（偽陰性）という「現象の帰結」を完璧に捉えています。
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            最大の修正点（専門用語の誤記）
+          </div>
+          <div class="summary-item-content">
+            「常時生体」→ <strong>常磁性体</strong>、「スピン耗時間緩和」→ <strong>スピン-格子緩和（T1緩和）時間</strong>。専門用語の誤変換・混同を正し、STIRが「T1非特異的消去」である点を論理的に明示する必要があります。
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            根本的誤概念への警告
+          </div>
+          <div class="summary-item-content">
+            「STIR＝脂肪抑制法」という名称から<strong>「脂肪の化学的性質を選別している」と錯覚しがち</strong>ですが、STIRは<strong>「特定のT1値を持つ全組織を無差別にゼロにする技術」</strong>にすぎません。
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-item-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            学習優先度
+          </div>
+          <div class="summary-item-content">
+            <strong style="color: var(--danger);">高（最頻出トラップ）</strong>：国家試験・MRI専門技術者認定試験で「造影×STIR」の禁忌性は極めて高い頻度で問われます。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 解答比較 -->
+    <div class="comparison-grid">
+      <div class="answer-panel user-answer">
+        <div class="answer-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          あなたの解答（画像より転記）
+        </div>
+        <div class="answer-body">
+          造影で使うガドリニウム造影剤は基本的に<span class="highlight-fix">常時生体〔誤：常磁性体〕</span>であり、そのためT1の関わる<span class="highlight-fix">スピン耗時間緩和〔誤：スピン-格子緩和〕</span>が早く済む結果、TIは短くはなる。造影後、STIRで評価すると、脂肪を消すために狙った短い時間において、腫瘍組織に取り込まれたガドリニウム造影剤によって、短いTIとほぼ近くなるため、ガドリニウムが取り込まれた組織も一緒に信号が消失する可能性があるから。
+        </div>
+      </div>
+
+      <div class="answer-panel model-answer">
+        <div class="answer-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          模範解答（合格基準記述）
+        </div>
+        <div class="answer-body">
+          STIRは化学シフト（共鳴周波数差）ではなく「T1緩和時間の差」のみを利用して信号を抑制する<strong>非特異的消去法</strong>である。造影剤（常磁性ガドリニウム）が取り込まれた組織はT1値が大幅に短縮し、脂肪のT1値に近似する。その結果、脂肪抑制のために設定した反転時間（TI）において、<strong>造影病変の縦磁化もゼロ点（Null Point）に達してしまい、病変の造影増強効果が消失・低信号化（偽陰性）</strong>して病変を見落とす危険があるため不適である。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 数式徹底解剖セクション -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        重要数式徹底解剖：反転回復（IR）とNull Point
+      </h2>
+      <span class="badge badge-primary">物理原理</span>
+    </div>
+
+    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 12px;">
+      STIRの本質を数式から理解します。180°反転パルス印加後の縦磁化回復曲線と、信号強度が完全にゼロとなる反転時間（TI）の導出過程です。
+    </p>
+
+    <!-- 式 1 -->
+    <div class="formula-card">
+      <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; color: var(--primary);">
+        【公式1】IRパルス印加後の縦磁化回復式（TR ≫ T1の条件下）
+      </div>
+      <div class="formula-display">
+        <math display="block">
+          <msub><mi>M</mi><mi>z</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msub><mi>M</mi><mn>0</mn></msub>
+          <mfenced>
+            <mrow>
+              <mn>1</mn>
+              <mo>−</mo>
+              <mn>2</mn>
+              <mo>⁢</mo>
+              <msup>
+                <mi>e</mi>
+                <mrow>
+                  <mo>−</mo>
+                  <mfrac>
+                    <mi>t</mi>
+                    <msub><mi>T</mi><mn>1</mn></msub>
+                  </mfrac>
+                </mrow>
+              </msup>
+            </mrow>
+          </mfenced>
+        </math>
+      </div>
+
+      <table class="formula-breakdown-table">
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>説明・定義</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>式・各記号</strong></td>
+            <td>
+              <math><msub><mi>M</mi><mi>z</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math>：時間 <math><mi>t</mi></math> における縦磁化、
+              <math><msub><mi>M</mi><mn>0</mn></msub></math>：熱平衡状態の縦磁化、
+              <math><msub><mi>T</mi><mn>1</mn></msub></math>：組織のスピン-格子緩和時間、
+              <math><mi>t</mi></math>：反転パルス印加後の経過時間
+            </td>
+          </tr>
+          <tr>
+            <td><strong>単位</strong></td>
+            <td>
+              <math><msub><mi>M</mi><mi>z</mi></msub><mo>,</mo><msub><mi>M</mi><mn>0</mn></msub></math>：任意単位（A/m）、
+              <math><mi>t</mi><mo>,</mo><msub><mi>T</mi><mn>1</mn></msub></math>：ミリ秒（ms）
+            </td>
+          </tr>
+          <tr>
+            <td><strong>物理的意味</strong></td>
+            <td>180°パルスで <math><mo>−</mo><msub><mi>M</mi><mn>0</mn></msub></math> まで完全に反転させられた縦磁化が、周囲の格子へエネルギーを放出しながら平衡状態 <math><mo>+</mo><msub><mi>M</mi><mn>0</mn></msub></math> へ指数関数的に回復する過程を表す。</td>
+          </tr>
+          <tr>
+            <td><strong>比例・反比例</strong></td>
+            <td>回復速度は <math><mn>1</mn><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></math>（緩和速度 <math><msub><mi>R</mi><mn>1</mn></msub></math>）に比例する。<math><msub><mi>T</mi><mn>1</mn></msub></math> が短いほど、縦磁化は急速に立ち上がる。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 式 2 -->
+    <div class="formula-card">
+      <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; color: var(--primary);">
+        【公式2】Null Point（信号ゼロクロス点）条件式
+      </div>
+      <div class="formula-display">
+        <math display="block">
+          <mi>T</mi><msub><mi>I</mi><mtext>null</mtext></msub>
+          <mo>=</mo>
+          <msub><mi>T</mi><mn>1</mn></msub>
+          <mo>·</mo>
+          <mi>ln</mi><mn>2</mn>
+          <mo>≈</mo>
+          <mn>0.693</mn>
+          <mo>·</mo>
+          <msub><mi>T</mi><mn>1</mn></msub>
+        </math>
+      </div>
+
+      <table class="formula-breakdown-table">
+        <thead>
+          <tr>
+            <th>導出 & 臨床的結論</th>
+            <th>解説内容</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>導出過程</strong></td>
+            <td>
+              90°パルス印加時に信号強度 <math><mi>S</mi><mo>∝</mo><mo>|</mo><msub><mi>M</mi><mi>z</mi></msub><mo stretchy="false">(</mo><mi>T</mi><mi>I</mi><mo stretchy="false">)</mo><mo>|</mo><mo>=</mo><mn>0</mn></math> となる条件を求める。<br>
+              <math><mn>1</mn><mo>−</mo><mn>2</mn><msup><mi>e</mi><mrow><mo>−</mo><mfrac><mrow><mi>T</mi><mi>I</mi></mrow><msub><mi>T</mi><mn>1</mn></msub></mfrac></mrow></msup><mo>=</mo><mn>0</mn>
+              <mspace width="0.5em"></mspace><mo>⇒</mo><mspace width="0.5em"></mspace>
+              <msup><mi>e</mi><mrow><mo>−</mo><mfrac><mrow><mi>T</mi><mi>I</mi></mrow><msub><mi>T</mi><mn>1</mn></msub></mfrac></mrow></msup><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac>
+              <mspace width="0.5em"></mspace><mo>⇒</mo><mspace width="0.5em"></mspace>
+              <mi>T</mi><mi>I</mi><mo>=</mo><msub><mi>T</mi><mn>1</mn></msub><mo>·</mo><mi>ln</mi><mn>2</mn><mo>≈</mo><mn>0.693</mn><mo>·</mo><msub><mi>T</mi><mn>1</mn></msub>
+              </math>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>変数増減による結果</strong></td>
+            <td>消したい組織の <math><msub><mi>T</mi><mn>1</mn></msub></math> が短くなれば、必要な <math><mi>T</mi><mi>I</mi></math> も比例して短くなる。<br>
+            例：1.5Tにおける脂肪（<math><msub><mi>T</mi><mn>1</mn></msub><mo>≈</mo><mn>250</mn><mtext> ms</mtext></math>）のとき、<math><mi>T</mi><msub><mi>I</mi><mtext>fat</mtext></msub><mo>≈</mo><mn>0.693</mn><mo>×</mo><mn>250</mn><mo>≈</mo><mn>173</mn><mtext> ms</mtext></math>。</td>
+          </tr>
+          <tr>
+            <td><strong>問題との関係</strong></td>
+            <td>
+              <strong>ここが核心：</strong>式の中に「組織の種類（脂肪か水か）」を区別するパラメータは存在しない。<strong>ただ「<math><msub><mi>T</mi><mn>1</mn></msub></math> が約250 msである組織」のすべてが、この <math><mi>T</mi><mi>I</mi></math> で同時にゼロになる。</strong>造影病変の <math><msub><mi>T</mi><mn>1</mn></msub></math> が短縮して250 msに近づけば、病変も脂肪と区別なく抹殺される。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. インタラクティブ動的シミュレーター & 磁化挙動グラフ -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+        磁化挙動シミュレーター：なぜ造影病変が消えるのか
+      </h2>
+      <span class="badge badge-success">動的実験UI</span>
+    </div>
+
+    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
+      スライダーで反転時間（TI）を変更するか、「再生」ボタンを押してください。反転パルス印加後、各組織の縦磁化がゼロ点（横軸）を横切るタイミングを視覚的に検証できます。
+    </p>
+
+    <div class="sim-container">
+      <div class="sim-controls">
+        <button id="btnPlay" class="btn">
+          <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span id="playText">再生</span>
+        </button>
+        <button id="btnReset" class="btn btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          初期値 (173ms)
+        </button>
+
+        <div class="slider-group">
+          <label for="tiRange">反転時間 (TI):</label>
+          <input type="range" id="tiRange" min="0" max="600" step="5" value="173">
+          <span class="sim-value-badge" id="tiDisplay">173 ms</span>
+        </div>
+      </div>
+
+      <div class="sim-svg-wrapper">
+        <!-- SVGグラフ表示 -->
+        <svg class="sim-svg" viewBox="0 0 800 420" id="simSvg">
+          <defs>
+            <!-- ゼロラインマーカー -->
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+            </marker>
+          </defs>
+
+          <!-- 背景グリッド -->
+          <rect x="70" y="30" width="700" height="340" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+          
+          <!-- 縦グリッド（時間） -->
+          <line x1="175" y1="30" x2="175" y2="370" stroke="#e2e8f0" stroke-dasharray="4"/>
+          <line x1="310" y1="30" x2="310" y2="370" stroke="#e2e8f0" stroke-dasharray="4"/>
+          <line x1="445" y1="30" x2="445" y2="370" stroke="#e2e8f0" stroke-dasharray="4"/>
+          <line x1="580" y1="30" x2="580" y2="370" stroke="#e2e8f0" stroke-dasharray="4"/>
+          <line x1="715" y1="30" x2="715" y2="370" stroke="#e2e8f0" stroke-dasharray="4"/>
+
+          <!-- Mz = 0 軸（基準線・ヌルポイント） -->
+          <line x1="70" y1="200" x2="770" y2="200" stroke="#475569" stroke-width="1.5"/>
+          <text x="775" y="204" font-size="12" fill="#475569" font-weight="700">Mz = 0 (Null Point)</text>
+
+          <!-- 軸目盛ラベル -->
+          <text x="65" y="35" font-size="11" text-anchor="end" fill="#64748b">+1.0 M₀</text>
+          <text x="65" y="204" font-size="11" text-anchor="end" fill="#64748b">0</text>
+          <text x="65" y="375" font-size="11" text-anchor="end" fill="#64748b">-1.0 M₀</text>
+
+          <text x="70" y="390" font-size="11" text-anchor="middle" fill="#64748b">0</text>
+          <text x="175" y="390" font-size="11" text-anchor="middle" fill="#64748b">150</text>
+          <text x="310" y="390" font-size="11" text-anchor="middle" fill="#64748b">300</text>
+          <text x="445" y="390" font-size="11" text-anchor="middle" fill="#64748b">450</text>
+          <text x="580" y="390" font-size="11" text-anchor="middle" fill="#64748b">600</text>
+          <text x="715" y="390" font-size="11" text-anchor="middle" fill="#64748b">750 (ms)</text>
+
+          <!-- カーブ1：脂肪（T1 = 250ms） 赤 -->
+          <!-- 計算式: y = 200 - 170 * (1 - 2*exp(-t/250)) -->
+          <path id="pathFat" fill="none" stroke="#dc2626" stroke-width="3"
+            d="M 70,370 C 130,300 200,210 272.5,140 C 370,60 520,32 770,30" />
+
+          <!-- カーブ2：造影腫瘍（Gd+ Tumor: T1 = 250ms） 紫破線（脂肪と全く同じ挙動） -->
+          <path id="pathGd" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="6,4"
+            d="M 70,370 C 130,300 200,210 272.5,140 C 370,60 520,32 770,30" />
+
+          <!-- カーブ3：未造影組織/水（T1 = 1200ms） 青 -->
+          <path id="pathWater" fill="none" stroke="#0284c7" stroke-width="2.5"
+            d="M 70,370 C 200,345 350,305 500,260 C 620,225 700,200 770,180" />
+
+          <!-- 90°励起タイミングライン (TI) -->
+          <g id="tiGuide" transform="translate(225.7, 0)">
+            <line x1="0" y1="30" x2="0" y2="370" stroke="#0f172a" stroke-width="2" stroke-dasharray="4,2"/>
+            <rect x="-40" y="10" width="80" height="20" rx="4" fill="#0f172a"/>
+            <text x="0" y="24" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">90°パルス</text>
+
+            <!-- 各カーブとの交点サークル -->
+            <circle id="dotFat" cx="0" cy="200" r="6" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+            <circle id="dotWater" cx="0" cy="336" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+          </g>
+
+          <!-- アノテーション吹き出し：Null Point -->
+          <g id="annotationNull" transform="translate(240, 175)">
+            <rect x="0" y="0" width="170" height="42" rx="4" fill="rgba(220, 38, 38, 0.95)"/>
+            <text x="8" y="16" font-size="10.5" fill="#ffffff" font-weight="700">脂肪 & 造影病変が同時にゼロ！</text>
+            <text x="8" y="32" font-size="9.5" fill="#fecaca">信号消失 ＝ 造影効果が見えない</text>
+            <path d="M 0,15 L -12,20 L 0,25 Z" fill="rgba(220, 38, 38, 0.95)"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="sim-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #dc2626;"></div>
+          <span>正常脂肪 (T1 ≈ 250ms)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #7c3aed; border: 1px dashed #ffffff;"></div>
+          <span>造影病変 [Gd投与] (T1短縮で ≈ 250ms)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #0284c7;"></div>
+          <span>未造影組織 / 液体 (T1 ≈ 1200ms)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #0f172a;"></div>
+          <span>印加パルス (TI)</span>
+        </div>
+      </div>
+
+      <!-- リアルタイム信号強度表示パネル -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 8px;">
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 10px;">
+          <div style="font-size: 0.75rem; color: #991b1b; font-weight: 700;">正常脂肪の縦磁化 (Mz)</div>
+          <div id="valFat" style="font-size: 1.2rem; font-weight: 800; color: #dc2626;">0.00 M₀</div>
+          <div style="font-size: 0.75rem; color: #7f1d1d;">判定: 完全抑制 (Black)</div>
+        </div>
+
+        <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 6px; padding: 10px;">
+          <div style="font-size: 0.75rem; color: #5b21b6; font-weight: 700;">造影病変の縦磁化 (Mz)</div>
+          <div id="valGd" style="font-size: 1.2rem; font-weight: 800; color: #7c3aed;">0.00 M₀</div>
+          <div style="font-size: 0.75rem; color: #4c1d95;">判定: <strong style="color: #b91c1c;">消失（偽陰性！）</strong></div>
+        </div>
+
+        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 10px;">
+          <div style="font-size: 0.75rem; color: #075985; font-weight: 700;">未造影組織の縦磁化 (|Mz|)</div>
+          <div id="valWater" style="font-size: 1.2rem; font-weight: 800; color: #0284c7;">0.74 M₀</div>
+          <div style="font-size: 0.75rem; color: #0c4a6e;">判定: 信号あり（描出）</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 脂肪抑制法の比較対照カード -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        なぜ造影にはCHESSやDixonを使うべきなのか？（手法比較）
+      </h2>
+      <span class="badge badge-primary">技術比較</span>
+    </div>
+
+    <p style="font-size: 0.92rem; color: var(--text-secondary);">
+      臨床で使われる主要な3大脂肪抑制技術の物理原理と造影剤との相性を整理します。STIRが造影後に禁忌である理由がより鮮明になります。
+    </p>
+
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>手法名</th>
+            <th>抑制の物理原理</th>
+            <th>造影後T1への適応</th>
+            <th>磁場不均一への耐性</th>
+            <th>臨床的メリット・デメリット</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>STIR法</strong><br>(反転回復法)</td>
+            <td><strong>T1緩和時間差</strong><br>(短T1組織をNull点消去)</td>
+            <td><span class="table-tag tag-ng">不適 (禁忌)</span></td>
+            <td><strong>極めて高い</strong><br>(磁場歪みでも均一)</td>
+            <td>金属周辺や広範囲でも均一に脂肪抑制できるが、T1短縮した造影病変も一緒に消失してしまう。</td>
+          </tr>
+          <tr>
+            <td><strong>CHESS法</strong><br>(Fat Sat / 周波数選択飽和)</td>
+            <td><strong>化学シフト差</strong><br>(周波数の差 3.5 ppm)</td>
+            <td><span class="table-tag tag-ok">第一選択</span></td>
+            <td><strong>低い</strong><br>(局所磁場不均一でムラ)</td>
+            <td>脂肪の共鳴周波数のみを狙い撃ちするため、造影病変（水プロトン）のT1短縮高信号を純粋に保持できる。</td>
+          </tr>
+          <tr>
+            <td><strong>Dixon法</strong><br>(IDEAL / Flex等)</td>
+            <td><strong>位相差計算・水脂肪分離</strong><br>(同位相/逆位相から再構成)</td>
+            <td><span class="table-tag tag-ok">極めて適する</span></td>
+            <td><strong>高い</strong><br>(B₀マップで補正)</td>
+            <td>化学シフトを利用しながら磁場不均一にも強い。一度の撮影で造影後水画像と脂肪画像を完全分離取得可能。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. 臨床重要ポイント & まとめカード -->
+  <section class="card" style="border-left: 5px solid var(--accent);">
+    <div class="card-header">
+      <h2 class="card-title" style="color: var(--accent);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+        まとめ：国試・臨床で迷わないための思考フロー
+      </h2>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; color: var(--text-primary);">
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="background: var(--accent-bg); color: var(--accent); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">1</div>
+        <div>
+          <strong>STIRは「脂肪」を認識していない：</strong>
+          STIRが選別しているのは「分子構造」ではなく「T1値（スピン-格子緩和時間）」です。短T1値を持つものはすべて脂肪と同じ運命を辿ります。
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="background: var(--accent-bg); color: var(--accent); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">2</div>
+        <div>
+          <strong>ガドリニウム造影剤の役割は「T1短縮」：</strong>
+          常磁性効果により周囲の水プロトンのT1を劇的に短縮させ、T1強調像で「白く光らせる」のが造影の目的です。
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="background: var(--accent-bg); color: var(--accent); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">3</div>
+        <div>
+          <strong>最悪の組み合わせ（T1短縮病変 × 短T1ゼロ化パルス）：</strong>
+          白く光らせたいはずの病変のT1が、皮下脂肪のT1（約250ms）と同等になった瞬間、STIRの反転パルスによって「最も暗い無信号（黒）」に叩き落とされます。これが「造影後にSTIRを使ってはならない」物理的・臨床的根拠です。
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // 完全オフライン動作 JavaScript
+  document.addEventListener('DOMContentLoaded', () => {
+    const tiRange = document.getElementById('tiRange');
+    const tiDisplay = document.getElementById('tiDisplay');
+    const tiGuide = document.getElementById('tiGuide');
+    const dotFat = document.getElementById('dotFat');
+    const dotWater = document.getElementById('dotWater');
+    const valFat = document.getElementById('valFat');
+    const valGd = document.getElementById('valGd');
+    const valWater = document.getElementById('valWater');
+    const annotationNull = document.getElementById('annotationNull');
+    
+    const btnPlay = document.getElementById('btnPlay');
+    const btnReset = document.getElementById('btnReset');
+    const playText = document.getElementById('playText');
+    const playIcon = document.getElementById('playIcon');
+
+    let isPlaying = false;
+    let animId = null;
+
+    // 物理パラメータ定数
+    const T1_FAT = 250;      // 脂肪 T1
+    const T1_GD = 250;       // 造影腫瘍 T1 (近似)
+    const T1_WATER = 1200;   // 未造影組織 T1
+
+    // 時間 t (ms) から SVG 上の x座標 (px) への変換
+    // グラフ描画領域: x = 70 (0ms) 〜 x = 770 (750ms)
+    // 1ms あたり (770 - 70) / 750 = 700 / 750 ≈ 0.9333 px
+    function timeToX(t) {
+      return 70 + (t / 750) * 700;
+    }
+
+    // Mz (-1.0 〜 +1.0) から SVG 上の y座標 (px) への変換
+    // y = 200 が Mz = 0
+    // y = 30 が Mz = +1.0, y = 370 が Mz = -1.0
+    function mzToY(mz) {
+      return 200 - mz * 170;
+    }
+
+    // 縦磁化回復計算式 Mz(t) = 1 - 2 * exp(-t / T1)
+    function calcMz(t, T1) {
+      return 1 - 2 * Math.exp(-t / T1);
+    }
+
+    // UI更新関数
+    function updateSimulation(ti) {
+      tiRange.value = ti;
+      tiDisplay.textContent = `${ti} ms`;
+
+      const xPos = timeToX(ti);
+      tiGuide.setAttribute('transform', `translate(${xPos}, 0)`);
+
+      const mzFat = calcMz(ti, T1_FAT);
+      const mzWater = calcMz(ti, T1_WATER);
+
+      const yFat = mzToY(mzFat);
+      const yWater = mzToY(mzWater);
+
+      dotFat.setAttribute('cy', yFat);
+      dotWater.setAttribute('cy', yWater);
+
+      // 数値表示の更新
+      valFat.textContent = `${mzFat.toFixed(2)} M₀`;
+      valGd.textContent = `${mzFat.toFixed(2)} M₀`;
+      valWater.textContent = `${Math.abs(mzWater).toFixed(2)} M₀`;
+
+      // ヌルポイント付近（150ms〜195ms）での強調表示制御
+      if (ti >= 150 && ti <= 195) {
+        annotationNull.style.display = 'block';
+        annotationNull.setAttribute('transform', `translate(${xPos + 15}, ${yFat - 20})`);
+      } else {
+        annotationNull.style.display = 'none';
+      }
+    }
+
+    // スライダー連動
+    tiRange.addEventListener('input', (e) => {
+      if (isPlaying) stopAnimation();
+      updateSimulation(parseInt(e.target.value, 10));
+    });
+
+    // リセットボタン（初期設定 TI = 173ms）
+    btnReset.addEventListener('click', () => {
+      if (isPlaying) stopAnimation();
+      updateSimulation(173);
+    });
+
+    // アニメーション再生・停止処理
+    function stopAnimation() {
+      isPlaying = false;
+      cancelAnimationFrame(animId);
+      playText.textContent = '再生';
+      playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+    }
+
+    function startAnimation() {
+      isPlaying = true;
+      playText.textContent = '一時停止';
+      playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+
+      let currentTI = parseInt(tiRange.value, 10);
+      if (currentTI >= 600) currentTI = 0;
+
+      function step() {
+        if (!isPlaying) return;
+        currentTI += 2.5;
+        if (currentTI > 600) {
+          currentTI = 0;
+        }
+        updateSimulation(Math.round(currentTI));
+        animId = requestAnimationFrame(step);
+      }
+      animId = requestAnimationFrame(step);
+    }
+
+    btnPlay.addEventListener('click', () => {
+      if (isPlaying) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
+    });
+
+    // 初期化実行
+    updateSimulation(173);
+  });
+</script>
+
+</body>
+</html>

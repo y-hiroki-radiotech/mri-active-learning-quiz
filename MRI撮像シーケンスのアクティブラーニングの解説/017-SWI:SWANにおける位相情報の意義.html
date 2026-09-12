@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材：SWI/SWANにおける位相情報の意義</title>
+<style>
+  :root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --primary-light: #e0f2fe;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-50: #f8fafc;
+    --card-border: #cbd5e1;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--slate-100);
+    color: var(--slate-800);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    line-height: 1.65;
+    padding: 24px 16px 60px;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  /* ヘッダー */
+  .page-header {
+    background: linear-gradient(135deg, var(--slate-900), var(--primary-dark));
+    color: #ffffff;
+    padding: 32px 24px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+
+  .q-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  /* カード共通 */
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* 採点サマリーカード */
+  .score-card {
+    border-left: 6px solid var(--warning);
+    background: #ffffff;
+  }
+
+  .score-header-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .score-stat-box {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .score-stat-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--slate-600);
+    text-transform: uppercase;
+  }
+
+  .score-stat-value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--warning);
+  }
+
+  .score-stat-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 1rem;
+    background: var(--warning-light);
+    color: #92400e;
+  }
+
+  .priority-high {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .summary-table th, .summary-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--slate-200);
+    font-size: 0.92rem;
+  }
+
+  .summary-table th {
+    width: 22%;
+    background: var(--slate-50);
+    font-weight: 700;
+    color: var(--slate-700);
+    white-space: nowrap;
+  }
+
+  .badge-user-ans {
+    background: #f1f5f9;
+    border-left: 3px solid #64748b;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    display: block;
+  }
+
+  /* 数式ボックス (MathML + CSS) */
+  .formula-card {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border-left: 5px solid var(--primary);
+  }
+
+  .formula-display {
+    text-align: center;
+    padding: 12px 0;
+    font-size: 1.25rem;
+    overflow-x: auto;
+  }
+
+  math {
+    font-family: "Cambria Math", "Latin Modern Math", STIXGeneral, serif;
+    color: #38bdf8;
+  }
+
+  .formula-desc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+  }
+
+  .formula-desc-table th, .formula-desc-table td {
+    padding: 8px 10px;
+    border-top: 1px solid #334155;
+    text-align: left;
+  }
+
+  .formula-desc-table th {
+    color: #94a3b8;
+    width: 25%;
+  }
+
+  /* SVG描画エリア */
+  .diagram-container {
+    background: #090d16;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 18px 0;
+    text-align: center;
+  }
+
+  .diagram-caption {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    margin-top: 8px;
+  }
+
+  /* インタラクティブ・シミュレーター */
+  .sim-container {
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 16px;
+    background: var(--slate-50);
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  .sim-control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sim-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+  }
+
+  .sim-btn:hover {
+    background: var(--primary-dark);
+  }
+
+  .sim-btn.reset {
+    background: #64748b;
+  }
+
+  .sim-btn.reset:hover {
+    background: #475569;
+  }
+
+  /* コントラストカード（比較表） */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9rem;
+  }
+
+  .comparison-table th, .comparison-table td {
+    padding: 12px;
+    border: 1px solid var(--slate-200);
+    text-align: center;
+  }
+
+  .comparison-table th {
+    background: var(--slate-50);
+    font-weight: 700;
+  }
+
+  .param-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .param-para {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .param-dia {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+  }
+
+  .callout {
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 14px 0;
+    font-size: 0.92rem;
+  }
+
+  .callout-info {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    color: #0369a1;
+  }
+
+  .callout-success {
+    background: var(--success-light);
+    border-left: 4px solid var(--success);
+    color: #15803d;
+  }
+
+  .callout-danger {
+    background: var(--danger-light);
+    border-left: 4px solid var(--danger);
+    color: #b91c1c;
+  }
+
+  /* 印刷用設定 */
+  @media print {
+    body {
+      background: #ffffff;
+      color: #000000;
+      padding: 0;
+    }
+    .page-header {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #000000;
+      box-shadow: none;
+      padding: 16px;
+    }
+    .card {
+      box-shadow: none;
+      border: 1px solid #94a3b8;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 20px;
+    }
+    .formula-card, .diagram-container {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: 1px solid #000000 !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    math {
+      color: #000000 !important;
+    }
+    .sim-controls {
+      display: none !important;
+    }
+    .formula-desc-table, .formula-desc-table th, .formula-desc-table td {
+      color: #000000 !important;
+      border-color: #cccccc !important;
+    }
+    .diagram-caption {
+      color: #333333 !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <header class="page-header">
+    <div class="q-badge">Q017 応用 ｜ GRE ・ T2* ・ SWI/SWAN</div>
+    <h1 class="page-title">SWI/SWANでマグニチュード画像だけでなく位相情報を使う意義を説明してください。</h1>
+  </header>
+
+  <!-- 1. 採点サマリー -->
+  <section class="card score-card">
+    <h2 class="card-title">📝 採点サマリー</h2>
+    <div class="score-header-grid">
+      <div class="score-stat-box">
+        <div class="score-stat-label">得点</div>
+        <div class="score-stat-value">55 <span style="font-size:1rem; color:var(--slate-600);">/ 100 点</span></div>
+      </div>
+      <div class="score-stat-box">
+        <div class="score-stat-label">判定</div>
+        <div style="margin-top:6px;"><span class="score-stat-status">部分正解（核心論述不足）</span></div>
+      </div>
+      <div class="score-stat-box">
+        <div class="score-stat-label">学習優先度</div>
+        <div style="margin-top:6px;"><span class="score-stat-status priority-high">高（臨床最重要テーマ）</span></div>
+      </div>
+    </div>
+
+    <table class="summary-table">
+      <tbody>
+        <tr>
+          <th>ユーザー解答</th>
+          <td><span class="badge-user-ans">磁化率効果では位相シフトが蓄積されるから</span></td>
+        </tr>
+        <tr>
+          <th>正答（模範解答）</th>
+          <td>
+            <strong>① 出血（常磁性）と石灰化（反磁性）の明瞭な鑑別：</strong><br>
+            マグニチュード像（T2*強調像）では局所磁場不均一による位相分散で両者ともに「等しい低信号（無信号）」となり鑑別できないが、位相情報は磁化率の符号（局所磁場の増減）を反映して回転方向が正反対（正/負）となるため、白黒の極性から両者を完全に識別できる。<br>
+            <strong>② 位相マスク乗算による微細静脈・微小出血のコントラスト飛躍的強調：</strong><br>
+            抽出した局所位相差から位相マスク（Phase Mask）を作成し、マグニチュード画像に累乗乗算（3〜4回乗算）することで、微小血管や微細な出血病変の信号のみを選択的に急峻減衰させ、CNR（対雑音コントラスト比）を極限まで高めることができる。
+          </td>
+        </tr>
+        <tr>
+          <th>正しく理解できた点</th>
+          <td>
+            「磁化率効果によって時間（TE）とともに位相シフトが蓄積する」という根本的な物理現象（$\Delta\phi = -\gamma \Delta B \text{TE}$）に着眼できている点は極めて正確です。
+          </td>
+        </tr>
+        <tr>
+          <th>最大の修正点</th>
+          <td>
+            「位相シフトが起きること（物理現象）」を述べただけで止まっており、問いである<strong>「なぜマグニチュードだけでは不十分で位相を使うのか（臨床・画像化における意義・目的）」</strong>に踏み込めていません。複素数信号の絶対値を取るマグニチュード像で失われる情報（符号・極性）と、位相マスク処理によるコントラスト増強という2大意義を明記する必要があります。
+          </td>
+        </tr>
+        <tr>
+          <th>根本的誤概念</th>
+          <td>
+            「物理的な変化が生じていること」＝「画像化の意義」と混同している点です。MRIにおける画像化の意義を論じる際は、「その物理量がどのような組織コントラストを生み出し、従来の撮像法では不可能だった何を鑑別可能にするのか」までをワンセットで捉える必要があります。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 2. 出血 vs 石灰化の鑑別メカニズム -->
+  <section class="card">
+    <h2 class="card-title">⚖️ 意義1：常磁性体（出血）と反磁性体（石灰化）の鑑別</h2>
+    <p>
+      生体内の微小出血（デオキシヘモグロビンやヘモジデリン）と石灰化（カルシウム塩）は、従来のマグニチュード画像（T2*強調像）では全く区別がつきません。しかし、位相情報を取り出すことで両者は白黒正反対のシグナルとして分離されます。
+    </p>
+
+    <!-- 比較表 -->
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>組織・物質</th>
+          <th>磁気的性質</th>
+          <th>局所磁場変化 (<math><mi mathvariant="normal">Δ</mi><mi>B</mi></math>)</th>
+          <th>位相シフト (<math><mi mathvariant="normal">Δ</mi><mi>ϕ</mi></math>)</th>
+          <th>マグニチュード像 (<math><mo>|</mo><mi>S</mi><mo>|</mo></math>)</th>
+          <th>位相像（右巻き定義時）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>微小出血 / 静脈血</strong><br>(ヘモジデリン/デオキシHb)</td>
+          <td><span class="param-badge param-para">常磁性体 (<math><mi mathvariant="normal">Δ</mi><mi>χ</mi><mo>&gt;</mo><mn>0</mn></math>)</span></td>
+          <td>局所磁場が<strong>増加</strong> (<math><mo>+</mo></math>)</td>
+          <td>負の方向へシフト (<math><mo>-</mo></math>)</td>
+          <td style="color:var(--danger); font-weight:bold;">低信号（黒）</td>
+          <td style="background:#f1f5f9; font-weight:bold; color:#0f172a;">低信号（黒）</td>
+        </tr>
+        <tr>
+          <td><strong>石灰化</strong><br>(リン酸カルシウム等)</td>
+          <td><span class="param-badge param-dia">反磁性体 (<math><mi mathvariant="normal">Δ</mi><mi>χ</mi><mo>&lt;</mo><mn>0</mn></math>)</span></td>
+          <td>局所磁場が<strong>減少</strong> (<math><mo>-</mo></math>)</td>
+          <td>正の方向へシフト (<math><mo>+</mo></math>)</td>
+          <td style="color:var(--danger); font-weight:bold;">低信号（黒）</td>
+          <td style="background:#ffffff; font-weight:bold; color:#0284c7;">高信号（白）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- SVG図：マグニチュード像と位相像の差異 -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 760 260" width="100%" height="230">
+        <!-- 枠：マグニチュード像 -->
+        <rect x="30" y="35" width="320" height="190" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+        <text x="190" y="24" fill="#94a3b8" font-size="13" font-weight="bold" text-anchor="middle">マグニチュード像（T2*強調像 / 絶対値画像）</text>
+        
+        <!-- 出血病変 -->
+        <circle cx="110" cy="115" r="32" fill="#050505" stroke="#475569" stroke-width="2"/>
+        <text x="110" y="119" fill="#ef4444" font-size="11" font-weight="bold" text-anchor="middle">微小出血</text>
+        <text x="110" y="170" fill="#fca5a5" font-size="11" text-anchor="middle">【低信号（黒）】</text>
+        
+        <!-- 石灰化病変 -->
+        <circle cx="270" cy="115" r="32" fill="#050505" stroke="#475569" stroke-width="2"/>
+        <text x="270" y="119" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">石灰化</text>
+        <text x="270" y="170" fill="#fca5a5" font-size="11" text-anchor="middle">【低信号（黒）】</text>
+
+        <text x="190" y="210" fill="#f87171" font-size="12" font-weight="bold" text-anchor="middle">⚠️ 両者とも位相分散で消滅し、区別不能！</text>
+
+        <!-- 矢印 -->
+        <path d="M 365 130 L 395 130" stroke="#38bdf8" stroke-width="3" fill="none"/>
+        <polygon points="395,124 407,130 395,136" fill="#38bdf8"/>
+
+        <!-- 枠：位相像 -->
+        <rect x="410" y="35" width="320" height="190" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+        <text x="570" y="24" fill="#38bdf8" font-size="13" font-weight="bold" text-anchor="middle">位 相 像（符号付き局所磁場マップ）</text>
+
+        <!-- 出血（黒） -->
+        <circle cx="490" cy="115" r="32" fill="#000000" stroke="#f43f5e" stroke-width="3"/>
+        <text x="490" y="119" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">微小出血</text>
+        <text x="490" y="170" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">【低信号（黒）】</text>
+
+        <!-- 石灰化（白） -->
+        <circle cx="650" cy="115" r="32" fill="#ffffff" stroke="#38bdf8" stroke-width="3"/>
+        <text x="650" y="119" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">石灰化</text>
+        <text x="650" y="170" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">【高信号（白）】</text>
+
+        <text x="570" y="210" fill="#4ade80" font-size="12" font-weight="bold" text-anchor="middle">✨ 極性（正負）が白黒に直結し、完全鑑別！</text>
+      </svg>
+      <div class="diagram-caption">図1：マグニチュード像による符号情報の脱落と、位相情報による磁気極性（常磁性 vs 反磁性）の可視化</div>
+    </div>
+  </section>
+
+  <!-- 3. 重要数式とその物理的解説 -->
+  <section class="card">
+    <h2 class="card-title">📐 重要数式：位相蓄積と位相マスク乗算</h2>
+
+    <div class="formula-card">
+      <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:6px; font-weight:bold;">【重要式 1】局所磁化率差による位相シフトの蓄積</div>
+      <div class="formula-display">
+        <math xmlns="http://www.w3.org/1997/Math/MathML" display="block">
+          <mrow>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>ϕ</mi>
+            <mo>=</mo>
+            <mo>−</mo>
+            <mi>γ</mi>
+            <mo>⋅</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>B</mi>
+            <mo>⋅</mo>
+            <mtext>TE</mtext>
+            <mo>=</mo>
+            <mo>−</mo>
+            <mi>γ</mi>
+            <mo>⋅</mo>
+            <mo stretchy="false">(</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>χ</mi>
+            <mo>⋅</mo>
+            <msub>
+              <mi>B</mi>
+              <mn>0</mn>
+            </msub>
+            <mo stretchy="false">)</mo>
+            <mo>⋅</mo>
+            <mtext>TE</mtext>
+          </mrow>
+        </math>
+      </div>
+      <table class="formula-desc-table">
+        <tbody>
+          <tr>
+            <th>記号と単位</th>
+            <td>
+              <math><mi mathvariant="normal">Δ</mi><mi>ϕ</mi></math>：蓄積位相シフト量 [rad]<br>
+              <math><mi>γ</mi></math>：磁気回転比 [rad/(s·T)]（プロトン：<math><mn>2.675</mn><mo>×</mo><msup><mn>10</mn><mn>8</mn></msup><mtext>&nbsp;rad/(s·T)</mtext></math>）<br>
+              <math><mi mathvariant="normal">Δ</mi><mi>B</mi></math>：局所静磁場変動 [T]<br>
+              <math><mi mathvariant="normal">Δ</mi><mi>χ</mi></math>：組織間の体積磁化率差 [無次元（ppm）]<br>
+              <math><msub><mi>B</mi><mn>0</mn></msub></math>：主静磁場強度 [T]、<math><mtext>TE</mtext></math>：エコー時間 [s]
+            </td>
+          </tr>
+          <tr>
+            <th>比例・反比例関係</th>
+            <td>
+              ・位相シフト <math><mi mathvariant="normal">Δ</mi><mi>ϕ</mi></math> は、<strong>エコー時間 <math><mtext>TE</mtext></math> に正比例</strong>して直線的に蓄積される。<br>
+              ・位相シフト <math><mi mathvariant="normal">Δ</mi><mi>ϕ</mi></math> は、<strong>静磁場強度 <math><msub><mi>B</mi><mn>0</mn></msub></math> に正比例</strong>する（3.0Tは1.5Tの2倍進む）。
+            </td>
+          </tr>
+          <tr>
+            <th>変数増減の結果</th>
+            <td>
+              TEを延長すると微小な磁化率差でも検出可能な位相差へと拡大する。しかし延長しすぎると<math><msubsup><mi>T</mi><mn>2</mn><mo>*</mo></msubsup></math>減衰によって信号そのもの（SNR）が消失するため、至適TE（1.5Tで約40〜50ms、3.0Tで約20〜30ms）が存在する。
+            </td>
+          </tr>
+          <tr>
+            <th>問題との直接関係</th>
+            <td>
+              ユーザー解答「位相シフトが蓄積されるから」はまさにこの式そのものを指しています。しかし、この式で生じた「正負の符号（方向性）」を画像化に活かすことこそが本質です。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="formula-card">
+      <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:6px; font-weight:bold;">【重要式 2】位相マスクの生成とSWI画像の再構成（コントラスト増強）</div>
+      <div class="formula-display">
+        <math xmlns="http://www.w3.org/1997/Math/MathML" display="block">
+          <mrow>
+            <msub>
+              <mi>I</mi>
+              <mtext>SWI</mtext>
+            </msub>
+            <mo stretchy="false">(</mo>
+            <mi>x</mi>
+            <mo>,</mo>
+            <mi>y</mi>
+            <mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <msub>
+              <mi>I</mi>
+              <mtext>mag</mtext>
+            </msub>
+            <mo stretchy="false">(</mo>
+            <mi>x</mi>
+            <mo>,</mo>
+            <mi>y</mi>
+            <mo stretchy="false">)</mo>
+            <mo>×</mo>
+            <msup>
+              <mrow>
+                <mo maxsize="1.2">[</mo>
+                <msub>
+                  <mi>f</mi>
+                  <mtext>mask</mtext>
+                </msub>
+                <mo stretchy="false">(</mo>
+                <mi>ϕ</mi>
+                <mo stretchy="false">(</mo>
+                <mi>x</mi>
+                <mo>,</mo>
+                <mi>y</mi>
+                <mo stretchy="false">)</mo>
+                <mo stretchy="false">)</mo>
+                <mo maxsize="1.2">]</mo>
+              </mrow>
+              <mi>n</mi>
+            </msup>
+            <mspace width="1.5em"/>
+            <mo stretchy="false">(</mo>
+            <mi>n</mi>
+            <mo>=</mo>
+            <mn>3</mn>
+            <mo>∼</mo>
+            <mn>4</mn>
+            <mo stretchy="false">)</mo>
+          </mrow>
+        </math>
+      </div>
+      <table class="formula-desc-table">
+        <tbody>
+          <tr>
+            <th>記号と処理内容</th>
+            <td>
+              <math><msub><mi>I</mi><mtext>mag</mtext></msub></math>：通常の3D GREマグニチュード画像（解剖学的形態情報）<br>
+              <math><msub><mi>f</mi><mtext>mask</mtext></msub><mo stretchy="false">(</mo><mi>ϕ</mi><mo stretchy="false">)</mo></math>：0から1の実数値をとる位相マスク（常磁性静脈血の負位相領域で0に近づくフィルタ）<br>
+              <math><mi>n</mi></math>：マスクの乗算回数（通常4回）。
+            </td>
+          </tr>
+          <tr>
+            <th>指数乗算の意義</th>
+            <td>
+              わずか10%の位相減衰マスク（0.9）であっても、4乗乗算することで <math><msup><mn>0.9</mn><mn>4</mn></msup><mo>≈</mo><mn>0.65</mn></math>（35%減衰）へとコントラスト差が非線形に拡大され、微細な皮質静脈や微小出血巣が背景脳実質から強烈な低信号として浮き彫りになる。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. 再構成パイプライン図 -->
+  <section class="card">
+    <h2 class="card-title">🔄 意義2：SWI/SWAN画像再構成アルゴリズムの流れ</h2>
+    <p>
+      生の位相データには、生体全体の緩やかな磁場不均一（空気・骨境界面による広域な歪み）が含まれています。ハイパスフィルタ（高周波通過処理）によってこの広域歪みを除去し、局所的な血管・出血の位相差のみを抽出してマスク化します。
+    </p>
+
+    <!-- SVGパイプライン図 -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 760 210" width="100%" height="190">
+        <!-- ボックス1: 3D GRE 複素データ -->
+        <rect x="20" y="70" width="110" height="70" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+        <text x="75" y="100" fill="#f8fafc" font-size="11" font-weight="bold" text-anchor="middle">3D GRE</text>
+        <text x="75" y="120" fill="#94a3b8" font-size="10" text-anchor="middle">Raw Data (S)</text>
+
+        <!-- 分岐矢印 上（マグニチュード） -->
+        <path d="M 130 90 L 190 50" stroke="#38bdf8" stroke-width="2" fill="none"/>
+        <polygon points="190,46 200,50 192,56" fill="#38bdf8"/>
+
+        <!-- 分岐矢印 下（位相） -->
+        <path d="M 130 120 L 190 160" stroke="#f59e0b" stroke-width="2" fill="none"/>
+        <polygon points="192,154 200,160 190,164" fill="#f59e0b"/>
+
+        <!-- ボックス2: マグニチュード画像 -->
+        <rect x="200" y="20" width="130" height="55" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="265" y="45" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">マグニチュード像</text>
+        <text x="265" y="62" fill="#94a3b8" font-size="9" text-anchor="middle">形態・解剖情報</text>
+
+        <!-- ボックス3: 位相画像 -->
+        <rect x="200" y="135" width="130" height="55" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="265" y="160" fill="#f59e0b" font-size="11" font-weight="bold" text-anchor="middle">生 位相画像</text>
+        <text x="265" y="177" fill="#fca5a5" font-size="9" text-anchor="middle">広域B0不均一を含む</text>
+
+        <!-- 矢印 -->
+        <line x1="330" y1="162" x2="365" y2="162" stroke="#f59e0b" stroke-width="2"/>
+        <polygon points="365,158 375,162 365,166" fill="#f59e0b"/>
+
+        <!-- ボックス4: ハイパスフィルタ -->
+        <rect x="375" y="135" width="120" height="55" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="435" y="157" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">ハイパスフィルタ</text>
+        <text x="435" y="175" fill="#cbd5e1" font-size="9" text-anchor="middle">局所磁化率のみ抽出</text>
+
+        <!-- 矢印 -->
+        <line x1="495" y1="162" x2="525" y2="162" stroke="#f59e0b" stroke-width="2"/>
+        <polygon points="525,158 535,162 525,166" fill="#f59e0b"/>
+
+        <!-- ボックス5: 位相マスク作成 -->
+        <rect x="535" y="135" width="95" height="55" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+        <text x="582" y="157" fill="#34d399" font-size="10" font-weight="bold" text-anchor="middle">位相マスク</text>
+        <text x="582" y="175" fill="#cbd5e1" font-size="9" text-anchor="middle">0.0 〜 1.0 に正規化</text>
+
+        <!-- 結合乗算へ -->
+        <path d="M 330 47 L 645 47 L 645 100" stroke="#38bdf8" stroke-width="2" fill="none"/>
+        <path d="M 630 162 L 645 162 L 645 125" stroke="#10b981" stroke-width="2" fill="none"/>
+
+        <!-- 乗算ノード -->
+        <circle cx="645" cy="112" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="2"/>
+        <text x="645" y="117" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">×</text>
+
+        <!-- 矢印 出力へ -->
+        <line x1="659" y1="112" x2="685" y2="112" stroke="#ffffff" stroke-width="2"/>
+        <polygon points="685,108 695,112 685,116" fill="#ffffff"/>
+
+        <!-- 最終SWI画像 -->
+        <rect x="695" y="82" width="55" height="60" rx="4" fill="#047857" stroke="#34d399" stroke-width="2"/>
+        <text x="722" y="110" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">SWI</text>
+        <text x="722" y="126" fill="#d1fae5" font-size="8" text-anchor="middle">最終画像</text>
+      </svg>
+      <div class="diagram-caption">図2：複素データからハイパス位相マスクを作成し、マグニチュード像に乗算するSWI再構成パイプライン</div>
+    </div>
+  </section>
+
+  <!-- 5. 動的シミュレーター（位相蓄積とマスク乗算） -->
+  <section class="card">
+    <h2 class="card-title">⚡ 体感シミュレーター：TEによる位相回転とマスク乗算効果</h2>
+    <p>
+      TEの経過に伴う「常磁性体（静脈血・微小出血）」と「反磁性体（石灰化）」のベクトル回転の向きの違い、および位相マスクの乗算回数によるコントラストの急峻な変化を確認できます。
+    </p>
+
+    <div class="sim-container">
+      <div class="sim-controls">
+        <div class="sim-control-group">
+          <label for="teSlider" style="font-size:0.88rem; font-weight:700;">エコー時間 (TE): <span id="teVal" style="color:var(--primary); font-weight:900;">25</span> ms</label>
+          <input type="range" id="teSlider" min="5" max="50" value="25" step="1" oninput="updateSim()">
+        </div>
+
+        <div class="sim-control-group">
+          <label for="maskPow" style="font-size:0.88rem; font-weight:700;">マスク乗算回数 (n): <span id="maskVal" style="color:var(--success); font-weight:900;">4</span> 乗</label>
+          <input type="range" id="maskPow" min="1" max="6" value="4" step="1" oninput="updateSim()">
+        </div>
+
+        <button class="sim-btn" onclick="toggleAutoRun()" id="runBtn">▶ アニメーション再生</button>
+        <button class="sim-btn reset" onclick="resetSim()">リセット</button>
+      </div>
+
+      <!-- シミュレータSVG描画エリア -->
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-around; align-items:center; background:#0b1329; border-radius:8px; padding:16px;">
+        <!-- ベクトル回転円盤 -->
+        <div style="text-align:center;">
+          <div style="color:#94a3b8; font-size:0.8rem; margin-bottom:6px; font-weight:bold;">複素平面上のスピン位相ベクトル</div>
+          <svg id="vectorSvg" viewBox="-110 -110 220 220" width="200" height="200">
+            <circle cx="0" cy="0" r="90" fill="none" stroke="#1e293b" stroke-width="2"/>
+            <line x1="-95" y1="0" x2="95" y2="0" stroke="#334155" stroke-width="1"/>
+            <line x1="0" y1="-95" x2="0" y2="95" stroke="#334155" stroke-width="1"/>
+            <text x="80" y="15" fill="#64748b" font-size="9">実軸(Re)</text>
+            <text x="5" y="-80" fill="#64748b" font-size="9">虚軸(Im)</text>
+
+            <!-- 基準スピン（水実質：ゼロ） -->
+            <line x1="0" y1="0" x2="80" y2="0" stroke="#94a3b8" stroke-width="2" stroke-dasharray="3"/>
+            <text x="82" y="-5" fill="#94a3b8" font-size="8">背景実質(0°)</text>
+
+            <!-- 出血ベクトル（赤・負回転時計回り） -->
+            <line id="paraLine" x1="0" y1="0" x2="60" y2="50" stroke="#ef4444" stroke-width="3.5"/>
+            <circle id="paraDot" cx="60" cy="50" r="5" fill="#ef4444"/>
+
+            <!-- 石灰化ベクトル（青・正回転反時計回り） -->
+            <line id="diaLine" x1="0" y1="0" x2="60" y2="-50" stroke="#38bdf8" stroke-width="3.5"/>
+            <circle id="diaDot" cx="60" cy="-50" r="5" fill="#38bdf8"/>
+          </svg>
+          <div style="font-size:0.78rem; margin-top:4px;">
+            <span style="color:#ef4444; font-weight:bold;">● 出血 (負の位相)</span> ｜ 
+            <span style="color:#38bdf8; font-weight:bold;">● 石灰化 (正の位相)</span>
+          </div>
+        </div>
+
+        <!-- 最終SWI信号コントラスト表示 -->
+        <div style="text-align:center; min-width:240px; margin-top:10px;">
+          <div style="color:#94a3b8; font-size:0.8rem; margin-bottom:8px; font-weight:bold;">再構成SWI画像上の信号強度（相対値）</div>
+          
+          <div style="text-align:left; background:#1e293b; padding:12px 16px; border-radius:8px; font-size:0.88rem;">
+            <div style="margin-bottom:8px;">
+              <span style="color:#cbd5e1;">背景脳実質:</span>
+              <span style="float:right; font-weight:bold; color:#f8fafc;">1.00</span>
+              <div style="background:#334155; height:6px; border-radius:3px; margin-top:3px;"><div style="background:#94a3b8; width:100%; height:100%; border-radius:3px;"></div></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="color:#fca5a5;">微小出血 (常磁性):</span>
+              <span id="paraSignalText" style="float:right; font-weight:bold; color:#ef4444;">0.12</span>
+              <div style="background:#334155; height:6px; border-radius:3px; margin-top:3px;"><div id="paraBar" style="background:#ef4444; width:12%; height:100%; border-radius:3px;"></div></div>
+            </div>
+            <div>
+              <span style="color:#bae6fd;">石灰化 (反磁性):</span>
+              <span id="diaSignalText" style="float:right; font-weight:bold; color:#38bdf8;">1.00</span>
+              <div style="background:#334155; height:6px; border-radius:3px; margin-top:3px;"><div id="diaBar" style="background:#38bdf8; width:100%; height:100%; border-radius:3px;"></div></div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-top:8px;">※常磁性マスク適用時：出血のみが急激に黒く強調される</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 結論・学習のまとめ -->
+  <section class="card">
+    <h2 class="card-title">💡 復習のまとめ：なぜ位相が必要なのか？</h2>
+    <div class="callout callout-info">
+      <strong>本問の核心：</strong><br>
+      MRIのRF受信信号は本来、実数部（Real）と虚数部（Imaginary）からなる<strong>「複素数」</strong>です。通常使われるマグニチュード処理は絶対値 <math><mo>|</mo><mi>S</mi><mo>|</mo><mo>=</mo><msqrt><msup><mi>Re</mi><mn>2</mn></msup><mo>+</mo><msup><mi>Im</mi><mn>2</mn></msup></msqrt></math> を計算するため、<strong>位相角が持っていた「符号（プラス・マイナスの向き）」が完全に消滅</strong>してしまいます。
+    </div>
+    <div class="callout callout-success">
+      <strong>臨床的意義の2大柱：</strong>
+      <ol style="margin-left:20px; margin-top:6px;">
+        <li><strong>鑑別診断能の獲得：</strong>「磁場を強める病変（出血）」と「弱める病変（石灰化）」という正反対の病理を、符号情報を保持した位相画像によって確定鑑別できる。</li>
+        <li><strong>微小病変の検出限界の突破：</strong>ボクセルサイズより細い微小静脈や微小出血であっても、周囲に漏れ出た位相シフトをマスク化して累乗乗算することで、解剖学的限界を超えた高コントラスト画像（SWI/SWAN）が得られる。</li>
+      </ol>
+    </div>
+    <p style="margin-top:14px; font-size:0.9rem; color:var(--slate-600);">
+      次回の論述では、「磁化率差で位相シフトが蓄積する」という物理現象から一歩進めて、「それによってマグニチュード像で失われる符号を取り戻し、石灰化と出血の鑑別や位相マスクによるCNR増強を実現する」という応用目的まで論述できるように定着させましょう。
+    </p>
+  </section>
+
+</div>
+
+<script>
+  let autoRunTimer = null;
+
+  function updateSim() {
+    const te = parseFloat(document.getElementById('teSlider').value);
+    const n = parseInt(document.getElementById('maskPow').value, 10);
+    document.getElementById('teVal').innerText = te;
+    document.getElementById('maskVal').innerText = n;
+
+    // 位相角計算 (簡易モデル: 1msあたり約0.08 rad)
+    const anglePara = te * 0.085; // 常磁性（時計回り・負）
+    const angleDia = -te * 0.085; // 反磁性（反時計回り・正）
+
+    const radius = 80;
+
+    // 出血ベクトルの先端座標
+    const xPara = radius * Math.cos(anglePara);
+    const yPara = radius * Math.sin(anglePara);
+    document.getElementById('paraLine').setAttribute('x2', xPara);
+    document.getElementById('paraLine').setAttribute('y2', yPara);
+    document.getElementById('paraDot').setAttribute('cx', xPara);
+    document.getElementById('paraDot').setAttribute('cy', yPara);
+
+    // 石灰化ベクトルの先端座標
+    const xDia = radius * Math.cos(angleDia);
+    const yDia = radius * Math.sin(angleDia);
+    document.getElementById('diaLine').setAttribute('x2', xDia);
+    document.getElementById('diaLine').setAttribute('y2', yDia);
+    document.getElementById('diaDot').setAttribute('cx', xDia);
+    document.getElementById('diaDot').setAttribute('cy', yDia);
+
+    // 位相マスク計算（常磁性マスク：負の位相の大きさに応じてマスク減衰）
+    // マスク値 f = clamp( (π - anglePara) / π, 0, 1 )
+    const normalizedPhase = Math.min(Math.PI, anglePara);
+    const singleMask = Math.max(0, (Math.PI - normalizedPhase) / Math.PI);
+    const finalParaSignal = Math.pow(singleMask, n);
+
+    // 反磁性は常磁性マスクでは減衰しないため 1.0
+    const finalDiaSignal = 1.0;
+
+    const paraPercent = Math.round(finalParaSignal * 100);
+    document.getElementById('paraSignalText').innerText = finalParaSignal.toFixed(2);
+    document.getElementById('paraBar').style.width = paraPercent + '%';
+
+    document.getElementById('diaSignalText').innerText = finalDiaSignal.toFixed(2);
+    document.getElementById('diaBar').style.width = '100%';
+  }
+
+  function toggleAutoRun() {
+    const btn = document.getElementById('runBtn');
+    if (autoRunTimer) {
+      clearInterval(autoRunTimer);
+      autoRunTimer = null;
+      btn.innerText = '▶ アニメーション再生';
+    } else {
+      btn.innerText = '⏸ 一時停止';
+      autoRunTimer = setInterval(() => {
+        let slider = document.getElementById('teSlider');
+        let current = parseInt(slider.value, 10);
+        if (current >= 50) {
+          current = 5;
+        } else {
+          current += 1;
+        }
+        slider.value = current;
+        updateSim();
+      }, 70);
+    }
+  }
+
+  function resetSim() {
+    if (autoRunTimer) {
+      clearInterval(autoRunTimer);
+      autoRunTimer = null;
+      document.getElementById('runBtn').innerText = '▶ アニメーション再生';
+    }
+    document.getElementById('teSlider').value = 25;
+    document.getElementById('maskPow').value = 4;
+    updateSim();
+  }
+
+  // 初期化実行
+  updateSim();
+</script>
+
+</body>
+</html>

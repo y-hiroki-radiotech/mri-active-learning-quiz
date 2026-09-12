@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRI解説：FSE/TSEで脂肪が高信号になる2大機序</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-green: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 24px 16px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+    }
+
+    /* セクションカード */
+    .section-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-amber {
+      background-color: rgba(245, 158, 11, 0.2);
+      color: var(--accent-amber);
+      border: 1px solid var(--accent-amber);
+    }
+
+    .badge-cyan {
+      background-color: rgba(6, 182, 212, 0.2);
+      color: var(--accent-cyan);
+      border: 1px solid var(--accent-cyan);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .card-desc {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 0;
+    }
+
+    /* インラインSVG数式用スタイル */
+    .math-inline {
+      display: inline-flex;
+      vertical-align: middle;
+      margin: 0 3px;
+    }
+
+    /* アニメーションステージ */
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      background-color: #0b1120;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #334155;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #475569;
+    }
+
+    button.primary {
+      background: #2563eb;
+    }
+
+    button.primary:hover {
+      background: #1d4ed8;
+    }
+
+    /* 解説ボックス */
+    .point-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .point-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .point-box {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 14px;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .point-box h4 {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #e2e8f0;
+    }
+
+    .point-box p {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* MTC インタラクティブUI */
+    .mtc-board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 16px 0;
+    }
+
+    @media (max-width: 650px) {
+      .mtc-board {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pool-card {
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .pool-visual {
+      height: 140px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    .water-bubble {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #38bdf8, #0284c7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.8rem;
+      color: white;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+      transition: all 0.5s ease;
+    }
+
+    .bound-bubble {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #a855f7, #6b21a8);
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      left: 15%;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+    }
+
+    .fat-bubble {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fbbf24, #d97706);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #1e1b4b;
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+    }
+
+    .signal-bar-wrap {
+      width: 100%;
+      background: #1e293b;
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .signal-bar {
+      height: 100%;
+      width: 85%;
+      transition: width 0.6s ease, background-color 0.6s ease;
+    }
+
+    /* まとめテーブル */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+
+    .summary-table th, .summary-table td {
+      border: 1px solid var(--card-border);
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .summary-table th {
+      background: #1e293b;
+      color: #cbd5e1;
+    }
+
+    .highlight-fat {
+      color: var(--accent-amber);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>FSE/TSE の T2WI で脂肪が高信号になる2大機序</h1>
+    <p class="subtitle">通常スピンエコー（SE）と高速スピンエコー（FSE）におけるスピン挙動・生体相互作用の比較可視化</p>
+  </header>
+
+  <!-- 機序1: J結合 -->
+  <section class="section-card">
+    <div class="section-header">
+      <span class="badge badge-amber">機序 1</span>
+      <h2 class="card-title">J結合の変調抑制（RFデカップリング効果）</h2>
+    </div>
+    <div class="card-desc">
+      <span>脂肪分子の炭化水素鎖（</span>
+      <!-- SVG: -CH2-CH2- -->
+      <svg class="math-inline" width="105" height="20" viewBox="0 0 105 20" style="vertical-align: -3px;">
+        <text x="2" y="14" fill="#f8fafc" font-size="13" font-family="-apple-system, sans-serif">―CH</text>
+        <text x="31" y="18" fill="#f8fafc" font-size="9" font-family="-apple-system, sans-serif">2</text>
+        <text x="39" y="14" fill="#f8fafc" font-size="13" font-family="-apple-system, sans-serif">―CH</text>
+        <text x="68" y="18" fill="#f8fafc" font-size="9" font-family="-apple-system, sans-serif">2</text>
+        <text x="76" y="14" fill="#f8fafc" font-size="13" font-family="-apple-system, sans-serif">―</text>
+      </svg>
+      <span>）内の隣接プロトン間で生じるJ結合により、位相ズレ（J変調）が生じます。<br></span>
+      <span>通常SEではTE到達時に位相が乱れて信号が激減しますが、FSEでは短間隔の180°パルス連打により位相ズレが打ち消され、脂肪本来の高信号が維持されます。</span>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="btnPlayJ">▶ アニメーション再生 / 一時停止</button>
+      <button id="btnResetJ">↺ リセット</button>
+      <span style="font-size: 0.85rem; color: var(--text-sub);" id="statusJ">状態: 準備完了</span>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="jCanvas" width="960" height="260"></canvas>
+    </div>
+
+    <div class="point-grid">
+      <div class="point-box" style="border-left-color: var(--accent-rose);">
+        <h4>通常 SE（Conventional SE）</h4>
+        <p>180°パルスの間隔が長く、J結合による微小な周波数差でプロトン間に位相差（J変調）が蓄積。180°パルス1回ではJ変調は相殺できず、エコー時にスピンが打ち消し合って<strong>信号が急激に低下</strong>します。</p>
+      </div>
+      <div class="point-box" style="border-left-color: var(--accent-green);">
+        <h4>FSE / TSE（Fast Spin Echo）</h4>
+        <p>エコースペーシング（ESP）が極めて短く（
+          <!-- SVG: 10~15 ms -->
+          <svg class="math-inline" width="75" height="18" viewBox="0 0 75 18" style="vertical-align: -2px;">
+            <text x="2" y="13" fill="#cbd5e1" font-size="12" font-family="-apple-system, sans-serif">10〜15 ms</text>
+          </svg>
+        ）、位相差が広がる前に180°パルスが反転を繰り返します（<strong>RFデカップリング</strong>）。J変調が相殺され、<strong>エコー収集時も強い信号をキープ</strong>します。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 機序2: MTC効果 -->
+  <section class="section-card">
+    <div class="section-header">
+      <span class="badge badge-cyan">機序 2</span>
+      <h2 class="card-title">磁化移動効果（MTC）による周囲組織の信号低下</h2>
+    </div>
+    <p class="card-desc">
+      FSEの連続180°パルス列は、実質組織の高分子結合水に対して「オフ共鳴飽和パルス」として作用します。<br>
+      周囲の筋肉や実質臓器の信号が低下する一方、水交換系を持たない脂肪は影響を受けないため、<strong>相対的コントラストで脂肪が白く際立ちます</strong>。
+    </p>
+
+    <div class="controls">
+      <button class="primary" id="btnToggleMTC">180°パルス列の照射シミュレーション（FSE）</button>
+    </div>
+
+    <div class="mtc-board">
+      <!-- 筋肉・実質組織 -->
+      <div class="pool-card">
+        <h3 style="font-size: 1.05rem; color: #38bdf8;">周囲組織（実質臓器・筋肉）</h3>
+        <p style="font-size: 0.8rem; color: var(--text-sub);">タンパク質（高分子）＋ 結合水 ＋ 自由水</p>
+        
+        <div class="pool-visual">
+          <div class="bound-bubble" id="boundBubble">高分子<br>結合水</div>
+          <div style="position: absolute; font-size: 0.75rem; color: #a855f7; left: 35%; top: 30%;" id="arrowMTC">飽和移動 ➔</div>
+          <div class="water-bubble" id="freeWaterBubble" style="position: absolute; right: 15%;">自由水</div>
+        </div>
+
+        <div style="font-size: 0.8rem; display: flex; justify-content: space-between; margin-top: 4px;">
+          <span>組織の信号強度:</span>
+          <span id="labelParenchyma" style="color: #38bdf8; font-weight: bold;">100%（通常SE）</span>
+        </div>
+        <div class="signal-bar-wrap">
+          <div class="signal-bar" id="barParenchyma" style="width: 80%; background: #0284c7;"></div>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 8px;">
+          パルス列で結合水が飽和 ➔ 自由水へ磁化が移動（MT効果） ➔ <strong>信号が約30%低下（黒くなる）</strong>
+        </p>
+      </div>
+
+      <!-- 脂肪組織 -->
+      <div class="pool-card">
+        <h3 style="font-size: 1.05rem; color: #fbbf24;">脂肪組織</h3>
+        <p style="font-size: 0.8rem; color: var(--text-sub);">トリグリセリド（疎水性・結合水プールなし）</p>
+        
+        <div class="pool-visual">
+          <div class="fat-bubble" id="fatBubble">脂肪<br>プロトン</div>
+        </div>
+
+        <div style="font-size: 0.8rem; display: flex; justify-content: space-between; margin-top: 4px;">
+          <span>脂肪の信号強度:</span>
+          <span id="labelFat" class="highlight-fat">高信号（変化なし）</span>
+        </div>
+        <div class="signal-bar-wrap">
+          <div class="signal-bar" id="barFat" style="width: 95%; background: #f59e0b;"></div>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 8px;">
+          結合水との化学交換を持たないため、<strong>MTC効果の影響を受けず高輝度を維持</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 総括まとめテーブル -->
+  <section class="section-card">
+    <div class="section-header">
+      <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green);">まとめ</span>
+      <h2 class="card-title">2つの機序による効果の集約</h2>
+    </div>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>機序</th>
+          <th>作用対象</th>
+          <th>FSEでの物理現象</th>
+          <th>画像上の結果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: var(--accent-amber); font-weight: 600;">① J結合の変調抑制</td>
+          <td>脂肪そのもの</td>
+          <td>短いESPによる180°連続パルスでスピンが反転し続け、J変調による位相分散が抑制される（RFデカップリング）</td>
+          <td>脂肪のT2短縮が防がれ、<strong>絶対的な信号強度が高く保たれる</strong></td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent-cyan); font-weight: 600;">② 磁化移動効果 (MTC)</td>
+          <td>周囲の生体組織<br>(実質臓器・筋肉)</td>
+          <td>多数の180°パルスが結合水を飽和させ、自由水プールの磁化が低下。脂肪は疎水性のため影響なし</td>
+          <td>周囲が暗く沈むため、<strong>相対的なコントラスト比で脂肪がさらに白く浮き出る</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+  // ==========================================
+  // 機序1：J結合シミュレーション (Canvas)
+  // ==========================================
+  const canvas = document.getElementById('jCanvas');
+  const ctx = canvas.getContext('2d');
+  let isPlaying = true;
+  let animFrameId = null;
+  let t = 0; // 0 to 100% of TE
+
+  const btnPlayJ = document.getElementById('btnPlayJ');
+  const btnResetJ = document.getElementById('btnResetJ');
+  const statusJ = document.getElementById('statusJ');
+
+  btnPlayJ.addEventListener('click', () => {
+    isPlaying = !isPlaying;
+    btnPlayJ.textContent = isPlaying ? '⏸ 一時停止' : '▶ アニメーション再生';
+  });
+
+  btnResetJ.addEventListener('click', () => {
+    t = 0;
+  });
+
+  function drawVectorCircle(cx, cy, r, angle1, angle2, title, subtitle, isEcho) {
+    // 円枠
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 基準十字
+    ctx.strokeStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
+    ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
+    ctx.stroke();
+
+    // ベクトル1 (J結合 + 成分)
+    const x1 = cx + r * 0.85 * Math.cos(angle1);
+    const y1 = cy - r * 0.85 * Math.sin(angle1);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3;
+    drawArrow(cx, cy, x1, y1);
+
+    // ベクトル2 (J結合 - 成分)
+    const x2 = cx + r * 0.85 * Math.cos(angle2);
+    const y2 = cy - r * 0.85 * Math.sin(angle2);
+    ctx.strokeStyle = '#f43f5e';
+    ctx.lineWidth = 3;
+    drawArrow(cx, cy, x2, y2);
+
+    // 合成ベクトル (ネット磁化)
+    const sumX = (Math.cos(angle1) + Math.cos(angle2)) / 2;
+    const sumY = (Math.sin(angle1) + Math.sin(angle2)) / 2;
+    const netMag = Math.sqrt(sumX * sumX + sumY * sumY);
+    const netAngle = Math.atan2(sumY, sumX);
+
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 4;
+    drawArrow(cx, cy, cx + r * 0.9 * netMag * Math.cos(netAngle), cy - r * 0.9 * netMag * Math.sin(netAngle));
+
+    // テキスト
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, cx, cy - r - 20);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(subtitle, cx, cy - r - 4);
+
+    // ネット信号表示
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = netMag > 0.6 ? '#10b981' : '#f43f5e';
+    ctx.fillText(`合成信号: ${(netMag * 100).toFixed(0)}%`, cx, cy + r + 24);
+  }
+
+  function drawArrow(fromX, fromY, toX, toY) {
+    const headlen = 8;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  }
+
+  function drawTimeline(x, y, w, progress, isFSE) {
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.stroke();
+
+    // 90度パルス
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(x, y - 20, 6, 20);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('90°', x + 3, y - 24);
+
+    if (!isFSE) {
+      // 通常SE: 180度パルス 1回 (中央)
+      const p180 = x + w * 0.5;
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(p180 - 3, y - 28, 6, 28);
+      ctx.fillText('180°', p180, y - 32);
+
+      // エコー (末尾)
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText('Echo (TE)', x + w, y + 18);
+    } else {
+      // FSE: 180度パルス 連続
+      for (let i = 1; i <= 5; i++) {
+        const p180 = x + w * (i * 0.166);
+        ctx.fillStyle = '#a855f7';
+        ctx.fillRect(p180 - 2, y - 22, 4, 22);
+        ctx.fillText('180°', p180, y - 26);
+      }
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText('Echo (実効TE)', x + w, y + 18);
+    }
+
+    // カレントポインタ
+    const curX = x + w * (progress / 100);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(curX, y - 15);
+    ctx.lineTo(curX, y + 15);
+    ctx.stroke();
+  }
+
+  function renderJSimulation() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const progress = t / 100; // 0 to 1
+
+    let seSpread;
+    if (progress < 0.5) {
+      seSpread = progress * 2 * 1.5;
+    } else {
+      seSpread = 1.5 + (progress - 0.5) * 2 * 1.5; 
+    }
+    const seA1 = Math.PI / 2 + seSpread;
+    const seA2 = Math.PI / 2 - seSpread;
+
+    const fseCycle = (progress * 6) % 1.0;
+    const fseSpread = Math.sin(fseCycle * Math.PI) * 0.25;
+    const fseA1 = Math.PI / 2 + fseSpread;
+    const fseA2 = Math.PI / 2 - fseSpread;
+
+    // 左: 通常SE
+    drawVectorCircle(180, 130, 60, seA1, seA2, '通常 SE（Conventional SE）', 'J変調の蓄積 ➔ スピン分散', progress > 0.95);
+    drawTimeline(60, 235, 240, t, false);
+
+    // 右: FSE
+    drawVectorCircle(680, 130, 60, fseA1, fseA2, 'FSE / TSE', '短いESPで頻回反転（デカップリング）', progress > 0.95);
+    drawTimeline(560, 235, 240, t, true);
+
+    // ステータス更新
+    if (t >= 100) {
+      statusJ.textContent = '状態: TE到達（SEは位相が打ち消し合って低信号、FSEは揃って高信号）';
+    } else {
+      statusJ.textContent = `状態: パルス進行中 (${t.toFixed(0)}%)`;
+    }
+
+    if (isPlaying) {
+      t += 0.5;
+      if (t > 100) {
+        t = 100;
+        isPlaying = false;
+        btnPlayJ.textContent = '▶ アニメーション再生';
+      }
+    }
+
+    animFrameId = requestAnimationFrame(renderJSimulation);
+  }
+
+  renderJSimulation();
+
+  // ==========================================
+  // 機序2：MTC効果 インタラクティブUI
+  // ==========================================
+  let isFSEModeMTC = false;
+  const btnToggleMTC = document.getElementById('btnToggleMTC');
+  const barParenchyma = document.getElementById('barParenchyma');
+  const labelParenchyma = document.getElementById('labelParenchyma');
+  const boundBubble = document.getElementById('boundBubble');
+  const arrowMTC = document.getElementById('arrowMTC');
+
+  btnToggleMTC.addEventListener('click', () => {
+    isFSEModeMTC = !isFSEModeMTC;
+    if (isFSEModeMTC) {
+      btnToggleMTC.textContent = '通常SEの状態に戻す';
+      btnToggleMTC.style.background = '#0284c7';
+      // 組織信号低下
+      barParenchyma.style.width = '48%';
+      barParenchyma.style.background = '#64748b';
+      labelParenchyma.textContent = '約65%に低下（MTC効果）';
+      labelParenchyma.style.color = '#94a3b8';
+      boundBubble.style.background = 'radial-gradient(circle, #64748b, #334155)';
+      arrowMTC.style.color = '#ef4444';
+      arrowMTC.textContent = '飽和伝播中 ➔➔';
+    } else {
+      btnToggleMTC.textContent = '180°パルス列の照射シミュレーション（FSE）';
+      btnToggleMTC.style.background = '#2563eb';
+      // 組織信号復活
+      barParenchyma.style.width = '80%';
+      barParenchyma.style.background = '#0284c7';
+      labelParenchyma.textContent = '100%（通常SE）';
+      labelParenchyma.style.color = '#38bdf8';
+      boundBubble.style.background = 'radial-gradient(circle, #a855f7, #6b21a8)';
+      arrowMTC.style.color = '#a855f7';
+      arrowMTC.textContent = '飽和移動 ➔';
+    }
+  });
+</script>
+
+</body>
+</html>

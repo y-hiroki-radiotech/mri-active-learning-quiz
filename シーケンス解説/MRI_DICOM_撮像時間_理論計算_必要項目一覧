@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI DICOMから撮像時間を理論計算するための必要項目一覧</title>
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --line:#dbe2ea;
+  --primary:#1d4ed8;
+  --primary-soft:#eaf1ff;
+  --good:#047857;
+  --good-soft:#ecfdf5;
+  --warn:#b45309;
+  --warn-soft:#fff7ed;
+  --danger:#b91c1c;
+  --danger-soft:#fef2f2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,Arial,sans-serif;
+  line-height:1.7;
+}
+main{
+  max-width:1180px;
+  margin:0 auto;
+  padding:32px 20px 64px;
+}
+h1,h2,h3{line-height:1.35}
+h1{font-size:2rem;margin:0 0 10px}
+h2{
+  font-size:1.35rem;
+  margin:42px 0 14px;
+  padding-left:12px;
+  border-left:5px solid var(--primary);
+}
+h3{font-size:1.08rem;margin:24px 0 10px}
+p{margin:8px 0 14px}
+.lead{
+  color:#374151;
+  font-size:1.05rem;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px;
+  margin:16px 0;
+  box-shadow:0 4px 14px rgba(0,0,0,.03);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;
+}
+.badge{
+  display:inline-block;
+  font-size:.82rem;
+  padding:3px 9px;
+  border-radius:999px;
+  font-weight:700;
+}
+.b5{background:#dbeafe;color:#1e40af}
+.b4{background:#e0e7ff;color:#4338ca}
+.b3{background:#f3f4f6;color:#4b5563}
+.good{background:var(--good-soft);border-left:5px solid var(--good)}
+.warn{background:var(--warn-soft);border-left:5px solid var(--warn)}
+.danger{background:var(--danger-soft);border-left:5px solid var(--danger)}
+.note{
+  padding:14px 16px;
+  border-radius:10px;
+  margin:14px 0;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  font-size:.93rem;
+}
+th,td{
+  border:1px solid var(--line);
+  padding:10px 9px;
+  vertical-align:top;
+}
+th{
+  background:#eef3f9;
+  text-align:left;
+  white-space:nowrap;
+}
+tr:nth-child(even) td{background:#fbfcfe}
+code{
+  background:#eef2f7;
+  border-radius:5px;
+  padding:2px 5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.eq{
+  background:#0f172a;
+  color:#f8fafc;
+  padding:14px 16px;
+  border-radius:10px;
+  overflow:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  margin:10px 0 16px;
+}
+.small{font-size:.88rem;color:var(--muted)}
+.checklist li{margin:4px 0}
+strong.key{color:#0f3ea8}
+@media print{
+  body{background:#fff}
+  main{max-width:none;padding:0}
+  .card{box-shadow:none;break-inside:avoid}
+  table{font-size:8.5pt}
+  h2{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>MRI DICOMから撮像時間を理論計算するための必要項目一覧</h1>
+  <p class="lead">
+    GE SIGNA Artist / SIGNA Heroを含むMRI DICOM画像から、撮像時間を単に読み取るのではなく、
+    <strong>撮像時間を決定する各パラメータを抽出し、シーケンスの理論式から撮像時間を再計算する</strong>
+    ための実務用チェックリスト。
+  </p>
+
+  <div class="card good">
+    <strong>基本方針</strong><br>
+    最初から <code>Acquisition Duration</code> を答えとして使わない。
+    まずシーケンスを特定し、TR・位相エンコード数・NEX・ETL・2D/3D・高速化因子などを取得して理論計算する。
+    最後に <code>Acquisition Duration</code> と比較し、理論値の妥当性を検証する。
+  </div>
+
+  <h2>1. 最優先で抽出するDICOM項目</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>分類</th>
+        <th>項目</th>
+        <th>DICOM Tag</th>
+        <th>重要度</th>
+        <th>計算での役割</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>シーケンス判定</td><td><strong>Series Description</strong></td><td><code>(0008,103E)</code></td><td><span class="badge b5">★★★★★</span></td><td>T1、T2、FLAIR、DWI、PROP、CUBEなどの識別。</td></tr>
+      <tr><td>シーケンス判定</td><td><strong>Sequence Name</strong></td><td><code>(0018,0024)</code></td><td><span class="badge b5">★★★★★</span></td><td>内部シーケンス名の識別。SE/FSE/GRE/EPI等の判定補助。</td></tr>
+      <tr><td>シーケンス判定</td><td>Scanning Sequence</td><td><code>(0018,0020)</code></td><td><span class="badge b4">★★★★☆</span></td><td>SE、GR、IRなど撮像方式の分類。</td></tr>
+      <tr><td>シーケンス判定</td><td><strong>MR Acquisition Type</strong></td><td><code>(0018,0023)</code></td><td><span class="badge b5">★★★★★</span></td><td><strong>2D / 3D判定。</strong>計算式の選択に必須。</td></tr>
+
+      <tr><td>基本時間</td><td><strong>Repetition Time：TR</strong></td><td><code>(0018,0080)</code></td><td><span class="badge b5">★★★★★</span></td><td>撮像時間計算の基本単位。通常ms。</td></tr>
+      <tr><td>積算</td><td><strong>Number of Averages：NEX/NSA</strong></td><td><code>(0018,0083)</code></td><td><span class="badge b5">★★★★★</span></td><td>同一データの積算回数。原則として撮像時間に比例。</td></tr>
+      <tr><td>位相エンコード</td><td><strong>Number of Phase Encoding Steps</strong></td><td><code>(0018,0089)</code></td><td><span class="badge b5">★★★★★</span></td><td>2D Cartesian撮像で必要なky方向の収集数。</td></tr>
+      <tr><td>FSE/TSE</td><td><strong>Echo Train Length：ETL</strong></td><td><code>(0018,0091)</code></td><td><span class="badge b5">★★★★★</span></td><td>1TR中に取得するエコー数。FSE/TSEでは撮像時間短縮の中心因子。</td></tr>
+
+      <tr><td>Matrix</td><td>Acquisition Matrix</td><td><code>(0018,1310)</code></td><td><span class="badge b4">★★★★☆</span></td><td>Phase Encoding Stepsが無い場合の補助。frequency/phase方向の確認。</td></tr>
+      <tr><td>Sampling</td><td>Percent Sampling</td><td><code>(0018,0093)</code></td><td><span class="badge b4">★★★★☆</span></td><td>phase方向の部分収集率。100%未満なら撮像時間短縮に関与。</td></tr>
+      <tr><td>Sampling</td><td>Percent Phase Field of View</td><td><code>(0018,0094)</code></td><td><span class="badge b3">★★★☆☆</span></td><td>Phase FOV縮小による実効phase matrixの確認。</td></tr>
+      <tr><td>Partial Fourier</td><td>Partial Fourier</td><td><code>(0018,9081)</code></td><td><span class="badge b4">★★★★☆</span></td><td>k-spaceの部分取得を判定。</td></tr>
+
+      <tr><td>Parallel Imaging</td><td>Parallel Acquisition</td><td><code>(0018,9077)</code></td><td><span class="badge b4">★★★★☆</span></td><td>ASSET、ARC等の使用有無を確認。</td></tr>
+      <tr><td>Parallel Imaging</td><td><strong>Parallel Reduction Factor In-plane</strong></td><td><code>(0018,9069)</code></td><td><span class="badge b5">★★★★★</span></td><td>in-plane方向の高速化率R。</td></tr>
+      <tr><td>Parallel Imaging</td><td>Parallel Reduction Factor Out-of-plane</td><td><code>(0018,9155)</code></td><td><span class="badge b4">★★★★☆</span></td><td>3D方向のparallel imaging高速化率。</td></tr>
+
+      <tr><td>3D</td><td><strong>MR Acquisition Phase Encoding Steps In-plane</strong></td><td><code>(0018,9231)</code></td><td><span class="badge b5">★★★★★</span></td><td>3D撮像のky方向実収集数。</td></tr>
+      <tr><td>3D</td><td><strong>MR Acquisition Phase Encoding Steps Out-of-plane</strong></td><td><code>(0018,9232)</code></td><td><span class="badge b5">★★★★★</span></td><td>3D撮像のkz / partition方向実収集数。</td></tr>
+
+      <tr><td>IR</td><td>Inversion Time：TI</td><td><code>(0018,0082)</code></td><td><span class="badge b3">★★★☆☆</span></td><td>FLAIR/STIR等の識別。撮像構造の解釈に必要。</td></tr>
+      <tr><td>Multi-echo</td><td>Echo Number(s)</td><td><code>(0018,0086)</code></td><td><span class="badge b3">★★★☆☆</span></td><td>multi-echo取得の確認。</td></tr>
+      <tr><td>心同期</td><td>Trigger Time</td><td><code>(0018,1060)</code></td><td><span class="badge b4">★★★★☆</span></td><td>Cardiac gating使用時の時間構造を確認。</td></tr>
+      <tr><td>Cine</td><td>Cardiac Number of Images</td><td><code>(0018,1090)</code></td><td><span class="badge b4">★★★★☆</span></td><td>Cineのcardiac phase数。</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. 理論計算後の検証に使う項目</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>項目</th><th>DICOM Tag</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>GE Acquisition Duration</strong></td>
+          <td><code>(0019,105A)</code></td>
+          <td>GE SIGNA Artist/Heroでは最重要の答え合わせ用。理論計算後に実測相当値との誤差を確認する。</td>
+        </tr>
+        <tr>
+          <td>Standard Acquisition Duration</td>
+          <td><code>(0018,9073)</code></td>
+          <td>標準DICOMで撮像時間が格納されている場合の検証値。</td>
+        </tr>
+        <tr>
+          <td>Acquisition Time</td>
+          <td><code>(0008,0032)</code></td>
+          <td>シリーズ開始時刻。シリーズ間の空き時間や検査全体の時間解析に利用。</td>
+        </tr>
+        <tr>
+          <td>Acquisition DateTime</td>
+          <td><code>(0008,002A)</code></td>
+          <td>日付をまたぐ場合を含めた絶対時刻解析。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. シーケンス別の基本計算式</h2>
+
+  <h3>2D SE / 通常GRE</h3>
+  <div class="eq">Tscan ≈ TR × Nphase × NEX</div>
+  <p>
+    最小限必要なのは <strong>TR、Phase Encoding Steps、NEX</strong>。
+  </p>
+
+  <h3>2D FSE / TSE</h3>
+  <div class="eq">Nshot = ceil(Nphase / ETL)
+Tscan ≈ TR × Nshot × NEX</div>
+  <p>
+    FSE/TSEでは <strong>ETL</strong> が必須。1TRでETL本のky lineを取得するため、
+    通常SEより撮像時間が短くなる。
+  </p>
+
+  <h3>3D GRE</h3>
+  <div class="eq">Tscan ≈ TR × Nky × Nkz × NEX</div>
+  <p>
+    2Dと異なり、<strong>kyに加えてkz / partition方向</strong>の位相エンコード数が必要。
+  </p>
+
+  <h3>3D FSE / CUBE</h3>
+  <div class="eq">Tscan ≈ TR × (Nky × Nkz / ETL) × NEX</div>
+  <p>
+    基本形は上式。ただしCUBEではvariable flip angle、ARC、elliptical sampling、
+    view orderingなどが絡むため、単純式と実際のScan Timeに差が出ることがある。
+  </p>
+
+  <h3>Parallel Imaging</h3>
+  <div class="eq">Tscan ≈ TR × Nphase × NEX / (ETL × R)</div>
+  <div class="note warn">
+    <strong>重要：</strong>
+    DICOMの <code>Number of Phase Encoding Steps</code> がすでに「実際に取得したline数」を表している場合、
+    さらにRで割ると<strong>二重補正</strong>になる。Matrix由来の理論phase数と、実収集phase stepsを区別する。
+  </div>
+
+  <h3>Partial Fourier / Percent Sampling</h3>
+  <div class="eq">Neffective ≈ Nphase × Sampling fraction</div>
+  <p>
+    ただし、DICOMのPhase Encoding Stepsがすでに部分収集後の実数なら、Sampling fractionを再度掛けない。
+  </p>
+
+  <h3>DWI / EPI</h3>
+  <div class="eq">Tscan ≈ TR × Nshot × Ndiffusion × NEX</div>
+  <p>
+    DWIではTRだけでなく、single-shot / multi-shot、b値数、diffusion direction数、
+    各b値のNEX、parallel imagingなどが必要。
+  </p>
+
+  <h3>PROPELLER</h3>
+  <div class="eq">Tscan ≈ TR × Nblades × Nshot-per-blade × NEX</div>
+  <p>
+    PROPELLERは通常のCartesian FSE式では完全に再現できない。
+    blade数、blade幅、重複率、oversampling、ETLなど追加のvendor固有情報が必要になることがある。
+  </p>
+
+  <h2>4. シーケンス別「必要項目」早見表</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>シーケンス</th>
+        <th>最低限必要</th>
+        <th>追加で確認したい項目</th>
+        <th>DICOMからの再現性</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>2D SE</td><td>TR、Nphase、NEX</td><td>Percent Sampling、Parallel factor</td><td><strong>非常に高い</strong></td></tr>
+      <tr><td>2D GRE</td><td>TR、Nphase、NEX</td><td>Parallel factor、Partial Fourier</td><td><strong>非常に高い</strong></td></tr>
+      <tr><td>2D FSE/TSE</td><td>TR、Nphase、NEX、ETL</td><td>Sampling、Parallel factor</td><td><strong>高い</strong></td></tr>
+      <tr><td>3D GRE</td><td>TR、Nky、Nkz、NEX</td><td>Parallel factor、Partial Fourier</td><td>高い</td></tr>
+      <tr><td>3D FSE / CUBE</td><td>TR、Nky、Nkz、ETL、NEX</td><td>ARC、elliptical sampling、view ordering</td><td>条件次第</td></tr>
+      <tr><td>EPI</td><td>TR、shots、NEX</td><td>EPI factor、Parallel factor</td><td>条件次第</td></tr>
+      <tr><td>DWI</td><td>TR、shots、NEX、b値数</td><td>方向数、b値別NEX、Parallel factor</td><td>条件次第</td></tr>
+      <tr><td>PROPELLER</td><td>TR、ETL、NEX</td><td>blade数、blade幅、overlap、oversampling</td><td>標準DICOMのみでは低め</td></tr>
+      <tr><td>Cine</td><td>TR、cardiac phases</td><td>views/segment、心拍数、trigger情報</td><td>条件次第</td></tr>
+      <tr><td>心電図同期</td><td>TR、trigger情報</td><td>心拍数、segments、RR依存情報</td><td>低〜中</td></tr>
+      <tr><td>呼吸同期</td><td>基本撮像条件</td><td>呼吸周期、gating efficiency</td><td><strong>低い</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. 今後の解析手順</h2>
+  <div class="card">
+    <ol class="checklist">
+      <li><strong>Series Description / Sequence Name / Acquisition Type</strong>から撮像法を特定する。</li>
+      <li><strong>TR、NEX、Phase Encoding Steps、ETL</strong>を抽出する。</li>
+      <li>3Dなら<strong>ky / kz（in-plane / out-of-plane phase encoding steps）</strong>を確認する。</li>
+      <li><strong>Percent Sampling、Partial Fourier、Parallel Imaging、Reduction Factor</strong>を確認する。</li>
+      <li>DWI、PROPELLER、CUBE、Cine、同期撮像なら追加のシーケンス固有因子を確認する。</li>
+      <li>シーケンスに対応した理論式へ値を代入して<strong>理論撮像時間</strong>を求める。</li>
+      <li>最後に <code>(0019,105A)</code> または <code>(0018,9073)</code> と比較し、誤差を評価する。</li>
+    </ol>
+  </div>
+
+  <h2>6. 最低限覚えておく7系統</h2>
+  <div class="grid">
+    <div class="card"><strong class="key">① シーケンス名</strong><br>Series Description / Sequence Name</div>
+    <div class="card"><strong class="key">② 2D / 3D</strong><br>MR Acquisition Type</div>
+    <div class="card"><strong class="key">③ TR</strong><br>Repetition Time</div>
+    <div class="card"><strong class="key">④ Phase Encoding数</strong><br>Nphase / Nky / Nkz</div>
+    <div class="card"><strong class="key">⑤ NEX</strong><br>Number of Averages</div>
+    <div class="card"><strong class="key">⑥ ETL</strong><br>FSE/TSE系で重要</div>
+    <div class="card"><strong class="key">⑦ 高速化因子</strong><br>Parallel / Partial Fourier / Sampling</div>
+  </div>
+
+  <div class="card danger">
+    <strong>注意：</strong>
+    「画像枚数 × TR」のような単純計算は原則として使用しない。
+    2D multisliceでは複数sliceが1TR内でinterleaveされるため、画像枚数そのものは直接の繰り返し回数ではない。
+    また、DICOMに格納される値が「設定値」なのか「実収集値」なのかを見分けないと、
+    Parallel ImagingやPartial Fourierを二重に補正する危険がある。
+  </div>
+
+  <p class="small">
+    本資料は、DICOM画像からMRI撮像時間を理論的に再構成する際の実務用整理表。
+    GE SIGNA Artist / SIGNA Heroでは、理論計算後の検証値としてGE Private Tag
+    <code>(0019,105A) Acquisition Duration</code> を利用できる場合がある。
+  </p>
+</main>
+</body>
+</html>

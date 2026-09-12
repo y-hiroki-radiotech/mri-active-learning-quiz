@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FLEXとDixon法 ― 原理・GE実装・臨床活用</title>
+<style>
+:root{
+  --ink:#172033;--muted:#5d687c;--line:#d9e0ea;--paper:#fff;
+  --blue:#2d63d5;--blue2:#eef4ff;--cyan:#0b8297;--cyan2:#eaf9fb;
+  --orange:#d46822;--orange2:#fff4ea;--green:#247a50;--green2:#edf9f2;
+  --red:#a33c42;--red2:#fff0f1;--violet:#6552b8;--violet2:#f2efff;
+  --shadow:0 8px 28px rgba(23,32,51,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:#f4f7fb;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.8;
+}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1120px;margin:auto;padding:28px 22px 64px}
+.hero{
+  padding:42px 44px;border-radius:26px;
+  background:linear-gradient(135deg,#10213e 0%,#173a6d 58%,#14657b 100%);
+  color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.hero:after{
+  content:"";position:absolute;width:340px;height:340px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.18);right:-95px;top:-130px;
+  box-shadow:0 0 0 42px rgba(255,255,255,.035),0 0 0 84px rgba(255,255,255,.025);
+}
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.78;font-weight:700}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.15;margin:.28em 0 .35em}
+.hero p{max-width:850px;font-size:17px;color:#e7f0ff;margin:0}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.badge{padding:6px 10px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(255,255,255,.08);font-size:12px}
+nav.toc{
+  margin:22px 0 0;background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 22px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;box-shadow:var(--shadow)
+}
+nav.toc a{display:block;padding:8px 10px;border-radius:10px;color:#24334e;font-weight:650}
+nav.toc a:hover{background:#f3f6fb;text-decoration:none}
+section{
+  margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px;
+  box-shadow:var(--shadow)
+}
+h2{font-size:28px;line-height:1.3;margin:0 0 18px}
+h3{font-size:20px;margin:25px 0 10px}
+h4{font-size:16px;margin:20px 0 8px}
+.lead{font-size:17px;color:#33425e}
+.callout{border-left:5px solid var(--blue);background:var(--blue2);padding:16px 18px;border-radius:10px;margin:16px 0}
+.callout.warn{border-color:var(--orange);background:var(--orange2)}
+.callout.danger{border-color:var(--red);background:var(--red2)}
+.callout.good{border-color:var(--green);background:var(--green2)}
+.grid2,.grid3,.grid4{display:grid;gap:16px}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+.card.tint-blue{background:var(--blue2)}
+.card.tint-green{background:var(--green2)}
+.card.tint-orange{background:var(--orange2)}
+.card.tint-violet{background:var(--violet2)}
+.card h3,.card h4{margin-top:0}
+.big{font-size:30px;font-weight:800;line-height:1.2}
+.small{font-size:13px;color:var(--muted)}
+.math{
+  font-family:"Times New Roman","Yu Mincho",serif;
+  background:#fbfcff;border:1px solid #dce4ef;border-radius:14px;
+  padding:17px 20px;margin:14px 0;text-align:center;font-size:20px;overflow:auto
+}
+.math .sub{font-size:.78em;vertical-align:sub}
+.math .sup{font-size:.72em;vertical-align:super}
+table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;font-size:14px}
+th,td{padding:12px 13px;vertical-align:top;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+th{background:#eef3fa;text-align:left}
+tr:first-child th:first-child{border-top-left-radius:12px}
+tr:first-child th:last-child{border-top-right-radius:12px}
+tr:last-child td:first-child{border-bottom-left-radius:12px}
+tr:last-child td:last-child{border-bottom-right-radius:12px}
+th:first-child,td:first-child{border-left:1px solid var(--line)}
+tr:first-child th{border-top:1px solid var(--line)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 7px;border-radius:999px;background:#eef3f9;color:#42516b;margin:2px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+.flow .node{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff;min-width:145px;text-align:center;font-weight:700}
+.flow .arrow{font-size:23px;color:#79859a}
+.phasebox{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fbfdff}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.controls button{
+  border:1px solid #bdc9da;background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700
+}
+.controls button.active{background:#173a6d;color:#fff;border-color:#173a6d}
+.metric{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.metric>div{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;background:#fff}
+.metric b{display:block;font-size:20px}
+svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:5px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.steps{counter-reset:step;display:grid;gap:12px}
+.step{position:relative;padding:15px 16px 15px 54px;border:1px solid var(--line);border-radius:14px}
+.step:before{
+  counter-increment:step;content:counter(step);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;
+  background:#173a6d;color:#fff;display:grid;place-items:center;font-weight:800
+}
+.checklist{padding-left:0;list-style:none}
+.checklist li{position:relative;padding:7px 0 7px 28px}
+.checklist li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:900}
+.xlist{padding-left:0;list-style:none}
+.xlist li{position:relative;padding:7px 0 7px 28px}
+.xlist li:before{content:"!";position:absolute;left:3px;color:var(--orange);font-weight:900}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.ref{font-size:13px;color:#44506a}
+.ref li{margin:8px 0}
+.footer{font-size:12px;color:#6f7b90;padding:20px 6px 0;text-align:center}
+@media(max-width:800px){
+  .hero{padding:30px 24px}.wrap{padding:14px 12px 38px}
+  section{padding:22px 18px}.grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .metric{grid-template-columns:1fr}.flow{align-items:stretch;flex-direction:column}.flow .arrow{transform:rotate(90deg);text-align:center}
+}
+@media print{
+  body{background:#fff;font-size:10.5pt}
+  .wrap{max-width:none;padding:0}
+  .hero,section,nav.toc{box-shadow:none}
+  .hero{border-radius:0}
+  section{break-inside:auto;margin-top:12px;padding:18px;border-radius:10px}
+  h2,h3{break-after:avoid}
+  table,.card,.phasebox,.callout{break-inside:avoid}
+  nav.toc{display:none}
+  a{color:#111;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">MRI WATER–FAT SEPARATION / GE FLEX</div>
+  <h1>FLEXとDixon法<br>原理から臨床活用まで</h1>
+  <p>
+    Dixonは「水と脂肪のケミカルシフトを位相差として符号化し、後から分離する」という技術体系。
+    FLEXはその考え方をGEが2-point Dixonとして臨床実装したアプリケーション群です。
+    この資料では、位相差の式、B<sub>0</sub>不均一、field map、water–fat swap、IDEALとの違い、
+    そして腹部・脊椎・MSK・乳房・頸部などでの使いどころを一続きに理解します。
+  </p>
+  <div class="badges">
+    <span class="badge">Dixonの基本原理</span>
+    <span class="badge">2-point FLEX</span>
+    <span class="badge">IDEAL / IDEAL-IQ</span>
+    <span class="badge">B₀不均一とswap</span>
+    <span class="badge">CHESS / STIR比較</span>
+    <span class="badge">臨床プロトコル判断</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#overview">1. まず結論</a>
+  <a href="#physics">2. ケミカルシフトの物理</a>
+  <a href="#recon">3. 2-point分離の数式</a>
+  <a href="#fieldmap">4. B₀不均一とfield map</a>
+  <a href="#flex">5. GE FLEXとは何か</a>
+  <a href="#ideal">6. IDEAL / IDEAL-IQとの違い</a>
+  <a href="#clinical">7. 臨床での活用</a>
+  <a href="#artifacts">8. アーチファクト</a>
+  <a href="#practice">9. 実務での選び方</a>
+  <a href="#refs">10. 参考文献</a>
+</nav>
+
+<section id="overview">
+  <h2>1. まず結論：DixonとFLEXは「原理」と「製品実装」の関係</h2>
+  <p class="lead">
+    <b>Dixon法</b>は水と脂肪の共鳴周波数差を利用した<b>chemical shift encoded MRI（CSE-MRI）</b>の基本概念です。
+    <b>FLEX</b>はGEがこの原理を<b>2-point Dixon</b>として各種シーケンスに組み込んだ実装です。
+  </p>
+
+  <div class="flow">
+    <div class="node">ケミカルシフト<br><span class="small">水と脂肪で周波数が違う</span></div>
+    <div class="arrow">→</div>
+    <div class="node">位相差を作る<br><span class="small">異なるTEで観測</span></div>
+    <div class="arrow">→</div>
+    <div class="node">Dixon再構成<br><span class="small">water / fat分離</span></div>
+    <div class="arrow">→</div>
+    <div class="node" style="background:#eef4ff">GE FLEX<br><span class="small">2-pointの臨床実装</span></div>
+  </div>
+
+  <div class="grid3">
+    <div class="card tint-blue">
+      <h3>Dixon</h3>
+      <p><b>総称・原理</b></p>
+      <p>2-point、3-point、multi-echoなど複数の実装を含む。</p>
+    </div>
+    <div class="card tint-green">
+      <h3>FLEX</h3>
+      <p><b>GEの2-point実装</b></p>
+      <p>例：LAVA Flex、FSE Flex、Cube Flex、VIBRANT Flex、DISCO Flex。</p>
+    </div>
+    <div class="card tint-violet">
+      <h3>IDEAL</h3>
+      <p><b>GEのmulti-point系</b></p>
+      <p>反復推定とfield map推定を用いてwater/fat分離をより頑健にする系統。</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>重要な修正：</b>
+    「FLEXは2-pointだが独自field mapがあるので、3-pointより常に磁場不均一に強い」と理解するのは適切ではありません。
+    実用的なB<sub>0</sub>補正は行われますが、<b>2-pointではwater/fatの割り当てに原理的な曖昧性が残り、swap artifactが起こり得ます。</b>
+    一般にmulti-point法は追加情報を使えるため分離の頑健性や定量性を高めやすい、という位置づけです。
+  </div>
+</section>
+
+<section id="physics">
+  <h2>2. 原理①：なぜ水と脂肪は時間とともにズレるのか</h2>
+
+  <h3>2-1. 出発点はケミカルシフト</h3>
+  <p>
+    同じ水素原子でも、周囲の電子による遮蔽の違いで実効磁場が少し異なります。
+    水と主な脂肪ピークの差は概ね<b>約3.4〜3.5 ppm</b>です。したがって静磁場B<sub>0</sub>が高いほど、
+    Hzで見た周波数差Δfは大きくなります。
+  </p>
+
+  <div class="math">
+    Δf ≈ γ̄ × B<span class="sub">0</span> × Δδ
+    <br><span class="small">γ̄：プロトンの磁気回転比 ≈ 42.58 MHz/T、Δδ：water–fat chemical shift ≈ 3.4〜3.5 ppm</span>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="big">1.5 T</div>
+      <p>Δf ≈ <b>約220 Hz</b></p>
+      <p>脂肪は水に対し毎秒およそ220回分、位相の進み方が異なる。</p>
+    </div>
+    <div class="card">
+      <div class="big">3.0 T</div>
+      <p>Δf ≈ <b>約440 Hz</b></p>
+      <p>1.5Tのほぼ2倍。したがって同じ位相差に達するまでの時間はほぼ半分。</p>
+    </div>
+  </div>
+
+  <h3>2-2. 位相差は時間に比例して増える</h3>
+  <div class="math">
+    Δφ(TE) = 2π × Δf × TE
+  </div>
+  <p>
+    waterとfatが同じ向きなら<b>in-phase（同位相）</b>、180°反対向きなら
+    <b>opposed-phase / out-of-phase（逆位相）</b>です。
+  </p>
+
+  <div class="phasebox">
+    <div class="controls">
+      <b>磁場強度：</b>
+      <button id="b15" class="active" onclick="setField(1.5)">1.5 T</button>
+      <button id="b30" onclick="setField(3.0)">3.0 T</button>
+      <span class="small">※3.5 ppmとして概算</span>
+    </div>
+    <svg id="phasor" viewBox="0 0 760 260" width="100%" role="img" aria-label="waterとfatの位相ベクトルの模式図">
+      <line x1="180" y1="130" x2="335" y2="130" stroke="#2d63d5" stroke-width="8" stroke-linecap="round"/>
+      <polygon points="335,130 315,118 315,142" fill="#2d63d5"/>
+      <text x="210" y="108" font-size="18" fill="#2d63d5" font-weight="700">Water</text>
+      <line id="fatLine" x1="180" y1="130" x2="25" y2="130" stroke="#d46822" stroke-width="8" stroke-linecap="round"/>
+      <polygon id="fatHead" points="25,130 45,118 45,142" fill="#d46822"/>
+      <text id="fatLabel" x="55" y="108" font-size="18" fill="#d46822" font-weight="700">Fat：180°</text>
+      <circle cx="180" cy="130" r="7" fill="#172033"/>
+      <text x="385" y="65" font-size="18" fill="#172033" font-weight="700">opposed-phase</text>
+      <text id="opText" x="385" y="100" font-size="30" fill="#172033">約 2.27 ms</text>
+      <text x="385" y="155" font-size="18" fill="#172033" font-weight="700">次のin-phase</text>
+      <text id="ipText" x="385" y="190" font-size="30" fill="#172033">約 4.55 ms</text>
+      <text x="385" y="225" font-size="13" fill="#5d687c">実装上のTEは装置・sequence・readout条件に依存します</text>
+    </svg>
+    <div class="metric">
+      <div><span class="small">周波数差 Δf</span><b id="dfVal">219 Hz</b></div>
+      <div><span class="small">180°まで</span><b id="opVal">2.28 ms</b></div>
+      <div><span class="small">360°まで</span><b id="ipVal">4.56 ms</b></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>覚え方：</b>
+    3Tではwater–fat周波数差が1.5Tの約2倍 → 位相が回る速さも約2倍 →
+    opposed-phase / in-phaseになる時間はおおむね半分。
+  </div>
+</section>
+
+<section id="recon">
+  <h2>3. 原理②：2-point Dixonはどうやってwaterとfatを取り出すか</h2>
+
+  <h3>3-1. 理想条件なら「足し算・引き算」で理解できる</h3>
+  <p>あるボクセルにwater信号Wとfat信号Fがあるとします。</p>
+
+  <div class="grid2">
+    <div class="card tint-blue">
+      <h3>In-phase</h3>
+      <div class="math">S<span class="sub">IP</span> = W + F</div>
+      <p>waterとfatが同方向なので加算される。</p>
+    </div>
+    <div class="card tint-orange">
+      <h3>Opposed-phase</h3>
+      <div class="math">S<span class="sub">OP</span> = W − F</div>
+      <p>waterとfatが180°反対なので差として現れる。</p>
+    </div>
+  </div>
+
+  <p>したがって理想化すれば、</p>
+  <div class="math">
+    W = (S<span class="sub">IP</span> + S<span class="sub">OP</span>) / 2
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    F = (S<span class="sub">IP</span> − S<span class="sub">OP</span>) / 2
+  </div>
+
+  <div class="grid4">
+    <div class="card"><h4>In-phase</h4><p>W+F</p><span class="tag">source / derived</span></div>
+    <div class="card"><h4>Opposed-phase</h4><p>W−F</p><span class="tag">source / derived</span></div>
+    <div class="card tint-blue"><h4>Water-only</h4><p>脂肪抑制像として使える</p><span class="tag">reconstruction</span></div>
+    <div class="card tint-orange"><h4>Fat-only</h4><p>脂肪を選択的に見る</p><span class="tag">reconstruction</span></div>
+  </div>
+
+  <h3>3-2. 現実のMRIでは「絶対値画像の単純な足し算」では済まない</h3>
+  <p>
+    実際にはB<sub>0</sub>不均一、渦電流、coil位相、複数脂肪ピーク、T2*減衰、flowなどが位相に影響します。
+    そのため現代のDixon/FLEXは<b>複素信号（magnitude + phase）を用いた再構成</b>として実装されます。
+  </p>
+
+  <div class="math">
+    S(TE) ≈ [ W + F · e<span class="sup">i2πΔf<sub>fat</sub>TE</span> ]
+    · e<span class="sup">i2πΔf<sub>B0</sub>TE</span>
+  </div>
+
+  <p>
+    ここでΔf<sub>B0</sub>が局所的な磁場ずれです。つまり装置は、
+    「water–fat本来の位相差」と「B<sub>0</sub>不均一が生んだ余計な位相」を分けて考える必要があります。
+  </p>
+</section>
+
+<section id="fieldmap">
+  <h2>4. 原理③：B₀不均一、field map、そしてwater–fat swap</h2>
+
+  <h3>4-1. なぜCHESSはムラになり、Dixonは比較的強いのか</h3>
+  <div class="grid2">
+    <div class="card">
+      <h3>CHESS / spectral fat sat</h3>
+      <p>
+        「脂肪はこの周波数にいるはず」と仮定し、脂肪の周波数帯だけをRFで選択して飽和させる。
+      </p>
+      <p>
+        B<sub>0</sub>がずれると脂肪のピーク位置もずれ、RFパルスが狙いを外す → <b>脂肪抑制ムラ</b>。
+      </p>
+    </div>
+    <div class="card tint-blue">
+      <h3>Dixon / FLEX</h3>
+      <p>
+        脂肪を撮像前に「消す」のではなく、水と脂肪の位相情報を取得し、<b>撮像後に分離</b>する。
+      </p>
+      <p>
+        B<sub>0</sub>のずれを再構成で扱えるため、広いFOVや形状変化の大きい部位で均一性を得やすい。
+      </p>
+    </div>
+  </div>
+
+  <h3>4-2. field mapとは何か</h3>
+  <p>
+    field mapは、位置ごとの共鳴周波数のずれΔf<sub>B0</sub>(x,y,z)を表した地図です。
+    Dixon系再構成では、この局所off-resonanceを推定しながらwaterとfatを分けます。
+  </p>
+
+  <svg viewBox="0 0 920 310" width="100%" role="img" aria-label="field mapとwater-fat分離の概念図">
+    <defs>
+      <linearGradient id="g1" x1="0" x2="1">
+        <stop offset="0%" stop-color="#2d63d5"/>
+        <stop offset="50%" stop-color="#eef4ff"/>
+        <stop offset="100%" stop-color="#d46822"/>
+      </linearGradient>
+    </defs>
+    <rect x="35" y="42" width="230" height="205" rx="18" fill="#f7f9fc" stroke="#cdd7e5"/>
+    <text x="150" y="72" text-anchor="middle" font-size="17" font-weight="700">局所B₀ずれ</text>
+    <rect x="65" y="100" width="170" height="90" rx="20" fill="url(#g1)" opacity=".85"/>
+    <text x="82" y="215" font-size="13" fill="#5d687c">−off-res.</text>
+    <text x="185" y="215" font-size="13" fill="#5d687c">+off-res.</text>
+
+    <text x="310" y="155" font-size="38" fill="#718096">→</text>
+
+    <rect x="365" y="42" width="230" height="205" rx="18" fill="#eef4ff" stroke="#b8c8e4"/>
+    <text x="480" y="72" text-anchor="middle" font-size="17" font-weight="700">field map推定</text>
+    <path d="M400 178 C440 100 470 210 525 120 C550 85 570 120 570 120" fill="none" stroke="#6552b8" stroke-width="6"/>
+    <text x="480" y="215" text-anchor="middle" font-size="13" fill="#5d687c">各voxelの位相誤差を推定</text>
+
+    <text x="640" y="155" font-size="38" fill="#718096">→</text>
+
+    <rect x="695" y="42" width="190" height="205" rx="18" fill="#edf9f2" stroke="#b8d8c5"/>
+    <text x="790" y="72" text-anchor="middle" font-size="17" font-weight="700">water / fat</text>
+    <circle cx="755" cy="137" r="32" fill="#2d63d5" opacity=".85"/>
+    <circle cx="825" cy="137" r="32" fill="#d46822" opacity=".85"/>
+    <text x="755" y="143" text-anchor="middle" font-size="16" fill="#fff" font-weight="700">W</text>
+    <text x="825" y="143" text-anchor="middle" font-size="16" fill="#fff" font-weight="700">F</text>
+    <text x="790" y="215" text-anchor="middle" font-size="13" fill="#5d687c">補正後に割り当て</text>
+  </svg>
+
+  <h3>4-3. それでもswapが起きる理由</h3>
+  <p>
+    waterとfatの2成分モデルは、条件によって「どちらをwaterと呼ぶか」という解の入れ替わりが数学的に起こり得ます。
+    特に2-point法は観測点が少なく、局所磁場変化が急峻、SNR低下、motion、flow、金属・空気境界などが加わると
+    <b>water-onlyとfat-onlyが局所的または広範囲に反転</b>することがあります。
+  </p>
+
+  <div class="callout danger">
+    <b>実務上の重要点：</b>
+    water-onlyだけを見て「病変」と判断せず、怪しい領域では
+    <b>fat-only、in-phase、opposed-phaseを必ず相互参照</b>します。
+    2-point Dixonのswapは、MSKでは病変を模倣し、血管内ではflow関連の誤割り当てが血栓様に見えることも報告されています。
+  </div>
+</section>
+
+<section id="flex">
+  <h2>5. GE FLEXは何をしているのか</h2>
+  <p class="lead">
+    GE公式では、Flex系は<b>2-point Dixon</b>を用い、1回の撮像からwater-only / fat-only / in-phase /
+    out-of-phaseの4コントラストを得るアプリケーションとして説明されています。
+  </p>
+
+  <table>
+    <tr><th>GEアプリケーション例</th><th>基盤sequence</th><th>主な用途イメージ</th></tr>
+    <tr><td><b>LAVA Flex</b></td><td>3D FSPGR / T1W</td><td>腹部、造影ダイナミック、body、短い息止め</td></tr>
+    <tr><td><b>FSE Flex</b></td><td>2D FSE</td><td>MSK、脊椎、T2/PD系の均一脂肪分離</td></tr>
+    <tr><td><b>Cube Flex</b></td><td>3D FSE</td><td>3D等方・再構成可能画像＋water/fat分離</td></tr>
+    <tr><td><b>VIBRANT Flex</b></td><td>乳房3D T1系</td><td>乳房造影、腋窩まで含む均一脂肪抑制</td></tr>
+    <tr><td><b>DISCO Flex</b></td><td>高速DCE</td><td>時間分解能を重視した造影ダイナミック＋2-point Dixon</td></tr>
+  </table>
+
+  <h3>5-1. なぜ2-pointは高速化しやすいのか</h3>
+  <p>
+    multi-point法より必要なecho数が少ないため、k-space収集の設計自由度が高く、
+    dual-echoやbipolar readout、parallel imagingなどと組み合わせて短時間化しやすいのが特徴です。
+    LAVA FlexはGE公式に「single acquisition」「typically single breath hold」と記載されています。
+  </p>
+
+  <div class="callout good">
+    <b>臨床的に意味が大きい点：</b>
+    「脂肪抑制画像を追加でもう1本撮る」のではなく、
+    1回の収集から<b>fat-suppressed相当のwater-onlyと、非抑制情報・fat-only情報を同時に残せる</b>ことです。
+    画像間の位置ずれが少なく、患者の息止め回数や総scan数削減にもつながります。
+  </div>
+
+  <h3>5-2. “Fast single TR bipolar acquisition”はどう理解するか</h3>
+  <p>
+    一部のGE Flex実装では、2つのechoを効率よく1TR内に収めるために<b>bipolar readout</b>を利用する高速収集が用意されています。
+    ただし名称・User CV番号・適用条件はsoftware versionやsequenceで異なり得るため、
+    <b>装置上の実装確認は該当バージョンのOperator Manual / Flex Reference Guideを優先</b>してください。
+  </p>
+  <p class="small">
+    bipolar readoutは高速化に有利な一方、正負readout間のeddy currentやflow位相差が誤差源になり得ます。
+  </p>
+</section>
+
+<section id="ideal">
+  <h2>6. FLEX、IDEAL、IDEAL-IQの違い</h2>
+
+  <table>
+    <tr>
+      <th>項目</th><th>FLEX</th><th>IDEAL</th><th>IDEAL-IQ</th>
+    </tr>
+    <tr>
+      <td><b>位置づけ</b></td>
+      <td>高速な2-point Dixon実装</td>
+      <td>multi-point水脂肪分離</td>
+      <td>multi-echoによる定量系</td>
+    </tr>
+    <tr>
+      <td><b>主目的</b></td>
+      <td>短時間・均一なwater/fat分離</td>
+      <td>より頑健なwater/fat分離</td>
+      <td>PDFF、R2*などの定量</td>
+    </tr>
+    <tr>
+      <td><b>情報量</b></td>
+      <td>少ないechoで効率重視</td>
+      <td>複数echoでfield map推定に余裕</td>
+      <td>複数echo＋fat spectrum/T2*等の補正モデル</td>
+    </tr>
+    <tr>
+      <td><b>速度</b></td>
+      <td>◎</td><td>○</td><td>○〜△（目的が定量）</td>
+    </tr>
+    <tr>
+      <td><b>swap耐性</b></td>
+      <td>△〜○：条件依存</td><td>○〜◎</td><td>○〜◎</td>
+    </tr>
+    <tr>
+      <td><b>定量</b></td>
+      <td>基本は定性・分離用途</td><td>主に分離</td><td><b>PDFF / R2*</b>を主眼に設計</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>使い分けの軸：</b>
+    「速く4コントラストが欲しい」ならFLEX、
+    「分離の頑健性を重視」ならmulti-point系、
+    「脂肪肝や鉄沈着を定量したい」ならIDEAL-IQ、という整理が理解しやすいです。
+  </div>
+</section>
+
+<section id="clinical">
+  <h2>7. 臨床での活用：どこでFLEX / Dixonが効くか</h2>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>① 腹部・肝胆膵</h3>
+      <ul class="checklist">
+        <li>造影T1で均一なfat suppression</li>
+        <li>1回の息止めで複数contrast</li>
+        <li>in/opposed-phaseでmicroscopic fatを評価</li>
+        <li>fat-onlyを補助情報として利用</li>
+      </ul>
+      <p class="small">LAVA FlexはGE公式でsingle breath-holdを想定した3D FSPGRとして提示されています。</p>
+    </div>
+
+    <div class="card">
+      <h3>② 脊椎・骨盤・四肢</h3>
+      <ul class="checklist">
+        <li>広いFOVでの脂肪抑制均一性</li>
+        <li>骨髄浮腫・炎症のwater-only</li>
+        <li>fat-onlyで骨髄脂肪を確認</li>
+        <li>CHESSが破綻しやすい手足・不整形部位</li>
+      </ul>
+      <p class="small">FSE Flex / Cube Flexの価値が出やすい領域。</p>
+    </div>
+
+    <div class="card">
+      <h3>③ 乳房</h3>
+      <ul class="checklist">
+        <li>3Tで問題になりやすいspectral fat satのムラを軽減</li>
+        <li>腋窩や胸壁を含めた均一性</li>
+        <li>造影病変のconspicuity向上</li>
+      </ul>
+      <p class="small">Dixonがspectral fat saturationより高評価だった比較研究があります。</p>
+    </div>
+
+    <div class="card">
+      <h3>④ 頸部・胸部・大きなFOV</h3>
+      <ul class="checklist">
+        <li>空気・組織境界でB₀が不均一になりやすい</li>
+        <li>従来fat satが均一になりにくい部位で有用</li>
+        <li>短時間化で嚥下・体動の影響を減らせる可能性</li>
+      </ul>
+      <p class="small">LAVA Flexを頸動脈MRAに応用し、撮像時間短縮を報告した研究もあります。</p>
+    </div>
+  </div>
+
+  <h3>7-1. in-phase / opposed-phaseは何に使うか</h3>
+  <table>
+    <tr><th>所見</th><th>考え方</th><th>臨床例</th></tr>
+    <tr>
+      <td>opposed-phaseで信号低下</td>
+      <td>同一voxel内にwaterとfatが混在し相殺</td>
+      <td>脂肪肝、脂質を含む副腎病変、骨髄病変のcharacterizationなど</td>
+    </tr>
+    <tr>
+      <td>water-only高信号</td>
+      <td>脂肪が除かれ、浮腫・造影増強など水系信号が見やすい</td>
+      <td>炎症、腫瘍、骨髄浮腫、造影病変</td>
+    </tr>
+    <tr>
+      <td>fat-only高信号</td>
+      <td>脂肪成分を直接強調</td>
+      <td>脂肪性病変、骨髄脂肪、ectopic fatの確認</td>
+    </tr>
+  </table>
+
+  <h3>7-2. 「FatSat画像」と「Water-only」は似ていても作り方が違う</h3>
+  <div class="grid2">
+    <div class="card tint-orange">
+      <h3>FatSat</h3>
+      <p><b>撮像前に脂肪信号を抑える</b></p>
+      <p>選択的RFでfatを飽和 → その後撮像。</p>
+    </div>
+    <div class="card tint-blue">
+      <h3>Water-only</h3>
+      <p><b>撮像後にwater成分を再構成</b></p>
+      <p>水と脂肪の両方の情報を収集 → 数学的に分離。</p>
+    </div>
+  </div>
+
+  <p>
+    したがって、water-onlyは見た目として「脂肪抑制像」でも、
+    <b>脂肪抑制パルスをかけた画像そのものではありません。</b>
+    LAVA FlexではGEもこの点を明記しています。
+  </p>
+</section>
+
+<section id="artifacts">
+  <h2>8. FLEX / Dixonで注意するアーチファクト</h2>
+
+  <div class="grid2">
+    <div class="card tint-orange">
+      <h3>Water–fat swap</h3>
+      <p>waterとfatのラベルが局所または広範囲で逆転。</p>
+      <ul class="xlist">
+        <li>急峻なB₀変化</li>
+        <li>低SNR</li>
+        <li>金属・空気境界</li>
+        <li>motion</li>
+      </ul>
+    </div>
+    <div class="card tint-orange">
+      <h3>Flow misallocation</h3>
+      <p>bipolar two-point Dixonではflowに伴う位相差がwater/fat誤割り当てを作る場合がある。</p>
+      <ul class="xlist">
+        <li>血管内の偽低信号</li>
+        <li>血栓様に見える可能性</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Susceptibility / metal</h3>
+      <p>DixonはCHESSより均一性に優れることがあるが、<b>金属近傍を万能に補正する技術ではない</b>。</p>
+      <p>大きなoff-resonanceやsignal voidそのものは残る。</p>
+    </div>
+    <div class="card">
+      <h3>Motion between echoes</h3>
+      <p>echo間で位相整合が崩れると分離精度が低下。腹部・呼吸・嚥下・血流に注意。</p>
+    </div>
+  </div>
+
+  <h3>8-1. swapを疑ったときの確認順</h3>
+  <div class="steps">
+    <div class="step"><b>water-onlyだけで判断しない。</b> fat-onlyを同じsliceで確認。</div>
+    <div class="step"><b>in-phase / opposed-phaseを確認。</b> source側が自然なら再構成swapを疑う。</div>
+    <div class="step"><b>部位のB₀環境を確認。</b> 肩、頸部、手足末端、金属、空気境界は要注意。</div>
+    <div class="step"><b>必要なら別の脂肪抑制法で再確認。</b> STIR、spectral fat sat、multi-point Dixonなど。</div>
+  </div>
+</section>
+
+<section id="practice">
+  <h2>9. 実務での選び方：FLEXを使うべき場面、別法を考える場面</h2>
+
+  <table>
+    <tr><th>目的・状況</th><th>第一候補の考え方</th><th>理由</th></tr>
+    <tr>
+      <td>短い息止めで腹部T1、4 contrastが欲しい</td>
+      <td><b>LAVA Flex</b></td>
+      <td>2-pointの速度とsingle-acquisitionの利点</td>
+    </tr>
+    <tr>
+      <td>脊椎・骨盤・四肢でCHESSのムラが強い</td>
+      <td><b>FSE Flex / Cube Flex</b></td>
+      <td>post-reconstruction型のwater/fat分離が有利</td>
+    </tr>
+    <tr>
+      <td>造影後に均一な脂肪抑制が必要</td>
+      <td><b>Dixon/Flex</b></td>
+      <td>STIRのようなT1短縮組織抑制を避けつつwater-onlyを得られる</td>
+    </tr>
+    <tr>
+      <td>fat-water swapが懸念される難しいB₀環境</td>
+      <td><b>multi-point法も検討</b></td>
+      <td>追加echoによる推定の冗長性</td>
+    </tr>
+    <tr>
+      <td>脂肪肝を定量したい</td>
+      <td><b>IDEAL-IQ / PDFF対応法</b></td>
+      <td>2-pointの単純fat fractionではなくT2*・fat spectrum等を考慮した定量が必要</td>
+    </tr>
+    <tr>
+      <td>強い金属artifactそのものを減らしたい</td>
+      <td><b>金属artifact reduction専用法を併用/優先</b></td>
+      <td>Dixonは脂肪分離法であり、SEMAC/MAVRIC等と目的が異なる</td>
+    </tr>
+  </table>
+
+  <h3>9-1. 1.5T Artist / 3T Heroで考えるときの実務ポイント</h3>
+  <div class="grid2">
+    <div class="card tint-blue">
+      <h3>1.5 T</h3>
+      <ul class="checklist">
+        <li>water–fat周波数差が3Tより小さい</li>
+        <li>位相条件に必要なTE間隔が長め</li>
+        <li>一般にB₀条件は3Tより穏やか</li>
+      </ul>
+    </div>
+    <div class="card tint-violet">
+      <h3>3.0 T</h3>
+      <ul class="checklist">
+        <li>water–fat周波数差が約2倍</li>
+        <li>opposed/in-phaseまでの時間が約半分</li>
+        <li>一方でB₀/B₁不均一・susceptibilityへの配慮がより重要</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>パラメータを調整するとき：</b>
+    TEだけを独立に考えず、<b>FOV・frequency matrix・receiver bandwidth・echo spacing・readout polarity・TR</b>
+    の連動として考えるのが重要です。Flexはwater–fat位相条件を満たす必要があるため、
+    通常のFSE/GREよりTE設定に制約が入り得ます。
+  </div>
+
+  <h3>9-2. 最終的な一文</h3>
+  <div class="callout good">
+    <b>FLEXとは、Dixonの「水と脂肪の位相差を利用して後から分ける」という思想を、
+    GEが2-point収集で高速化し、LAVA・FSE・Cubeなどの日常sequenceに組み込んだ臨床実装。</b>
+    ただし2-pointゆえのswapの弱点は残るため、難しいB₀環境や定量ではmulti-point / IDEAL系との使い分けが重要です。
+  </div>
+</section>
+
+<section id="refs">
+  <h2>10. 参考文献・根拠</h2>
+  <ol class="ref">
+    <li>GE HealthCare. <b>LAVA Flex</b>. 3D FSPGR、single acquisition、water-only / fat-only / in-phase / out-of-phase、均一なfat suppressionについての製品説明。<br>
+      <a href="https://www.gehealthcare.com/en/products/magnetic-resonance-imaging/applications/lava-flex-body">GE HealthCare: LAVA Flex</a></li>
+    <li>GE HealthCare. <b>Body MRI for SIGNA / OncoWorks</b>. LAVA Flex、DISCO Flex、Cube Flex、FSE Flexの2-point Dixon実装の説明。<br>
+      <a href="https://www.gehealthcare.com/en-us/products/magnetic-resonance-imaging/applications/body-mri-for-signa">GE HealthCare: Body MRI for SIGNA</a></li>
+    <li>Ma J. Dixon techniques for water and fat imaging. <i>J Magn Reson Imaging</i>. 2008;28:543-558. doi:10.1002/jmri.21492.</li>
+    <li>Eggers H, Börnert P. Chemical shift encoding-based water-fat separation methods. <i>J Magn Reson Imaging</i>. 2014;40:251-268. doi:10.1002/jmri.24568.</li>
+    <li>Reeder SB, et al. Water-fat separation with IDEAL gradient-echo imaging. <i>J Magn Reson Imaging</i>. 2007;25:644-652. doi:10.1002/jmri.20831.</li>
+    <li>Kirchgesner T, et al. Two-point Dixon fat-water swapping artifact: lesion mimicker at musculoskeletal T2-weighted MRI. <i>Skeletal Radiol</i>. 2020.</li>
+    <li>Schubert T, et al. Thrombus-mimicking artifacts in two-point Dixon MRI: prevalence, appearance, and severity. <i>J Magn Reson Imaging</i>. 2017;45:229-236.</li>
+    <li>Dalto VF, et al. Applications of the Dixon technique in the evaluation of the musculoskeletal system. <i>Radiol Bras</i>. 2021;54:33-42.</li>
+    <li>Omoumi P, et al. The Dixon method in musculoskeletal MRI: from fat-sensitive to fat-specific imaging. <i>Skeletal Radiol</i>. 2022;51:1365-1369.</li>
+    <li>Le-Petross HT, et al. / related clinical literature: Dixon versus spectral fat saturation for 3D T1-weighted breast MRI at 3T. <i>Eur Radiol</i>. 2017.</li>
+    <li>Irie R, et al. Rapid MR angiography using 3D gradient-echo imaging and the two-point Dixon method to evaluate carotid plaque. <i>Magn Reson Med Sci</i>. 2022.</li>
+    <li>GE HealthCare. <b>IDEAL / IDEAL IQ</b>. IDEAL IQによるfat fractionとR2*補正の製品情報。<br>
+      <a href="https://www.gehealthcare.com/en-us/products/magnetic-resonance-imaging/applications/ideal">GE HealthCare: IDEAL / IDEAL IQ</a></li>
+  </ol>
+
+  <hr>
+  <p class="small">
+    注：FLEXの細かな収集方式、User CV、許容TE、Fast single TR bipolar acquisitionの挙動は、
+    GE software releaseとsequenceにより異なる可能性があります。臨床装置での設定変更時は、
+    対象装置・対象releaseのOperator Manual / Application Guideを最終根拠にしてください。
+  </p>
+</section>
+
+<div class="footer">
+  Educational reference • FLEX / Dixon MRI physics & clinical use • Generated as a self-contained offline HTML
+</div>
+</div>
+
+<script>
+function setField(B){
+  const gamma=42.58e6, ppm=3.5e-6;
+  const df=gamma*B*ppm;
+  const op=1000/(2*df);
+  const ip=1000/df;
+  document.getElementById('dfVal').textContent=Math.round(df)+' Hz';
+  document.getElementById('opVal').textContent=op.toFixed(2)+' ms';
+  document.getElementById('ipVal').textContent=ip.toFixed(2)+' ms';
+  document.getElementById('opText').textContent='約 '+op.toFixed(2)+' ms';
+  document.getElementById('ipText').textContent='約 '+ip.toFixed(2)+' ms';
+  document.getElementById('b15').classList.toggle('active',B===1.5);
+  document.getElementById('b30').classList.toggle('active',B===3.0);
+}
+</script>
+</body>
+</html>
