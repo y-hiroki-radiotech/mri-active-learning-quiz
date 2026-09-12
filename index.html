@@ -11,13 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/review-logic.js" defer></script>
   <script src="assets/app.js" defer></script>
 </head>
 <body>
   <header>
     <div class="header-inner">
       <div><small>MRI EDUCATION PORTAL</small><h1>MRI Learning</h1><p>原理から臨床まで、必要な教材をすぐに見つける。</p></div>
-      <label>表示<select id="theme"><option value="system">自動</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+      <div class="header-actions"><a class="header-link" href="review.html">復習する <span id="review-count"></span></a><label>表示<select id="theme"><option value="system">自動</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
     </div>
   </header>
   <main>

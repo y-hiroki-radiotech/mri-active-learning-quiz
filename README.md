@@ -51,6 +51,19 @@ MRI撮像シーケンスのアクティブラーニングの解説/
 3. 公開用の英数字URLへ教材を配置
 4. GitHub Pagesへデプロイ
 
+## 自動復習
+
+トップページの「復習する」から、GitHubへ新しく追加された教材の復習ページを開けます。
+
+- 新規追加の翌日：「昨日の復習」
+- 新規追加の7日後：「先週の復習」
+- 予定日に復習できなかった教材は、完了するまで表示
+- 翌日分と7日後分はそれぞれ独立して記録
+
+復習予定は日本時間を基準にブラウザ側で計算するため、日付が変わったときにPagesを再デプロイする必要はありません。復習履歴は`localStorage`へ保存されるため、端末やブラウザをまたいだ同期は行われません。
+
+復習対象は、基準コミット`dc7998fe79bcc26aa155a16bb46cd77ef56d3a0c`より後に初めてGitへ追加されたHTMLです。既存教材の内容更新だけでは、新しい復習予定は作成されません。ファイル名や保存場所を後から変更する可能性がある教材には、履歴を安定して識別できるよう`mri-id`の設定を推奨します。
+
 初回のみ、GitHubリポジトリの「Settings → Pages → Source」で`GitHub Actions`を選択してください。ローカルフォルダへ追加しただけでは公開されないため、commitとpushが必要です。
 
 ## ローカル確認
@@ -58,6 +71,7 @@ MRI撮像シーケンスのアクティブラーニングの解説/
 ```bash
 python3 scripts/build_site.py --check
 python3 -m unittest discover -s tests -v
+node --test tests/test_review_logic.js
 python3 scripts/build_site.py --output _site
 python3 -m http.server 8000 --directory _site
 ```

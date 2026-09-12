@@ -7,10 +7,12 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import unicodedata
 from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 SOURCES = {
     "MRI撮像シーケンスのアクティブラーニングの解説": ("physics", "アクティブラーニング"),
@@ -18,6 +20,8 @@ SOURCES = {
 }
 CATEGORIES = {"physics", "sequences", "artifacts", "parameters", "coils", "anatomy", "positioning", "questions"}
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+JST = ZoneInfo("Asia/Tokyo")
+REVIEW_BASELINE_AT = datetime.fromisoformat("2026-09-12T19:23:11+09:00")
 
 
 class BuildError(ValueError):
@@ -81,6 +85,31 @@ def make_id(title: str, relative: str) -> str:
     return f"{base[:60].rstrip('-')}-{digest}"
 
 
+def make_review_key(relative: str) -> str:
+    digest = hashlib.sha256(unicodedata.normalize("NFC", relative).encode()).hexdigest()[:16]
+    return f"path-{digest}"
+
+
+def git_history_dates(path: Path, root: Path) -> tuple[str, str, datetime] | None:
+    """Return added date, updated date and added instant from the file's Git history."""
+    relative = path.relative_to(root).as_posix()
+    result = subprocess.run(
+        ["git", "-C", str(root), "log", "--follow", "--format=%cI", "--", relative],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    history = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if result.returncode != 0 or not history:
+        return None
+    try:
+        updated_at = datetime.fromisoformat(history[0]).astimezone(JST)
+        added_at = datetime.fromisoformat(history[-1]).astimezone(JST)
+    except ValueError:
+        return None
+    return added_at.date().isoformat(), updated_at.date().isoformat(), added_at
+
+
 def parse_material(path: Path, root: Path) -> dict[str, object]:
     relative = path.relative_to(root).as_posix()
     source = path.relative_to(root).parts[0]
@@ -97,7 +126,10 @@ def parse_material(path: Path, root: Path) -> dict[str, object]:
     material_id = meta.get("mri-id") or make_id(title, relative)
     if not ID_RE.fullmatch(material_id):
         raise BuildError(f"{relative}: mri-id must be lowercase ASCII kebab-case")
-    updated = meta.get("mri-updated") or date.fromtimestamp(path.stat().st_mtime).isoformat()
+    history_dates = git_history_dates(path, root)
+    file_date = date.fromtimestamp(path.stat().st_mtime).isoformat()
+    added = history_dates[0] if history_dates else file_date
+    updated = meta.get("mri-updated") or (history_dates[1] if history_dates else file_date)
     try:
         date.fromisoformat(updated)
     except ValueError as exc:
@@ -108,10 +140,13 @@ def parse_material(path: Path, root: Path) -> dict[str, object]:
     fingerprint = hashlib.sha256(text.strip().encode()).hexdigest()
     return {
         "id": material_id, "title": title, "category": category,
+        "reviewKey": material_id if meta.get("mri-id") else make_review_key(relative),
         "subcategory": meta.get("mri-subcategory") or SOURCES[source][1],
         "keywords": csv_list(meta.get("mri-keywords", "")) or [title, source],
         "description": meta.get("mri-description") or f"{title}を学ぶMRI教材です。",
+        "addedAt": added,
         "updated": updated, "contentType": content_type,
+        "reviewEligible": history_dates[2] > REVIEW_BASELINE_AT if history_dates else True,
         "manufacturer": csv_list(meta.get("mri-manufacturer", "")),
         "anatomy": csv_list(meta.get("mri-anatomy", "")),
         "path": f"{category}/{material_id}.html",
@@ -147,14 +182,14 @@ def build(root: Path, output: Path) -> list[dict[str, object]]:
     if output.exists():
         shutil.rmtree(output)
     output.mkdir(parents=True)
-    for name in ("index.html", "manifest.webmanifest", "sw.js"):
+    for name in ("index.html", "review.html", "manifest.webmanifest", "sw.js"):
         shutil.copy2(root / name, output / name)
     shutil.copytree(root / "assets", output / "assets")
     for item in materials:
         target = output / str(item["path"])
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / str(item["_source"]), target)
-    payload = {"schemaVersion": 1, "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "materials": [{k: v for k, v in item.items() if not k.startswith("_")} for item in materials]}
+    payload = {"schemaVersion": 2, "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "materials": [{k: v for k, v in item.items() if not k.startswith("_")} for item in materials]}
     (output / "materials.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (output / ".nojekyll").touch()
     return materials
