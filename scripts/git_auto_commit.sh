@@ -30,6 +30,18 @@ log() {
   echo "[$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S %Z')] $*" >> "$LOG"
 }
 
+notify_discord() {
+  local message="$1"
+  if [[ -z "${DISCORD_WEBHOOK_URL:-}" ]]; then
+    return 0
+  fi
+  local payload
+  payload="$(printf '%s' "$message" | python3 -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))')"
+  if ! curl -sS -X POST -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL" >/dev/null 2>&1; then
+    log "警告: Discord通知の送信に失敗しました"
+  fi
+}
+
 abort() {
   log "中断: $*"
   log "=== end (aborted) ==="
@@ -38,6 +50,7 @@ abort() {
 
 fail() {
   log "エラー: $*"
+  notify_discord "❌ MRI教材の自動同期に失敗しました: $*"
   log "=== end (error) ==="
   exit 1
 }
@@ -157,8 +170,10 @@ log "commit作成: $commit_sha ($commit_message)"
 # --- ステップ12: push ---
 if git push "$REMOTE" "$MAIN_BRANCH" >>"$LOG" 2>&1; then
   log "push成功: $REMOTE/$MAIN_BRANCH"
+  notify_discord "✅ MRI教材: Google Drive同期 → GitHub push 完了 (commit: $commit_sha, 変更ファイル数: $changed_count)"
 else
   log "push失敗(non-fast-forward等の可能性): ローカルcommit $commit_sha は残しています。force/rebaseは行いません"
+  notify_discord "❌ MRI教材: push失敗（non-fast-forwardの可能性）。ローカルcommit $commit_sha は保持されています。"
   log "=== end (push failed) ==="
   exit 1
 fi
