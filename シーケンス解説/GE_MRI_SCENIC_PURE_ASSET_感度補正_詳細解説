@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GE MRI 感度補正を原理から理解する：SCENIC・PURE・ASSET</title>
+<style>
+:root{
+  --bg:#f4f7fb; --card:#fff; --ink:#172033; --muted:#5d687a; --line:#dde5ef;
+  --blue:#175fc4; --blue2:#eaf2ff; --green:#11734b; --green2:#eaf8f1;
+  --red:#bd3030; --red2:#fff0f0; --amber:#9a6500; --amber2:#fff7df;
+  --purple:#6b46c1; --purple2:#f3efff; --teal:#087b83; --teal2:#e8f8f8;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.75;
+}
+main{max-width:1160px;margin:0 auto;padding:28px 18px 80px}
+.hero{
+  background:linear-gradient(135deg,#0d2348,#165fc4 64%,#0f7d86);
+  color:#fff;border-radius:24px;padding:36px 32px;
+  box-shadow:0 18px 40px rgba(18,47,90,.18)
+}
+.hero h1{font-size:clamp(27px,4.4vw,45px);line-height:1.18;margin:0 0 13px}
+.hero p{font-size:17px;margin:0;max-width:900px;opacity:.95}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.badge{padding:5px 10px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.13);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:25px;margin-top:20px;box-shadow:0 5px 18px rgba(20,43,78,.05)}
+h2{margin:0 0 15px;font-size:26px;line-height:1.35}
+h3{font-size:20px;margin:25px 0 10px;line-height:1.45}
+h4{font-size:17px;margin:18px 0 7px}
+p{margin:8px 0 12px}
+strong{font-weight:760}
+a{color:var(--blue);word-break:break-all}
+.key{border-left:6px solid var(--blue);background:var(--blue2);border-radius:12px;padding:17px 20px;margin:14px 0}
+.key.good{border-color:var(--green);background:var(--green2)}
+.key.warn{border-color:var(--red);background:var(--red2)}
+.key.note{border-color:#d08b00;background:var(--amber2)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.tech{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+.tech.scenic{border-top:6px solid var(--purple)}
+.tech.pure{border-top:6px solid var(--green)}
+.tech.asset{border-top:6px solid var(--blue)}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.pill.purple{background:var(--purple2);color:var(--purple)}
+.pill.green{background:var(--green2);color:var(--green)}
+.pill.blue{background:var(--blue2);color:var(--blue)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+th,td{border:1px solid var(--line);padding:10px 11px;vertical-align:top;text-align:left}
+th{background:#edf3fa}
+tr:nth-child(even) td{background:#fbfcfe}
+.eq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#111827;color:#f8fafc;border-radius:12px;padding:14px 16px;overflow:auto;margin:12px 0}
+.figure{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fbfdff;margin:14px 0}
+.figure svg{width:100%;height:auto;display:block}
+.figcap{font-size:13px;color:var(--muted);padding:7px 5px 1px}
+.small{font-size:13px;color:var(--muted)}
+.callout{
+  padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fafcff;margin:8px 0
+}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center}
+.flowbox{padding:14px;border-radius:13px;border:2px solid #aabbd3;background:#fff;text-align:center}
+.arrow{font-size:30px;color:var(--blue);font-weight:800;text-align:center}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button{font:inherit;border:1px solid #b9c6d7;background:#fff;border-radius:10px;padding:8px 11px;cursor:pointer}
+button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.panel{display:none;padding:15px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.panel.active{display:block}
+.decision{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.decision .d{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.score{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+.score.high{background:#e7f8ef;color:#11734b}
+.score.mid{background:#fff6df;color:#8a5d00}
+.score.low{background:#fff0f0;color:#b82d2d}
+ul,ol{padding-left:23px}
+hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+.footer{margin-top:26px;color:var(--muted);font-size:13px}
+@media(max-width:830px){
+  .grid3,.grid2,.decision{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg)}
+  .hero{padding:27px 22px}.card{padding:19px}
+  table{font-size:13px}
+}
+@media print{
+  body{background:#fff}
+  main{max-width:none;padding:0}
+  .hero,.card{box-shadow:none;break-inside:avoid}
+  .controls,button{display:none}
+  .panel{display:block!important;margin:7px 0}
+}
+</style>
+</head>
+<body>
+<main>
+
+<section class="hero">
+<h1>GE MRI 感度補正を原理から理解する<br>SCENIC・PURE・ASSET</h1>
+<p>「どれをONにすれば画像がきれいになるか」ではなく、<b>何を推定し、どこを補正し、何を代償にしているのか</b>から考えるための実践教材。GE SIGNA系でのプロトコル設計を想定。</p>
+<div class="badges">
+<span class="badge">SCENIC</span><span class="badge">PURE</span><span class="badge">ASSET</span>
+<span class="badge">coil sensitivity</span><span class="badge">bias field</span><span class="badge">parallel imaging</span>
+<span class="badge">SNR / g-factor</span><span class="badge">臨床設定の考え方</span>
+</div>
+</section>
+
+<section class="card">
+<h2>0. 最重要：3つは同じ「感度補正」ではない</h2>
+<div class="grid3">
+<div class="tech scenic">
+<span class="pill purple">SCENIC</span>
+<h3>画像ベースの均一性補正</h3>
+<p>画像内に含まれる<b>ゆっくり変化する低空間周波数の濃度むら（bias field）</b>を推定し、画像を平坦化する方向の処理。</p>
+<p><b>目的：</b>表面コイル近傍の過度な高信号や深部の低信号、shadingを視覚的に低減。</p>
+</div>
+<div class="tech pure">
+<span class="pill green">PURE</span>
+<h3>校正データベースの均一性補正</h3>
+<p>比較的均一なbody coilと非均一なsurface/phased-array coilの<b>calibration scan</b>から感度分布を求め、補正mapを作る。</p>
+<p><b>目的：</b>実測したreceive sensitivity profileに基づいて画像強度を均一化。</p>
+</div>
+<div class="tech asset">
+<span class="pill blue">ASSET</span>
+<h3>感度マップを使う並列撮像</h3>
+<p>k-spaceを間引いて高速化し、各coil elementの<b>空間感度の違い</b>を手掛かりに、重なったaliasingを展開する。</p>
+<p><b>目的：</b>画像均一化ではなく<b>撮像時間短縮</b>。SENSE系の考え方。</p>
+</div>
+</div>
+
+<div class="key warn">
+<strong>したがって「SCENIC / PURE / ASSETのどれが一番きれい？」という比較は完全には正しくありません。</strong><br>
+SCENICとPUREは主に<b>濃度むら補正</b>。ASSETは<b>高速化のための再構成</b>です。ASSETを使いつつPUREを使う、という組み合わせも理論上自然です。
+</div>
+</section>
+
+<section class="card">
+<h2>1. そもそも、なぜ表面コイル画像は均一でないのか</h2>
+<p>receive coil element <b>c</b> が受信する信号は、単純化すると次のように書けます。</p>
+<div class="eq">S_c(r) = C_c(r) · M(r) + n_c(r)</div>
+<ul>
+<li><b>M(r)</b>：本当に見たい組織由来のMR信号</li>
+<li><b>C<sub>c</sub>(r)</b>：coil element c の位置依存receive sensitivity</li>
+<li><b>n<sub>c</sub>(r)</b>：noise</li>
+</ul>
+<p>表面コイルは近傍で非常に感度が高く、距離とともに感度が低下します。複数elementをRSS（root-sum-of-squares）的に合成した場合も、おおまかには</p>
+<div class="eq">I_RSS(r) ≈ |M(r)| · √( Σ_c |C_c(r)|² )</div>
+<p>となり、後半の <b>√Σ|C|²</b> が「本来の組織コントラストとは無関係な濃度むら」を作ります。</p>
+
+<div class="figure">
+<svg viewBox="0 0 980 390">
+<defs>
+<linearGradient id="g1" x1="0" x2="1"><stop offset="0%" stop-color="#6b46c1" stop-opacity=".9"/><stop offset="100%" stop-color="#d9d4ed" stop-opacity=".12"/></linearGradient>
+<marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="#175fc4"/></marker>
+</defs>
+<rect x="60" y="82" width="300" height="210" rx="100" fill="#e4eaf3" stroke="#9aabc2" stroke-width="3"/>
+<rect x="42" y="72" width="32" height="230" rx="16" fill="#6b46c1"/>
+<path d="M76,80 L330,80 L330,295 L76,295 Z" fill="url(#g1)"/>
+<text x="65" y="335" font-size="20" fill="#6b46c1">surface coil</text>
+<text x="115" y="180" font-size="24" fill="#172033">近い → 高感度・明るい</text>
+<text x="180" y="235" font-size="23" fill="#596579">遠い → 低感度・暗い</text>
+
+<line x1="390" y1="190" x2="520" y2="190" stroke="#175fc4" stroke-width="7" marker-end="url(#ab)"/>
+<text x="405" y="160" font-size="18" fill="#175fc4">均一性補正</text>
+
+<rect x="555" y="82" width="300" height="210" rx="100" fill="#dfe8f3" stroke="#9aabc2" stroke-width="3"/>
+<text x="620" y="180" font-size="24" fill="#172033">補正後：</text>
+<text x="600" y="225" font-size="23" fill="#11734b">組織信号の見え方を均一化</text>
+<text x="605" y="335" font-size="17" fill="#596579">ただし「真の組織信号」を完全復元する魔法ではない</text>
+</svg>
+<div class="figcap">receive sensitivity由来の低周波濃度むらをどう見積もるかが、SCENICとPUREの大きな違いです。</div>
+</div>
+</section>
+
+<section class="card">
+<h2>2. SCENIC：画像そのものから「bias field」を推定する</h2>
+<p><b>SCENIC = Surface Coil ENhancement for Imaging Clarity</b>。GEのArtist資料では、従来のreFINEを発展させた均一性補正で、bias fieldを利用し、B-splineを用いて反復的に低空間周波数の濃度むらを推定すると説明されています。</p>
+
+<h3>2-1. 数式のお気持ち</h3>
+<p>画像を</p>
+<div class="eq">I(r) = T(r) · B(r) + noise</div>
+<p>と考えます。</p>
+<ul>
+<li><b>T(r)</b>：本来の組織コントラスト（tissue）</li>
+<li><b>B(r)</b>：ゆっくり空間的に変化するbias field</li>
+</ul>
+<p>SCENICは、画像全体を見ながら「このなだらかな明暗は組織ではなくbiasだろう」と推定して <b>B̂(r)</b> を作り、概念的には</p>
+<div class="eq">I_corrected(r) ≈ I(r) / B̂(r)</div>
+<p>として低周波shadingを取り除く処理と理解すると分かりやすいです。</p>
+
+<h3>2-2. B-splineを使う意味</h3>
+<p>B-splineは、局所的な細かな病変の輪郭ではなく、<b>数cmスケールでゆっくり変化する滑らかな場</b>を表現するのに向いています。したがって、コイル感度やRF shadingのような「なだらかな濃度変化」と相性が良いわけです。</p>
+
+<div class="flow">
+<div class="flowbox"><b>元画像</b><br>組織コントラスト + shading</div>
+<div class="arrow">→</div>
+<div class="flowbox"><b>低周波bias fieldを推定</b><br>B-spline / iterative estimation</div>
+<div class="arrow">→</div>
+<div class="flowbox"><b>補正画像</b><br>shading↓・見かけの均一性↑</div>
+</div>
+
+<h3>2-3. 臨床画像への影響</h3>
+<table>
+<tr><th>良い影響</th><th>注意点</th></tr>
+<tr>
+<td>
+・表面コイル近傍の過度なbrighteningを低減<br>
+・深部構造が見やすくなる<br>
+・大きなshadingを減らしwindowingしやすい<br>
+・MPR/3D表示で濃度むらが目立ちにくい
+</td>
+<td>
+・画像そのものから補正場を推定するため、<b>組織形状や強いコントラストをbiasと誤認</b>する可能性<br>
+・GE manualも、SCENIC後に元画像にはないhyper/hypo-intense領域が出る可能性を警告<br>
+・定量的なsignal intensity比較では補正の影響を受ける
+</td>
+</tr>
+</table>
+
+<div class="key warn">
+<strong>SCENICの弱点の本質：</strong>「これはcoil shadingか？本当の病変・組織差か？」を画像だけから推定するため、完全には区別できません。<br>
+したがって<b>強い局所コントラスト・画像外形が特殊・信号欠損が大きい・金属近傍</b>では注意が必要です。
+</div>
+</section>
+
+<section class="card">
+<h2>3. PURE：校正スキャンから「感度map」を作る</h2>
+<p><b>PURE = Phased array UnifoRmity Enhancement</b>。GE資料では、比較的均一なbody coil画像と、非均一なsurface/phased-array coil画像のcalibrationを取得し、両者の関係からintensity correction mapを計算します。</p>
+
+<h3>3-1. 基本原理</h3>
+<p>簡略化して、body coilの感度を <b>C<sub>body</sub>(r)</b>、array coilの感度を <b>C<sub>array</sub>(r)</b> とすると、同じ対象を低分解能で撮影したcalibrationから</p>
+<div class="eq">Sensitivity ratio(r) ≈ I_array,cal(r) / I_body,cal(r)</div>
+<p>を作り、この比を利用して本撮像の濃度むらを正規化します。</p>
+
+<div class="figure">
+<svg viewBox="0 0 980 370">
+<defs><marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="#11734b"/></marker></defs>
+<rect x="35" y="75" width="220" height="125" rx="16" fill="#edf3fa" stroke="#7790ad" stroke-width="3"/>
+<text x="69" y="120" font-size="22" font-weight="700">Body coil calibration</text>
+<text x="85" y="160" font-size="19" fill="#596579">比較的uniformなreference</text>
+
+<rect x="35" y="235" width="220" height="100" rx="16" fill="#f3efff" stroke="#6b46c1" stroke-width="3"/>
+<text x="57" y="275" font-size="21" font-weight="700">Array coil calibration</text>
+<text x="64" y="307" font-size="18" fill="#596579">position-dependent sensitivity</text>
+
+<line x1="275" y1="140" x2="430" y2="190" stroke="#11734b" stroke-width="6" marker-end="url(#ag)"/>
+<line x1="275" y1="280" x2="430" y2="220" stroke="#11734b" stroke-width="6" marker-end="url(#ag)"/>
+
+<rect x="455" y="140" width="200" height="120" rx="16" fill="#eaf8f1" stroke="#11734b" stroke-width="3"/>
+<text x="495" y="187" font-size="22" font-weight="700">Correction map</text>
+<text x="487" y="224" font-size="18">array/body の関係</text>
+
+<line x1="670" y1="200" x2="785" y2="200" stroke="#11734b" stroke-width="6" marker-end="url(#ag)"/>
+
+<rect x="805" y="140" width="140" height="120" rx="16" fill="#eaf8f1" stroke="#11734b" stroke-width="3"/>
+<text x="839" y="188" font-size="22" font-weight="700">本画像</text>
+<text x="824" y="223" font-size="18">uniformity補正</text>
+</svg>
+</div>
+
+<h3>3-2. PUREの長所</h3>
+<ul>
+<li><b>画像の内容そのものだけに頼らず、実測感度mapに基づく</b>ため、物理的に筋が通ったnormalization。</li>
+<li>スライスをまたぐ3D的な感度分布を使えるため、MPRやvolume dataでuniformityを保ちやすい。</li>
+<li>研究報告では、画像ベース補正より<b>slice間均一性</b>が良い場合がある。</li>
+<li>脳3D、脊椎、骨盤、腹部など、大きなFOVや複数coil elementを使う撮像と相性が良い。</li>
+</ul>
+
+<h3>3-3. PUREの弱点：calibrationと本撮像の「ずれ」</h3>
+<div class="key warn">
+<strong>PUREで最も重要なのは「calibration時と本撮像時でcoil sensitivity geometryが同じ」という仮定です。</strong>
+</div>
+<p>被検者が動く、コイル位置が変わる、table positionやscan centerが大きく変わる、calibration volume外へ本撮像が出ると、補正mapと現実の感度分布が一致しなくなります。</p>
+<table>
+<tr><th>原因</th><th>結果</th></tr>
+<tr><td>calibration後に患者が大きく動く</td><td>補正mapの位置と解剖の位置がずれ、局所的な過補正/補正不足</td></tr>
+<tr><td>coil configurationを変更</td><td>感度分布そのものが変化 → 再calibrationが必要</td></tr>
+<tr><td>scan center / volumeを大幅変更</td><td>calibration coverage外・map精度低下</td></tr>
+<tr><td>metal / 強いsignal voidをcalibrationに含む</td><td>reference自体が歪み、PURE/ASSETのmapが不安定になり得る</td></tr>
+</table>
+
+<div class="key note">
+<strong>「PUREをかければB1問題が全部直る」ではありません。</strong><br>
+PUREの中心はreceive-coil sensitivity normalizationです。真のB<sub>1</sub><sup>+</sup> transmit inhomogeneity、脂肪抑制失敗、B0不均一を根治する処理ではありません。見かけのshadingが改善しても、励起flip angleや脂肪抑制そのものが正しくなったとは限りません。
+</div>
+</section>
+
+<section class="card">
+<h2>4. ASSET：感度mapでaliasingを「解く」</h2>
+<p><b>ASSET = Array Spatial Sensitivity Encoding Technique</b>。GEのSENSE系parallel imagingです。各coil elementが持つ空間的に異なる感度を「位置の手掛かり」として使います。</p>
+
+<h3>4-1. なぜk-spaceを間引くとaliasingするのか</h3>
+<p>phase encodeをR倍間引くと、撮像時間は概ね短縮しますが、phase方向FOVが実質的に1/Rになったのと同じになり、複数の位置が1つの画素へfoldします。</p>
+<div class="eq">undersampling R → effective phase FOV ≈ FOV / R → aliasing</div>
+<p>通常のsingle coilでは「A地点とB地点が同じ画素に重なった」ら分離不能です。しかしarray coilでは、各位置でcoil 1〜Nの感度比が異なります。</p>
+
+<div class="figure">
+<svg viewBox="0 0 1000 430">
+<rect x="55" y="75" width="250" height="280" rx="20" fill="#f3f6fb" stroke="#9eb0c8" stroke-width="3"/>
+<circle cx="135" cy="170" r="47" fill="#ffd7d7"/><circle cx="235" cy="260" r="47" fill="#dce9ff"/>
+<text x="95" y="175" font-size="22">位置 A</text><text x="195" y="266" font-size="22">位置 B</text>
+<text x="88" y="320" font-size="18" fill="#596579">本来は別の位置</text>
+
+<text x="355" y="130" font-size="21" fill="#172033">R=2でphase encodeを間引く</text>
+<path d="M355,170 C430,205 430,255 355,290" fill="none" stroke="#175fc4" stroke-width="6"/>
+<text x="370" y="235" font-size="21" fill="#175fc4">fold</text>
+
+<rect x="510" y="105" width="190" height="210" rx="18" fill="#fff0f0" stroke="#bd3030" stroke-width="3"/>
+<circle cx="605" cy="205" r="60" fill="#e7cfcf"/>
+<text x="545" y="210" font-size="21">A + B が重なる</text>
+<text x="535" y="272" font-size="17">通常なら分離困難</text>
+
+<line x1="720" y1="205" x2="820" y2="205" stroke="#175fc4" stroke-width="6"/>
+<polygon points="820,205 800,192 800,218" fill="#175fc4"/>
+
+<rect x="835" y="75" width="125" height="280" rx="18" fill="#eaf2ff" stroke="#175fc4" stroke-width="3"/>
+<text x="850" y="125" font-size="17" font-weight="700">coil感度</text>
+<text x="850" y="160" font-size="15">coil1:</text><text x="900" y="160" font-size="15">A高/B低</text>
+<text x="850" y="195" font-size="15">coil2:</text><text x="900" y="195" font-size="15">A低/B高</text>
+<text x="850" y="250" font-size="17" fill="#11734b">→ 連立方程式</text>
+<text x="850" y="282" font-size="17" fill="#11734b">として展開</text>
+</svg>
+</div>
+
+<h3>4-2. SENSE/ASSETの線形代数</h3>
+<p>foldされた1画素に2地点 A, B が重なったとき、coil c の信号は</p>
+<div class="eq">s_c = C_c(A)·m_A + C_c(B)·m_B</div>
+<p>複数coilの式を並べると</p>
+<div class="eq">s = C · m</div>
+<p>となります。ASSET calibrationで得た感度行列 <b>C</b> が十分に異なるなら、逆問題を解いて <b>m</b>（AとBの本来の信号）を分離できます。</p>
+
+<h3>4-3. ASSETの代償：SNR低下とg-factor</h3>
+<div class="eq">SNR_ASSET ≈ SNR_full / ( √R · g )</div>
+<ul>
+<li><b>R</b>：acceleration factor</li>
+<li><b>g</b>：geometry factor。coil geometryが悪いほど &gt;1になりnoise amplificationが増える</li>
+</ul>
+<p>R=2なら理想でも約1/√2 ≈ 0.71、つまり約29%のSNR低下。実際はg-factorの分だけさらに悪化します。</p>
+
+<div class="key warn">
+<strong>ASSETのartifactは「単純な低SNR」だけではありません。</strong><br>
+感度mapが間違うと、foldされた信号を正しく分離できず、<b>局所的なresidual aliasing・central artifact・noise amplification</b>として現れます。金属、患者移動、calibration coverage不足、coil element不良は要注意です。
+</div>
+</section>
+
+<section class="card">
+<h2>5. 3者の本質的な違い</h2>
+<table>
+<thead><tr>
+<th></th><th>SCENIC</th><th>PURE</th><th>ASSET</th>
+</tr></thead>
+<tbody>
+<tr><th>主目的</th><td>濃度むら・shading補正</td><td>receive coil感度むら補正</td><td>parallel imaging高速化</td></tr>
+<tr><th>主に使う情報</th><td>本画像から推定した低周波bias field</td><td>body coil / array coil calibration</td><td>各coil elementのsensitivity map</td></tr>
+<tr><th>k-space</th><td>通常は取得そのものを間引かない</td><td>通常は取得そのものを間引かない</td><td><b>phase encodeを間引く</b></td></tr>
+<tr><th>scan time</th><td>本撮像時間を直接短縮しない</td><td>calibration分の追加がある</td><td><b>短縮できる</b></td></tr>
+<tr><th>SNR</th><td>見かけのbrightness/noise分布が変わる</td><td>深部を持ち上げるとnoiseも目立つことがある</td><td><b>√Rとg-factorで低下</b></td></tr>
+<tr><th>motionに対する弱点</th><td>画像内容依存。各画像の形状/contrastに影響される</td><td><b>calibrationと本撮像の位置ずれ</b></td><td><b>calibrationと本撮像の位置ずれ</b></td></tr>
+<tr><th>特徴的な失敗</th><td>偽のhyper/hypo intensity</td><td>過補正/補正不足、shading残存</td><td>residual aliasing、局所noise増大</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2>6. 臨床ではどう考えて選ぶか</h2>
+<div class="controls">
+<button class="active" onclick="showP(0,this)">Brain / 3D</button>
+<button onclick="showP(1,this)">Spine</button>
+<button onclick="showP(2,this)">Shoulder / MSK</button>
+<button onclick="showP(3,this)">Abdomen / Pelvis</button>
+<button onclick="showP(4,this)">DWI / EPI</button>
+<button onclick="showP(5,this)">DCE / 定量</button>
+</div>
+
+<div class="panel active">
+<h3>Brain・3D T1 / FLAIR / CUBE</h3>
+<p><b>基本：</b>形態診断やsegmentationでは、頭蓋内の大きな濃度むらを減らす価値が高い。</p>
+<ul>
+<li><b>PURE：</b><span class="score high">推奨度 高</span> calibrationと頭部位置が安定しやすく、slice間uniformityが欲しい3Dに向く。</li>
+<li><b>SCENIC：</b><span class="score high">推奨度 高</span> routine visual uniformityには有用。画像ベース補正なのでsubtle intensity解析では注意。</li>
+<li><b>ASSET：</b><span class="score mid">目的次第</span> 3D撮像時間短縮やmotion低減に有効。ただしSNRとg-factorとの交換。</li>
+</ul>
+<p><b>考え方：</b>「uniformityが欲しい」→ PURE/SCENIC。「時間を短くしたい」→ ASSET/ARC/HyperSenseなど。</p>
+</div>
+
+<div class="panel">
+<h3>Spine</h3>
+<p>脊椎はposterior arrayなどに近い背側が明るく、腹側が暗くなりやすく、receive sensitivity補正の恩恵が大きい領域です。</p>
+<ul>
+<li><b>PURE：</b><span class="score high">有用</span> 長いcoverage、複数elementを跨ぐ場合の均一化。</li>
+<li><b>SCENIC：</b><span class="score high">有用</span> shadingを視覚的に抑え、cord/discの読影をしやすくする。</li>
+<li><b>ASSET：</b><span class="score mid">用途別</span> 3D CUBEや長いFSEを高速化。ただしcoil geometryとphase方向に注意。</li>
+</ul>
+<p>局所coil element不良を「補正で隠す」のは不可。突然の片側shadingはcoil malfunctionも疑います。</p>
+</div>
+
+<div class="panel">
+<h3>Shoulder・KneeなどMSK</h3>
+<p>肩はisocenterから外れやすく、coil geometryも非対称になりやすいため、uniformity correctionの効果が目立ちます。</p>
+<ul>
+<li><b>SCENIC：</b><span class="score high">実用的</span> 表層brightening / 深部darkeningを均す。</li>
+<li><b>PURE：</b><span class="score high">有用</span> calibrationが良好なら、深部構造のvisibilityを改善。</li>
+<li><b>ASSET：</b><span class="score mid">慎重</span> 小FOV・coil element数・phase方向によってg-factor penaltyが大きくなり得る。</li>
+</ul>
+<p><b>注意：</b>均一化しても、fat sat不良の根本原因（B0/B1問題）は別です。STIR、shim、FOV/center、脂肪抑制法の再検討が優先されることがあります。</p>
+</div>
+
+<div class="panel">
+<h3>Abdomen・Pelvis</h3>
+<p>大きなFOV、前後array、呼吸、3Tのdielectric shadingなど複数因子が重なります。</p>
+<ul>
+<li><b>PURE：</b><span class="score high">条件が安定なら有用</span> anterior/posterior arrayの感度差補正。ただしcalibration後の体動に弱い。</li>
+<li><b>SCENIC：</b><span class="score high">routine形態画像に有用</span> low-frequency shadingを抑えやすい。</li>
+<li><b>ASSET：</b><span class="score high">BH短縮に有用</span> breath-holdを短くするメリットがSNR低下を上回ることが多い。</li>
+</ul>
+<p><b>3Tでは注意：</b>中央のdark shadingが真のtransmit B1問題なら、uniformity filterだけでは根治しません。</p>
+</div>
+
+<div class="panel">
+<h3>DWI / EPI</h3>
+<ul>
+<li><b>ASSET：</b><span class="score high">非常に有用</span> phase encode stepsを減らすことでEPI echo trainを短くし、susceptibility distortionやT2* blurringを減らせる場合がある。</li>
+<li><b>PURE / SCENIC：</b><span class="score mid">表示目的</span> magnitude uniformityには役立つが、幾何学歪みそのものは直さない。</li>
+</ul>
+<p><b>ASSETの価値：</b>DWIでは単なる時短以上に、「echo train短縮 → distortion低減」という画像品質メリットがあります。ただしRを上げ過ぎるとg-factor noiseが支配的になります。</p>
+</div>
+
+<div class="panel">
+<h3>DCE・定量解析・経時signal比較</h3>
+<p><b>最も慎重にすべき領域。</b>SCENIC/PUREはpixel intensityを変えるため、絶対signalや時間変化を解析する際は補正の一貫性が重要です。</p>
+<ul>
+<li><b>SCENIC：</b><span class="score low">要注意</span> 画像内容依存でbias推定が変わると、time pointごとに補正量が変動する可能性。</li>
+<li><b>PURE：</b><span class="score mid">固定mapなら理屈は明快</span> ただし患者運動でmap mismatchが生じる。</li>
+<li><b>ASSET：</b><span class="score mid">用途次第</span> 時間分解能向上は大きな利点だが、SNRとreconstruction特性を定量解析で固定する必要。</li>
+</ul>
+<p>GE manualもPUREなどのuniformity filterはpixel intensityを変えるため、一部post-processing結果へ影響し得ることを注意喚起しています。</p>
+</div>
+</section>
+
+<section class="card">
+<h2>7. 実務的な設定アルゴリズム</h2>
+<div class="decision">
+<div class="d">
+<h3>Q1. 問題は「濃度むら」？</h3>
+<p><b>YES → SCENIC / PUREを考える。</b></p>
+<p>coil近傍だけ明るい、深部が暗い、前後coilでbrightnessが違う、3D reformatでshadingが目立つ。</p>
+</div>
+<div class="d">
+<h3>Q2. 問題は「撮像時間」？</h3>
+<p><b>YES → ASSETを考える。</b></p>
+<p>breath-hold短縮、motion低減、EPI distortion低減、3D/FSE時間短縮。</p>
+</div>
+<div class="d">
+<h3>Q3. calibration後に患者が動きやすい？</h3>
+<p><b>YES → PURE/ASSET map mismatchを警戒。</b></p>
+<p>再position、大きなtable移動、coil変更ならrecalibrationを検討。</p>
+</div>
+<div class="d">
+<h3>Q4. 定量signalが重要？</h3>
+<p><b>YES → 補正方法を固定し、SCENICの画像依存性に注意。</b></p>
+<p>同じ患者内のseries比較でも、補正ON/OFFを混在させない。</p>
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2>8. 「こう見えたら何を疑う？」トラブルシュート</h2>
+<table>
+<tr><th>画像所見</th><th>まず考えること</th><th>対応の方向</th></tr>
+<tr><td>coil直下だけ極端に明るい</td><td>receive sensitivity gradient</td><td>SCENIC / PURE、coil位置・選択確認</td></tr>
+<tr><td>PURE後に局所的に妙な明暗</td><td>calibration mismatch、scan volumeずれ、metal</td><td>再calibration、患者位置・coil構成確認</td></tr>
+<tr><td>SCENIC後に病変様のhyper/hypo領域</td><td>image-derived bias推定の誤り</td><td>unfiltered画像と比較、PURE/Noneも比較</td></tr>
+<tr><td>ASSETで中央や局所にaliasing</td><td>sensitivity map / FOV / calibration coverage / g-factor</td><td>R低下、phase方向変更、再calibration、FOV見直し</td></tr>
+<tr><td>脂肪抑制そのものが不均一</td><td>B0/B1、center frequency、shim</td><td>uniformity filterではなくshim/fat sat法/STIR検討</td></tr>
+<tr><td>3T腹部中央が暗い</td><td>dielectric / transmit B1 inhomogeneity</td><td>B1対策、position/shim、必要に応じ別手法。SCENIC/PUREだけに頼らない</td></tr>
+</table>
+</section>
+
+<section class="card">
+<h2>9. 覚えるべき一言</h2>
+<div class="grid3">
+<div class="callout"><strong style="color:#6b46c1">SCENIC</strong><br>「画像を見て、なだらかな濃度むらを推定して平らにする」</div>
+<div class="callout"><strong style="color:#11734b">PURE</strong><br>「calibrationで実測したcoil感度差から平らにする」</div>
+<div class="callout"><strong style="color:#175fc4">ASSET</strong><br>「coil感度差を位置情報として使い、間引いたデータを展開する」</div>
+</div>
+<div class="key good">
+<strong>臨床判断の軸：</strong><br>
+Uniformityを良くしたい → SCENIC / PURE。<br>
+Scan timeを短くしたい → ASSET。<br>
+PUREとASSETは同じcalibration系のreceive sensitivity情報を利用しても、<b>目的と副作用はまったく違う</b>。
+</div>
+</section>
+
+<section class="card">
+<h2>10. GE装置で特に確認すべきこと</h2>
+<ol>
+<li>現在のソフトウェアreleaseでSCENIC/PURE/ASSETがどのsequenceに対応しているか。</li>
+<li>Calibration in PrescanがONか、calibration volumeが本撮像範囲を十分含むか。</li>
+<li>患者の体動・coil再配置・scan center大幅変更後に古いcalibrationを使い続けていないか。</li>
+<li>ASSET factorを上げたときにSNR低下とg-factor artifactが許容できるか。</li>
+<li>SCENIC/PURE後だけを見ず、問題時は必ずNone/unfiltered画像と比較する。</li>
+<li>信号定量・DCE・subtraction・segmentationなど下流処理がある場合、intensity correctionをprotocol内で固定する。</li>
+</ol>
+</section>
+
+<section class="card">
+<h2>参考文献・根拠</h2>
+<ol class="small">
+<li>GE HealthCare, SIGNA Artist Datasheet — Uniformity Correction Technology: SCENIC / PURE.
+<a href="https://landing1.gehealthcare.com/rs/005-SHS-767/images/Artist_Datasheet.pdf">Artist Datasheet</a></li>
+<li>GE HealthCare, SIGNA Architect / Premier Operator Manual (2021). SCENIC/PURE、coil non-uniformity、calibrationおよびfilter caution.</li>
+<li>GE Operator Manual, ASSET: Array Spatial Sensitivity Encoding Technique. ASSET calibration measures receive-coil sensitivity maps for unfolding aliased anatomy.</li>
+<li>Kwok WE. Basic Principles of and Practical Guide to Clinical MRI Radiofrequency Coils. Radiographics. RF coil signal uniformity correction (SCIC/PUREなど) の整理。</li>
+<li>Task Group 284. Magnetic resonance imaging simulation in radiotherapy: considerations for clinical implementation, optimization, and QA. Image intensity nonuniformity correction.</li>
+<li>ISMRM Electro-Magnetic Tissue Properties Study Group. Recommended Implementation of Quantitative Susceptibility Mapping. GE ASSETをSENSE-similar solutionとして整理。</li>
+</ol>
+<p class="small">注意：GEの名称・対応sequence・calibration workflowはソフトウェアversionで変更されることがあります。実機では当該Artist/HeroのOperator Manual、Protocol Notes、Scan Advisoryを優先してください。</p>
+</section>
+
+<div class="footer">
+作成日：2026-09-14 ｜ 教育用途。診断・プロトコル変更は施設基準、GEの該当ソフトウェア版マニュアル、担当アプリケーションスペシャリストの指示を優先してください。
+</div>
+
+</main>
+<script>
+function showP(i,b){
+  document.querySelectorAll('.panel').forEach((x,n)=>x.classList.toggle('active',n===i));
+  document.querySelectorAll('.controls button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+}
+</script>
+</body>
+</html>

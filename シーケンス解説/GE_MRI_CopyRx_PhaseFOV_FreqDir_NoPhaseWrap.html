@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GE MRI Copy Rx：Phase FOV・Freq. Dir・No Phase Wrapを外す理由</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#172033; --muted:#596579;
+  --line:#dfe5ee; --blue:#165dcc; --blue2:#eaf2ff; --red:#bd2c2c;
+  --red2:#fff0f0; --green:#177245; --green2:#eaf8f0; --amber:#8a5a00;
+  --amber2:#fff7df; --purple:#6542b5; --purple2:#f1edff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.75;
+}
+main{max-width:1100px;margin:0 auto;padding:28px 18px 80px}
+.hero{
+  background:linear-gradient(135deg,#102448,#165dcc);
+  color:white;border-radius:22px;padding:34px 30px;box-shadow:0 14px 34px rgba(20,50,100,.18)
+}
+.hero h1{font-size:clamp(26px,4vw,42px);line-height:1.25;margin:0 0 14px}
+.hero p{margin:0;opacity:.94;font-size:17px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.badge{font-size:13px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:20px;box-shadow:0 4px 16px rgba(20,40,80,.05)}
+h2{font-size:25px;margin:0 0 14px;line-height:1.35}
+h3{font-size:19px;margin:24px 0 10px}
+p{margin:8px 0 12px}
+strong{font-weight:750}
+.key{
+  padding:18px 20px;border-left:6px solid var(--blue);background:var(--blue2);
+  border-radius:12px;margin:14px 0;font-size:17px
+}
+.warn{background:var(--red2);border-left-color:var(--red)}
+.ok{background:var(--green2);border-left-color:var(--green)}
+.note{background:var(--amber2);border-left-color:#d38a00}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.param{border:1px solid var(--line);border-radius:16px;padding:17px;background:#fff}
+.param .tag{display:inline-block;font-weight:700;font-size:12px;padding:3px 8px;border-radius:999px;background:var(--blue2);color:var(--blue);margin-bottom:8px}
+.param h3{margin:3px 0 8px}
+.param ul{padding-left:20px;margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:11px 12px;text-align:left;vertical-align:top}
+th{background:#eef3fa}
+tr:nth-child(even) td{background:#fbfcfe}
+.codeeq{
+  background:#111827;color:#f9fafb;padding:14px 16px;border-radius:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:auto
+}
+.small{font-size:13px;color:var(--muted)}
+svg{width:100%;height:auto;display:block}
+.figure{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fbfcff;margin:14px 0}
+.figcap{font-size:13px;color:var(--muted);padding:7px 4px 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button{
+  border:1px solid #bcc9dc;background:white;border-radius:10px;padding:9px 12px;
+  font:inherit;cursor:pointer
+}
+button.active{background:var(--blue);color:white;border-color:var(--blue)}
+.scenario{display:none;border:1px solid var(--line);padding:16px;border-radius:13px;background:#fff}
+.scenario.active{display:block}
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.box{border:2px solid #9db5db;border-radius:14px;padding:16px;background:#f8fbff}
+.arrow{font-size:34px;color:var(--blue);font-weight:800;text-align:center}
+.checkbox{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f3f6fa;padding:10px 12px;border-radius:10px;margin:8px 0}
+.footer{margin-top:28px;color:var(--muted);font-size:13px}
+a{color:var(--blue);word-break:break-all}
+@media(max-width:780px){
+  .grid{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg)}
+  .hero{padding:26px 22px}
+  .card{padding:19px}
+  table{font-size:13px}
+  th,td{padding:8px}
+}
+@media print{
+  body{background:white}
+  main{max-width:none;padding:0}
+  .hero,.card{box-shadow:none;break-inside:avoid}
+  button,.controls{display:none}
+  .scenario{display:block!important;margin:8px 0}
+  a{text-decoration:none;color:#000}
+}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+  <h1>GE MRI Copy Rx<br>Phase FOV・Freq. Dir・No Phase Wrapを「外す」理由</h1>
+  <p>「スライス位置をコピーしたいだけなのに、なぜこの3項目はコピーしないのか？」を、位相エンコード・k空間・折り返し・アーチファクト方向から理解するための実践教材。</p>
+  <div class="badges">
+    <span class="badge">GE SIGNA系</span><span class="badge">Copy Rx / Graphic Rx</span>
+    <span class="badge">Phase FOV</span><span class="badge">Freq. Dir.</span><span class="badge">No Phase Wrap</span>
+    <span class="badge">単一HTML・オフライン閲覧可</span>
+  </div>
+</section>
+
+<section class="card">
+<h2>結論：コピーしたいのは「幾何学」であって、「位相エンコード戦略」ではない</h2>
+<div class="key">
+  <strong>Phase FOV・Freq. Dir・No Phase Wrapを外す主目的は、コピー先シリーズが本来持っている位相エンコード方向・撮像範囲・折り返し対策を上書きしないためです。</strong>
+</div>
+<p>Copy Rxでは、前シリーズのスライス位置・角度・厚さ・間隔などを再利用できます。しかし、<strong>Freq. Dir.は読み出し方向を決めるだけでなく、直交する位相方向も決めます。</strong> Phase FOVはその位相方向の撮像範囲を決め、No Phase Wrapはその同じ位相方向へのオーバーサンプリングを行います。</p>
+<p>つまり、この3項目は別々のつまみではなく、実質的に<strong>「位相エンコード設計の1セット」</strong>です。スライス位置だけを揃えたい場合、ここまでコピーすると「別コントラストを同じ位置で撮る」という目的を超えて、コピー元のアーチファクト対策まで持ち込んでしまいます。</p>
+</section>
+
+<section class="card">
+<h2>1. まず3項目の役割を整理</h2>
+<div class="grid">
+  <div class="param">
+    <span class="tag">方向を決める</span>
+    <h3>Freq. Dir.</h3>
+    <p>GEでは表示されるのは主に<strong>周波数エンコード（readout）方向</strong>です。</p>
+    <ul>
+      <li>Freq. Dir.を変更すると、面内で<strong>frequency と phase が入れ替わる</strong></li>
+      <li>したがって、位相ゴースト・wrap・EPI歪み等の方向も変わる</li>
+      <li>化学シフトは主にfrequency方向へ現れるため、その方向も変わる</li>
+    </ul>
+  </div>
+  <div class="param">
+    <span class="tag">位相方向の広さを決める</span>
+    <h3>Phase FOV</h3>
+    <p>Frequency側FOVに対する、<strong>phase方向FOVの比率</strong>です。</p>
+    <div class="codeeq">FOV_phase = FOV_freq × Phase FOV</div>
+    <p>例：FOV 24 cm、Phase FOV 0.75 → 位相方向は18 cm。</p>
+  </div>
+  <div class="param">
+    <span class="tag">位相方向のwrap対策</span>
+    <h3>No Phase Wrap</h3>
+    <p>位相方向の折り返しを防ぐための<strong>phase oversampling</strong>です。</p>
+    <ul>
+      <li>位相方向の取得範囲を広げる</li>
+      <li>最終表示は目的FOVに戻す</li>
+      <li>実装によりNEX・scan time・互換性へ影響</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section class="card">
+<h2>2. Freq. Dir.をコピーすると、実は「Phase Dir.までコピー」している</h2>
+<div class="figure">
+<svg viewBox="0 0 900 420" role="img" aria-label="Frequency direction and phase direction diagram">
+  <defs>
+    <marker id="arrB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#165dcc"/></marker>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#bd2c2c"/></marker>
+  </defs>
+  <rect x="70" y="70" width="300" height="250" rx="25" fill="#f1f5fb" stroke="#9db5db" stroke-width="3"/>
+  <ellipse cx="220" cy="195" rx="78" ry="110" fill="#d8e2f1"/>
+  <text x="175" y="202" font-size="28" fill="#596579">anatomy</text>
+  <line x1="110" y1="355" x2="335" y2="355" stroke="#165dcc" stroke-width="8" marker-end="url(#arrB)"/>
+  <text x="130" y="395" font-size="24" fill="#165dcc">Freq. (readout)</text>
+  <line x1="405" y1="300" x2="405" y2="95" stroke="#bd2c2c" stroke-width="8" marker-end="url(#arrR)"/>
+  <text x="430" y="205" font-size="24" fill="#bd2c2c">Phase</text>
+
+  <text x="520" y="95" font-size="27" font-weight="700" fill="#172033">Freq. Dir.をswap</text>
+  <path d="M610,135 C690,170 690,240 610,275" fill="none" stroke="#6542b5" stroke-width="7" marker-end="url(#arrB)"/>
+  <text x="520" y="325" font-size="23" fill="#6542b5">→ phase方向も90°入れ替わる</text>
+  <text x="520" y="360" font-size="20" fill="#596579">ghost / wrap / EPI distortionの向きまで変化</text>
+</svg>
+<div class="figcap">GEのFreq. Dir.は「単なる表示向き」ではありません。面内のreadout/phaseの割当を変えるため、アーチファクト設計そのものが変わります。</div>
+</div>
+
+<h3>k空間では何が変わる？</h3>
+<p>Cartesian MRIでは、readout中に連続的に <strong>k<sub>x</sub></strong> を走査し、TRごとに位相エンコード量を変えて <strong>k<sub>y</sub></strong> のラインを選びます。</p>
+<div class="codeeq">k(t) = (γ / 2π) ∫ G(τ) dτ</div>
+<p>Freq. Dir.をswapするということは、患者座標上の「どちらの軸をreadoutとして連続サンプリングし、どちらをphase encodeとしてラインごとに進めるか」を入れ替えることです。</p>
+<div class="key warn">
+  <strong>コピー元で最適だったFreq. Dir.が、コピー先でも最適とは限りません。</strong><br>
+  pulse sequence、flow、motion、EPI、chemical shift、parallel imagingなどの条件が変われば、望ましい方向も変わり得ます。
+</div>
+</section>
+
+<section class="card">
+<h2>3. Phase FOVをコピーすると「位相方向の撮像範囲」まで上書きする</h2>
+<div class="figure">
+<svg viewBox="0 0 920 430">
+  <rect x="65" y="80" width="330" height="250" rx="18" fill="#eef4fc" stroke="#9db5db" stroke-width="3"/>
+  <ellipse cx="230" cy="205" rx="125" ry="98" fill="#d2dcea"/>
+  <rect x="105" y="105" width="250" height="200" fill="none" stroke="#165dcc" stroke-width="5"/>
+  <text x="105" y="365" font-size="22" fill="#165dcc">Phase FOV = 1.00</text>
+  <text x="115" y="395" font-size="18" fill="#596579">位相方向も十分に含む</text>
+
+  <rect x="520" y="80" width="330" height="250" rx="18" fill="#eef4fc" stroke="#9db5db" stroke-width="3"/>
+  <ellipse cx="685" cy="205" rx="125" ry="98" fill="#d2dcea"/>
+  <rect x="555" y="130" width="260" height="150" fill="none" stroke="#bd2c2c" stroke-width="5"/>
+  <text x="555" y="365" font-size="22" fill="#bd2c2c">Phase FOV = 0.75</text>
+  <text x="545" y="395" font-size="18" fill="#596579">短い位相FOVの外に信号源が残る → wrapリスク</text>
+</svg>
+<div class="figcap">Phase FOVを小さくするとphase encode数を減らして撮像時間を短縮できますが、位相方向に解剖がはみ出すとaliasing（wrap around）が発生します。</div>
+</div>
+<p>GEの旧来のオペレータ資料では、Phase FOVを下げると<strong>phase encoding stepsが減ってscan timeが短くなる</strong>一方、SNRがわずかに下がり、位相方向の範囲が狭くなることが説明されています。</p>
+<p>したがってCopy RxでPhase FOVまでコピーすると、コピー先が本来1.0で設計されていたのに0.75へ変わる、あるいはその逆が起こり得ます。</p>
+<table>
+<tr><th>コピーされた状態</th><th>起こり得ること</th></tr>
+<tr><td>Phase FOVが小さすぎる</td><td>位相方向の解剖がFOV外に出てwrap。目的部位に重なる可能性。</td></tr>
+<tr><td>Phase FOVが大きすぎる</td><td>不要にphase encodeが増え、scan timeが延びることがある。</td></tr>
+<tr><td>Freq. Dir.まで同時コピー</td><td>「Phase FOVを短くした方向」そのものが90°変わるため、意図していない方向のcoverageが不足。</td></tr>
+</table>
+</section>
+
+<section class="card">
+<h2>4. No Phase Wrapをコピーすると「折り返し対策」までコピーする</h2>
+<p>No Phase Wrap（NPW）は、位相方向の外側にある解剖が折り返してくるのを防ぐ機能です。GEの従来資料では、位相方向のFOVとphase encoding stepsを拡張し、目的FOVを保ったままaliasingを避ける仕組みとして説明されています。</p>
+
+<div class="flow">
+  <div class="box">
+    <strong>NPW OFF</strong>
+    <p>Phase FOV外の信号も受信</p>
+    <p>↓</p>
+    <p>Nyquist条件を満たさない位相方向で位置が一意に決まらない</p>
+    <p>↓</p>
+    <p style="color:#bd2c2c;font-weight:700">反対側へwrap</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box">
+    <strong>NPW ON</strong>
+    <p>phase方向をoversample</p>
+    <p>↓</p>
+    <p>外側の信号も広いFOV内で正しく位置付け</p>
+    <p>↓</p>
+    <p style="color:#177245;font-weight:700">中央の目的FOVを再構成</p>
+  </div>
+</div>
+
+<div class="key note">
+  <strong>ただし「NPWは常にONが安全」ではありません。</strong><br>
+  GEの実装では、sequence/software releaseによりNEX、overscan、scan time、motion artifact、Square Pixel、parallel imagingなどとの互換性に制約があります。古いGE資料ではPhase FOV&lt;1との非互換も明記されています。現在のArtist/Heroでは必ず装置上の警告・自施設プロトコル・該当ソフトウェア版マニュアルを優先してください。
+</div>
+</section>
+
+<section class="card">
+<h2>5. 3項目は「連鎖」している</h2>
+<div class="figure">
+<svg viewBox="0 0 1000 360">
+  <defs><marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#165dcc"/></marker></defs>
+  <rect x="40" y="95" width="250" height="120" rx="18" fill="#eaf2ff" stroke="#165dcc" stroke-width="3"/>
+  <text x="83" y="145" font-size="29" font-weight="700" fill="#165dcc">Freq. Dir.</text>
+  <text x="63" y="182" font-size="19" fill="#172033">readout方向を選ぶ</text>
+
+  <line x1="305" y1="155" x2="405" y2="155" stroke="#165dcc" stroke-width="6" marker-end="url(#m)"/>
+  <text x="310" y="130" font-size="16" fill="#596579">直交方向が</text>
+
+  <rect x="420" y="95" width="250" height="120" rx="18" fill="#fff0f0" stroke="#bd2c2c" stroke-width="3"/>
+  <text x="467" y="145" font-size="29" font-weight="700" fill="#bd2c2c">Phase方向</text>
+  <text x="450" y="182" font-size="19" fill="#172033">ghost / wrapの方向</text>
+
+  <line x1="685" y1="155" x2="785" y2="155" stroke="#165dcc" stroke-width="6" marker-end="url(#m)"/>
+
+  <rect x="800" y="45" width="170" height="95" rx="16" fill="#fff7df" stroke="#d38a00" stroke-width="3"/>
+  <text x="826" y="87" font-size="24" font-weight="700" fill="#8a5a00">Phase FOV</text>
+  <text x="822" y="118" font-size="16">phaseの広さ</text>
+
+  <rect x="800" y="185" width="170" height="95" rx="16" fill="#eaf8f0" stroke="#177245" stroke-width="3"/>
+  <text x="812" y="227" font-size="23" font-weight="700" fill="#177245">No Phase Wrap</text>
+  <text x="817" y="258" font-size="16">phase oversampling</text>
+
+  <text x="240" y="315" font-size="22" fill="#6542b5" font-weight="700">→ だからCopy Rxでは「3つをまとめて外す」という運用が合理的</text>
+</svg>
+</div>
+</section>
+
+<section class="card">
+<h2>6. 外さなかったら、具体的にどうなる？</h2>
+<table>
+<thead><tr><th>項目</th><th>外さずコピーした場合</th><th>臨床上の見え方・問題</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>Freq. Dir.</strong></td>
+<td>コピー元のreadout方向がコピー先にも適用され、phase方向も同時に入れ替わる。</td>
+<td>呼吸・嚥下・血流などのghost方向が変わり、ROIへ重なる。chemical shiftの方向、EPIの歪み方向も変化し得る。</td>
+</tr>
+<tr>
+<td><strong>Phase FOV</strong></td>
+<td>コピー元の位相方向coverageがそのまま入る。</td>
+<td>小さすぎればwrap、大きすぎれば時間効率を失う。Freq. Dir.もコピーされると「短くなる方向」も変わる。</td>
+</tr>
+<tr>
+<td><strong>No Phase Wrap</strong></td>
+<td>コピー元のphase oversampling戦略まで引き継ぐ。</td>
+<td>不要なoversampling、scan time/NEXの変化、motion感度や互換性の変化。逆にOFFをコピーすればwrap防止が失われる場合もある。</td>
+</tr>
+<tr>
+<td><strong>3項目すべて</strong></td>
+<td>コピー元の「位相方向＋そのFOV＋anti-wrap」を丸ごと移植。</td>
+<td>スライス位置は正しいのに、画像アーチファクトだけが想定外になる“静かな設定ミス”が起こり得る。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="key warn">
+<strong>重要：</strong>外さなければ必ず失敗する、という意味ではありません。<br>
+同一plane・同一sequence・同じartifact strategyで完全に再現したいなら、コピーする方が合理的な場合もあります。問題は「位置だけコピーしたつもり」が成立しなくなることです。
+</div>
+</section>
+
+<section class="card">
+<h2>7. 典型例で理解する</h2>
+<div class="controls">
+  <button class="active" onclick="showScenario(0,this)">例A：同じ位置でT1→T2</button>
+  <button onclick="showScenario(1,this)">例B：FSE→EPI</button>
+  <button onclick="showScenario(2,this)">例C：完全再現</button>
+</div>
+
+<div class="scenario active">
+<h3>例A：同じAxial位置で、T1からT2へスライス位置をコピー</h3>
+<div class="checkbox">☑ Slice location / angle / thickness / spacing<br>☐ Phase FOV<br>☐ Freq. Dir.<br>☐ No Phase Wrap</div>
+<p><strong>考え方：</strong>断面を一致させたいだけなら、位相方向設計はT2プロトコルの設定を保持する方が安全です。T1側でたまたま採用されていたFreq. Dir.やNPWを持ち込む必要はありません。</p>
+</div>
+
+<div class="scenario">
+<h3>例B：FSEの処方をEPI系へコピー</h3>
+<div class="checkbox">☑ geometry<br>☐ Phase FOV<br>☐ Freq. Dir.<br>☐ No Phase Wrap</div>
+<p><strong>特に注意。</strong>EPIではphase方向がsusceptibility distortionの方向に直結します。またparallel imagingやecho spacingとの関係も強いため、FSEで最適だった位相方向をそのままコピーする意味はありません。</p>
+</div>
+
+<div class="scenario">
+<h3>例C：同じseriesを条件も含めてほぼ完全再現</h3>
+<div class="checkbox">☑ geometry<br>☑ Phase FOV<br>☑ Freq. Dir.<br>☑ No Phase Wrap</div>
+<p>例えば再撮像や同じartifact strategyを保った反復撮像では、3項目まで含めることが合理的です。ただし、patient motionやcoil/sequence設定変更があれば再確認します。</p>
+</div>
+</section>
+
+<section class="card">
+<h2>8. 実務でのチェック手順</h2>
+<ol>
+<li><strong>Copy Rxの目的を先に決める：</strong>「geometryのみ」か「撮像条件も含む完全再現」か。</li>
+<li>geometryのみなら、Phase FOV・Freq. Dir.・No Phase Wrapは原則コピー対象から外す。</li>
+<li>コピー後、<strong>Freq. Dir.を見てphase方向を頭の中で明示</strong>する。</li>
+<li>そのphase方向に解剖がPhase FOV内へ収まるか確認。</li>
+<li>収まらないなら、Phase FOVを広げる／No Phase Wrapを使う／Freq. Dir.を変える／SATを使う、をシーケンスに応じて選択。</li>
+<li>最後にscan time、NEX、parallel imaging、EPI、Square Pixel等との互換性を確認。</li>
+</ol>
+<div class="key ok">
+<strong>覚え方：</strong><br>
+「Copy Rxでコピーするのは断面。Phase FOV・Freq Dir・NPWは“そのシーケンスの位相設計”なので、いったんコピーから外し、コピー先で再判断する。」
+</div>
+</section>
+
+<section class="card">
+<h2>9. 原理を1枚でまとめる</h2>
+<table>
+<tr><th>設定</th><th>物理的に決めるもの</th><th>コピー先で再判断する理由</th></tr>
+<tr><td>Freq. Dir.</td><td>readout gradientの方向。直交軸がphase encode方向。</td><td>motion/flow ghost、chemical shift、EPI distortion等の最適方向がsequenceごとに異なる。</td></tr>
+<tr><td>Phase FOV</td><td>位相方向の空間coverageとphase encode量。</td><td>解剖の広がりとscan timeのバランスがseriesごとに異なる。</td></tr>
+<tr><td>No Phase Wrap</td><td>位相方向oversamplingによるaliasing防止。</td><td>必要性・NEX/scan time・互換性がsequence/softwareに依存。</td></tr>
+</table>
+<p><strong>3つの共通点は「位相方向をどう設計するか」。</strong>したがってslice geometryのコピーとは切り離して扱うのが最も理解しやすい運用です。</p>
+</section>
+
+<section class="card">
+<h2>参考資料</h2>
+<p class="small">本資料は公開されているGEオペレータマニュアルのミラー、GE MRI運用資料、およびMRI技術資料を突き合わせて作成しています。装置ソフトウェア版で挙動・互換性が変わるため、最終判断はArtist/Heroの該当software releaseのOperator Manualとコンソール表示を優先してください。</p>
+<ol class="small">
+<li>GE Healthcare, <em>SIGNA 1.5T MR System Operator Manual</em>, Rev.11 (2019). 公開ミラー：
+<a href="https://www.scribd.com/document/897622134/Creator-En">https://www.scribd.com/document/897622134/Creator-En</a></li>
+<li>GE MRI operator documentation (2003) – Phase FOV / Frequency Direction / No Phase Wrap sections. 公開ミラー：
+<a href="https://www.scribd.com/document/698680899/Ge-Mri-1-5-Teslla-en-2">https://www.scribd.com/document/698680899/Ge-Mri-1-5-Teslla-en-2</a></li>
+<li>UC San Diego Center for Functional MRI, GE scanner operations / Copy Rx：
+<a href="https://fmri.ucsd.edu/Howto/3T/operatingtips.html">https://fmri.ucsd.edu/Howto/3T/operatingtips.html</a></li>
+<li>Medical Imaging Source, <em>GE MRI No Phase Wrap</em>：
+<a href="https://www.medicalimagingsource.com/ge-mri-no-phase-wrap">https://www.medicalimagingsource.com/ge-mri-no-phase-wrap</a></li>
+</ol>
+</section>
+
+<div class="footer">
+作成日：2026-09-14 ｜ 教育用途。装置操作時は施設プロトコル、GEの当該ソフトウェア版Operator Manual、コンソール警告を優先してください。
+</div>
+</main>
+<script>
+function showScenario(i,btn){
+  document.querySelectorAll('.scenario').forEach((x,n)=>x.classList.toggle('active',n===i));
+  document.querySelectorAll('.controls button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

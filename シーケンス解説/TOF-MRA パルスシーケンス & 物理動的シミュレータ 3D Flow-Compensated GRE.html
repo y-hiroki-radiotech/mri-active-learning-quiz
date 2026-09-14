@@ -1,0 +1,503 @@
+<!-- ================================================================= -->
+<!-- TOF-MRA シーケンス動的シミュレータ（完全オフライン・数式完全整合版） -->
+<!-- ================================================================= -->
+<section class="card" id="mri-seq-simulator-card">
+  <div class="card-title">
+    <span>TOF-MRA パルスシーケンス & 物理動的シミュレータ</span>
+    <span class="badge badge-primary">3D Flow-Compensated GRE</span>
+  </div>
+
+  <p style="font-size: 0.95rem; margin-bottom: 16px;">
+    血管狭窄部で生じる<strong>「ボクセル内位相分散」</strong>と<strong>「TE短縮・Flow Compensation（流速補正）が有効な理由」</strong>を、時間軸に沿ったMRI装置の物理制御から追体験します。
+  </p>
+
+  <!-- コントロールバー -->
+  <div class="ctrl-panel" style="justify-content: space-between;">
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <button class="btn" id="sim-play-btn">▶ 再生</button>
+      <button class="btn btn-secondary" id="sim-prev-btn">⏮ 前のイベント</button>
+      <button class="btn btn-secondary" id="sim-next-btn">⏭ 次のイベント</button>
+      <button class="btn btn-secondary" id="sim-reset-btn">↺ リセット</button>
+    </div>
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">
+        流速補正(Gread):
+        <select id="sim-flowcomp-select" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 600;">
+          <option value="on" selected>あり (三葉波形 m1=0)</option>
+          <option value="off">なし (通常prephaser)</option>
+        </select>
+      </label>
+      <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">
+        狭窄度:
+        <select id="sim-stenosis-select" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 600;">
+          <option value="normal">正常 (層流 v=0.4m/s)</option>
+          <option value="stenosis" selected>高度狭窄 (乱流/広帯域流速)</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- タイムラインスライダー -->
+  <div style="display: flex; align-items: center; gap: 12px; margin: 12px 0 6px 0;">
+    <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; width: 50px;">時刻 t:</span>
+    <input type="range" id="sim-time-slider" min="0" max="1000" value="0" style="flex: 1; cursor: pointer;">
+    <span id="sim-time-val" style="font-size: 0.85rem; font-family: monospace; font-weight: 700; width: 65px; color: #0f172a;">0.0 ms</span>
+  </div>
+
+  <!-- メイン表示グリッド（PC: 2カラム / スマホ: 1カラム） -->
+  <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; margin-top: 10px;" id="sim-layout-grid">
+
+    <!-- 左カラム：シーケンスタイムライン -->
+    <div class="svg-container" style="margin: 0; padding: 8px;">
+      <div style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; justify-content: space-between;">
+        <span>3D TOF-GRE タイムライン (TR = 25 ms)</span>
+        <span style="color: #0284c7;">TE = 3.8 ms (Echo中心)</span>
+      </div>
+      <svg id="seq-svg" viewBox="0 0 520 400" width="100%" height="400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="t-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+            <polygon points="0 0, 6 2, 0 4" fill="#64748b"/>
+          </marker>
+        </defs>
+
+        <!-- レーン背景ストライプ -->
+        <rect x="70" y="20" width="440" height="45" fill="#f8fafc" stroke="#f1f5f9"/>
+        <rect x="70" y="75" width="440" height="45" fill="#ffffff" stroke="#f1f5f9"/>
+        <rect x="70" y="130" width="440" height="45" fill="#f8fafc" stroke="#f1f5f9"/>
+        <rect x="70" y="185" width="440" height="45" fill="#ffffff" stroke="#f1f5f9"/>
+        <rect x="70" y="240" width="440" height="45" fill="#f8fafc" stroke="#f1f5f9"/>
+        <rect x="70" y="295" width="440" height="45" fill="#ffffff" stroke="#f1f5f9"/>
+
+        <!-- レーンラベル -->
+        <text x="60" y="46" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="end">RF</text>
+        <text x="60" y="101" font-size="11" font-weight="bold" fill="#334155" text-anchor="end">Gslab (z)</text>
+        <text x="60" y="156" font-size="11" font-weight="bold" fill="#334155" text-anchor="end">Gphase (y)</text>
+        <text x="60" y="211" font-size="11" font-weight="bold" fill="#334155" text-anchor="end">Gpart (z)</text>
+        <text x="60" y="266" font-size="11" font-weight="bold" fill="#b91c1c" text-anchor="end">Gread (x)</text>
+        <text x="60" y="321" font-size="11" font-weight="bold" fill="#15803d" text-anchor="end">ADC / Echo</text>
+
+        <!-- 各レーンのゼロ基底軸線 -->
+        <line x1="70" y1="55" x2="510" y2="55" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="70" y1="105" x2="510" y2="105" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="70" y1="160" x2="510" y2="160" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="70" y1="215" x2="510" y2="215" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="70" y1="270" x2="510" y2="270" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="70" y1="325" x2="510" y2="325" stroke="#cbd5e1" stroke-width="1"/>
+
+        <!-- 1. RF: Excitation (α=20°) + RF Spoiling -->
+        <path d="M 90,55 Q 96,25 102,55" fill="rgba(2, 132, 199, 0.25)" stroke="#0284c7" stroke-width="2"/>
+        <text x="96" y="23" font-size="10" font-weight="bold" fill="#0284c7" text-anchor="middle">α = 20°</text>
+
+        <!-- 2. Gslab: Slab Select + Rephaser + Spoiler -->
+        <path d="M 85,105 L 90,85 L 102,85 L 107,105 Z" fill="rgba(100, 116, 139, 0.2)" stroke="#475569" stroke-width="1.5"/>
+        <path d="M 112,105 L 116,120 L 126,120 L 130,105 Z" fill="rgba(100, 116, 139, 0.2)" stroke="#475569" stroke-width="1.5"/>
+        <path d="M 440,105 L 446,80 L 476,80 L 482,105 Z" fill="rgba(100, 116, 139, 0.2)" stroke="#475569" stroke-width="1.5"/>
+        <text x="461" y="76" font-size="9" fill="#64748b" text-anchor="middle">Spoiler</text>
+
+        <!-- 3. Gphase & 4. Gpart (3D Encoding) + Rewinders -->
+        <path d="M 135,160 L 140,140 L 165,140 L 170,160 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2"/>
+        <path d="M 135,160 L 140,180 L 165,180 L 170,160 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <path d="M 410,160 L 415,180 L 435,180 L 440,160 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2"/>
+        <text x="152" y="136" font-size="9" fill="#64748b" text-anchor="middle">ky Enc</text>
+        <text x="425" y="194" font-size="8" fill="#64748b" text-anchor="middle">Rewind</text>
+
+        <path d="M 135,215 L 140,200 L 165,200 L 170,215 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2"/>
+        <path d="M 135,215 L 140,230 L 165,230 L 170,215 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <path d="M 410,215 L 415,230 L 435,230 L 440,215 Z" fill="rgba(100, 116, 139, 0.15)" stroke="#475569" stroke-width="1.2"/>
+        <text x="152" y="196" font-size="9" fill="#64748b" text-anchor="middle">kz Part</text>
+
+        <!-- 5. Gread (Flow Comp vs 通常Prephase) 動的グループ -->
+        <g id="seq-gread-group">
+          <!-- JSで三葉波形 (+, -, +) または通常 (-/+) を書き換え描画 -->
+        </g>
+
+        <!-- 6. ADC & Echo -->
+        <!-- ADC Window -->
+        <rect x="235" y="308" width="130" height="20" fill="rgba(22, 163, 74, 0.15)" stroke="#16a34a" stroke-width="1.5" rx="3"/>
+        <text x="300" y="322" font-size="10" font-weight="bold" fill="#15803d" text-anchor="middle">ADC ON</text>
+        <!-- Gradient Echo 波形 -->
+        <path d="M 245,325 Q 285,325 300,298 Q 315,325 355,325" fill="none" stroke="#0284c7" stroke-width="2"/>
+        <text x="300" y="293" font-size="9" font-weight="bold" fill="#0284c7" text-anchor="middle">Echo</text>
+
+        <!-- TE / TR ブラケット -->
+        <line x1="96" y1="365" x2="300" y2="365" stroke="#0284c7" stroke-width="1.5" marker-end="url(#t-arrow)"/>
+        <line x1="96" y1="358" x2="96" y2="372" stroke="#0284c7" stroke-width="1.5"/>
+        <line x1="300" y1="358" x2="300" y2="372" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="198" y="360" font-size="11" font-weight="bold" fill="#0284c7" text-anchor="middle">TE (3.8 ms)</text>
+
+        <line x1="96" y1="388" x2="495" y2="388" stroke="#334155" stroke-width="1.5" marker-end="url(#t-arrow)"/>
+        <line x1="96" y1="381" x2="96" y2="395" stroke="#334155" stroke-width="1.5"/>
+        <line x1="495" y1="381" x2="495" y2="395" stroke="#334155" stroke-width="1.5"/>
+        <text x="295" y="385" font-size="11" font-weight="bold" fill="#334155" text-anchor="middle">1 TR (25.0 ms)</text>
+
+        <!-- 現在時刻縦カーソル線 -->
+        <line id="sim-cursor" x1="96" y1="15" x2="96" y2="395" stroke="#dc2626" stroke-width="2" stroke-dasharray="4,2"/>
+        <polygon id="sim-cursor-head" points="92,10 100,10 96,18" fill="#dc2626"/>
+      </svg>
+    </div>
+
+    <!-- 右カラム：物理状態同期（k-space / 位相モーメント / 磁化） -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+
+      <!-- 補助図1: k-space Trajectory (kx-ky) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; justify-content: space-between;">
+          <span>k-space軌跡 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>k</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mi>&#x3B3;</mi><mrow><mn>2</mn><mi>&#x3C0;</mi></mrow></mfrac><mo>&#x222B;</mo><mi>G</mi><mi>d</mi><mi>t</mi></math></span>
+          <span id="kspace-coord" style="font-family: monospace; font-size: 0.75rem; color: #0284c7;">kx: 0, ky: 0</span>
+        </div>
+        <svg id="kspace-svg" viewBox="0 0 240 130" width="100%" height="130">
+          <rect x="0" y="0" width="240" height="130" fill="#0f172a" rx="6"/>
+          <!-- グリッド & 軸 -->
+          <line x1="20" y1="65" x2="220" y2="65" stroke="#334155" stroke-width="1"/>
+          <line x1="120" y1="10" x2="120" y2="120" stroke="#334155" stroke-width="1"/>
+          <text x="225" y="68" font-size="9" fill="#94a3b8">kx</text>
+          <text x="123" y="18" font-size="9" fill="#94a3b8">ky</text>
+          <!-- 軌跡線 -->
+          <path id="kspace-trail" d="M 120,65" fill="none" stroke="#38bdf8" stroke-width="2"/>
+          <!-- 現在位置ポイント -->
+          <circle id="kspace-point" cx="120" cy="65" r="4.5" fill="#ef4444"/>
+          <!-- k-space中心マーカー -->
+          <circle cx="120" cy="65" r="2" fill="#ffffff" opacity="0.5"/>
+        </svg>
+      </div>
+
+      <!-- 補助図2: 傾斜磁場モーメントと位相シフト (m0, m1) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 6px;">
+          勾配モーメント <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>0</mn></msub></math>(静止), <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub></math>(流速依存) & 位相
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
+          <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #0284c7;">
+            <div>0次モーメント: <span id="m0-val" style="font-weight: 700; font-family: monospace;">0.00</span></div>
+            <div style="color: #64748b; font-size: 0.75rem;"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>0</mn></msub><mo>=</mo><mo>&#x222B;</mo><msub><mi>G</mi><mi>x</mi></msub><mi>d</mi><mi>t</mi></math> (Echo中心で0)</div>
+          </div>
+          <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #b91c1c;">
+            <div>1次モーメント: <span id="m1-val" style="font-weight: 700; font-family: monospace;">0.00</span></div>
+            <div style="color: #64748b; font-size: 0.75rem;"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub><mo>=</mo><mo>&#x222B;</mo><mi>t</mi><msub><mi>G</mi><mi>x</mi></msub><mi>d</mi><mi>t</mi></math> (流速補正で0)</div>
+          </div>
+        </div>
+        <!-- 位相差バーメーター -->
+        <div style="margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; color: #475569;">
+            <span>ボクセル内位相差のばらつき (<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x394;</mi><mi>&#x3D5;</mi></math>):</span>
+            <span id="phase-disp-val" style="color: #b91c1c;">0° (可干渉)</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 3px;">
+            <div id="phase-disp-bar" style="width: 0%; height: 100%; background: #10b981; transition: width 0.1s, background 0.2s;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 同期リアルタイム解説パネル -->
+  <div style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px;">
+      <span class="box-label" style="color: #0369a1; font-weight: 700; font-size: 0.8rem;">今、MRI装置と磁化の中で何が起きている？</span>
+      <div id="sim-explain-now" style="font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-top: 4px; line-height: 1.5;">
+        RF照射待機中。未飽和の新鮮血液スピンがスラブ内に流入中（インフロー効果）。
+      </div>
+    </div>
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px;">
+      <span class="box-label" style="color: #16a34a; font-weight: 700; font-size: 0.8rem;">次に起こること & 画像への影響</span>
+      <div id="sim-explain-next" style="font-size: 0.9rem; font-weight: 600; color: #15803d; margin-top: 4px; line-height: 1.5;">
+        スラブ選択励起パルス（α=20°）が印加され、新鮮血流の縦磁化が横磁化へ倒れます。
+      </div>
+    </div>
+  </div>
+
+  <!-- 数式のお気持ちセクション -->
+  <div style="margin-top: 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px;">
+    <strong style="color: #92400e; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+      💡 数式のお気持ち：なぜ三葉波形（+, -, +）で流速による位相ズレが消えるのか？
+    </strong>
+    <p style="font-size: 0.85rem; color: #78350f; margin-top: 4px; line-height: 1.5;">
+      傾斜磁場をかけると静止スピンは位置 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>x</mi><mn>0</mn></msub></math> に応じて位相が進みます（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>0</mn></msub></math>）。しかし移動している血流スピンは傾斜磁場中を動くため、時間が経つほど強い（または弱い）磁場を経験し、速度 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>v</mi></math> に比例した余計な位相回転 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3D5;</mi><mo>=</mo><mi>&#x3B3;</mi><mi>v</mi><msub><mi>m</mi><mn>1</mn></msub></math> を抱え込みます。
+      Greadを「正 → 2倍の負 → 正」のように巧妙に配置すると、<strong>「進みすぎた位相」と「遅れた位相」がEcho中心時刻（TE）で等速運動スピンについて完全に相殺（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub><mo>=</mo><mn>0</mn></math>）</strong>します。ただし、狭窄後の<strong>乱流（加速度・渦・多速度成分）</strong>は高次項（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>2</mn></msub></math>以上）が残り、TEが長いと相殺しきれずボクセル内位相分散を引き起こします。
+    </p>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 動的シミュレータ エンジン (Vanilla JS / 完全オフライン) -->
+<!-- ================================================================= -->
+<script>
+(function() {
+  // DOM参照
+  const playBtn = document.getElementById('sim-play-btn');
+  const prevBtn = document.getElementById('sim-prev-btn');
+  const nextBtn = document.getElementById('sim-next-btn');
+  const resetBtn = document.getElementById('sim-reset-btn');
+  const slider = document.getElementById('sim-time-slider');
+  const timeVal = document.getElementById('sim-time-val');
+  const flowCompSelect = document.getElementById('sim-flowcomp-select');
+  const stenosisSelect = document.getElementById('sim-stenosis-select');
+  const cursor = document.getElementById('sim-cursor');
+  const cursorHead = document.getElementById('sim-cursor-head');
+  const greadGroup = document.getElementById('seq-gread-group');
+  const kspaceTrail = document.getElementById('kspace-trail');
+  const kspacePoint = document.getElementById('kspace-point');
+  const kspaceCoord = document.getElementById('kspace-coord');
+  const m0Val = document.getElementById('m0-val');
+  const m1Val = document.getElementById('m1-val');
+  const phaseDispVal = document.getElementById('phase-disp-val');
+  const phaseDispBar = document.getElementById('phase-disp-bar');
+  const expNow = document.getElementById('sim-explain-now');
+  const expNext = document.getElementById('sim-explain-next');
+
+  // シーケンス時間定義 (0〜1000 norm unit => 0〜25.0 ms)
+  // イベントキーフレーム (slider value):
+  // 0-60: 静止/流入
+  // 60-115: RF励起 + Slab選択
+  // 115-135: Slab Rephase
+  // 135-230: Phase/Partition Encoding & Gread Prephase (FlowComp)
+  // 235-370: Gread Readout (flat plateau) & ADC ON (TE center @ 300)
+  // 370-440: Gphase/part Rewind
+  // 440-490: RF Spoiler + Gslab Spoiler
+  // 490-1000: TR終端回復
+  const events = [
+    { t: 0, label: "TR開始：流入", now: "未飽和の新鮮血液がスラブ内へ流入中。縦磁化は最大（インフロー効果）。", next: "高周波（RF）パルスにより横磁化が倒されます。" },
+    { t: 88, label: "RF励起 (α=20°)", now: "Slab選択磁場(Gslab)印加中にRFを照射。目的スラブ内のスピンを一斉に20°倒します。", next: "スラブ内の位相分散をリフェーズし、空間エンコードへ移ります。" },
+    { t: 125, label: "Slabリフェーズ", now: "励起時のスラブ選択勾配で生じたz方向の位相のばらつきを負のローブで相殺中。", next: "位相エンコード（Gy）とパーティションエンコード（Gz）の印加。" },
+    { t: 180, label: "空間エンコード & 読み出し前処理", now: "ky/kzを位置決め。GreadではEcho中心で全スピンの位相を揃えるための前処理勾配を印加中。", next: "ADCサンプリング開始とGradient Echoの形成。" },
+    { t: 300, label: "TE (エコー中心) & ADCサンプリング", now: "Gread反転により周波数位相が再収束してGradient Echoが形成され、k-space中心を取得中。", next: "残存する横磁化の位相を巻き戻し（Rewind）および破壊（Spoiler）。" },
+    { t: 425, label: "位相リワインダー", now: "ky/kzの位相勾配を逆向きにかけ、次のTRに向けて横磁化の位相履歴をリセット。", next: "強力なスポイラー勾配とRF位相サイクルで横磁化を消去。" },
+    { t: 465, label: "Spoiler印加", now: "残留横磁化をバラバラにして完全に消去（RF Spoiling併用）。T1コントラストを担保。", next: "次のTRへ移行し、新たなスライス/ラインのデータを取得します。" }
+  ];
+
+  let isPlaying = false;
+  let animTimer = null;
+
+  // Gread波形のSVGパス生成（Flow Comp vs 通常）
+  function updateGreadWaveform() {
+    const isFlowComp = flowCompSelect.value === 'on';
+    let pathHtml = '';
+    if (isFlowComp) {
+      // FlowComp 三葉波形: 正(+15) -> 負(-28) -> 読出フラット(+18) -> スポイラー
+      // t: 135-165(+), 165-215(-), 235-370(+ Readout), 440-480(+)
+      pathHtml = `
+        <path d="M 135,270 L 140,250 L 160,250 L 165,270 L 170,298 L 210,298 L 215,270 L 235,270 L 240,252 L 365,252 L 370,270 L 440,270 L 446,245 L 476,245 L 482,270 Z" 
+              fill="rgba(185, 28, 28, 0.15)" stroke="#b91c1c" stroke-width="1.5"/>
+        <text x="188" y="245" font-size="9" font-weight="bold" fill="#b91c1c" text-anchor="middle">Flow Comp (m1=0)</text>
+        <text x="300" y="248" font-size="9" fill="#b91c1c" text-anchor="middle">Flat Readout</text>
+      `;
+    } else {
+      // 通常 Prephaser: 負(-) -> 読出フラット(+)
+      pathHtml = `
+        <path d="M 145,270 L 152,295 L 205,295 L 212,270 L 235,270 L 240,252 L 365,252 L 370,270 L 440,270 L 446,245 L 476,245 L 482,270 Z" 
+              fill="rgba(185, 28, 28, 0.15)" stroke="#b91c1c" stroke-width="1.5"/>
+        <text x="180" y="308" font-size="9" fill="#b91c1c" text-anchor="middle">Prephaser</text>
+        <text x="300" y="248" font-size="9" fill="#b91c1c" text-anchor="middle">Flat Readout</text>
+      `;
+    }
+    greadGroup.innerHTML = pathHtml;
+  }
+
+  // 物理計算シミュレーション（時間 t に応じた m0, m1, kx, ky, 位相分散）
+  function calculatePhysics(tNorm) {
+    const isFlowComp = flowCompSelect.value === 'on';
+    const isStenosis = stenosisSelect.value === 'stenosis';
+
+    // x座標マッピング: tNorm(0-1000) => SVG x(70-510)
+    const cursorX = 70 + (tNorm / 1000) * 440;
+
+    // kx(t), ky(t), m0(t), m1(t) の積算計算
+    let kx = 0;
+    let ky = 0;
+    let m0 = 0;
+    let m1 = 0;
+
+    // ky: 135-170で印加
+    if (tNorm > 135 && tNorm <= 170) {
+      ky = ((tNorm - 135) / 35) * 45;
+    } else if (tNorm > 170 && tNorm < 410) {
+      ky = 45;
+    } else if (tNorm >= 410 && tNorm <= 440) {
+      ky = 45 - ((tNorm - 410) / 30) * 45;
+    }
+
+    // Gread / m0, m1 計算
+    if (isFlowComp) {
+      if (tNorm > 135 && tNorm <= 165) {
+        let f = (tNorm - 135) / 30;
+        m0 = f * 0.4;
+        m1 = f * 0.3;
+      } else if (tNorm > 165 && tNorm <= 215) {
+        let f = (tNorm - 165) / 50;
+        m0 = 0.4 - f * 1.4; // 負へ振れる
+        m1 = 0.3 - f * 0.9;
+      } else if (tNorm > 215 && tNorm < 235) {
+        m0 = -1.0;
+        m1 = -0.6;
+      } else if (tNorm >= 235 && tNorm <= 370) {
+        let f = (tNorm - 235) / 135;
+        m0 = -1.0 + f * 2.0; // t=300 (f≒0.48) で m0 = 0
+        m1 = -0.6 + f * 1.25; // t=300 で m1 ≒ 0 (流速補正成立)
+      } else if (tNorm > 370) {
+        m0 = 1.0;
+        m1 = 0.65;
+      }
+    } else {
+      // 通常Prephaser
+      if (tNorm > 145 && tNorm <= 212) {
+        let f = (tNorm - 145) / 67;
+        m0 = -f * 1.0;
+        m1 = -f * 0.8;
+      } else if (tNorm > 212 && tNorm < 235) {
+        m0 = -1.0;
+        m1 = -0.8;
+      } else if (tNorm >= 235 && tNorm <= 370) {
+        let f = (tNorm - 235) / 135;
+        m0 = -1.0 + f * 2.0;
+        m1 = -0.8 + f * 1.1; // t=300で m0=0 だが m1≠0 (流速位相が残る)
+      } else if (tNorm > 370) {
+        m0 = 1.0;
+        m1 = 0.3;
+      }
+    }
+
+    kx = m0 * 80; // kxスケール
+
+    // ボクセル内位相分散（Δφ）の推定
+    // 正常血流: 速度分布が単峰性、m1依存で位相がずれる
+    // 乱流(狭窄後): 流速のばらつき幅σ_vが巨大 + 高次項(加速度)
+    let phaseDispDeg = 0;
+    if (tNorm >= 88) { // 励起後
+      if (!isStenosis) {
+        // 正常層流
+        phaseDispDeg = Math.abs(m1) * (isFlowComp ? 12 : 65);
+      } else {
+        // 乱流（ボクセル内に極端な速度勾配）
+        phaseDispDeg = Math.abs(m1) * 110 + (tNorm >= 235 ? 130 : 40);
+        if (isFlowComp && tNorm >= 280 && tNorm <= 320) {
+          // FlowCompがあっても乱流では渦・高次成分により分散が残る
+          phaseDispDeg = 85;
+        }
+      }
+    }
+    phaseDispDeg = Math.min(180, phaseDispDeg);
+
+    return { cursorX, kx, ky, m0, m1, phaseDispDeg };
+  }
+
+  // 描画更新関数
+  function render() {
+    const tNorm = parseFloat(slider.value);
+    const tMs = (tNorm * 0.025).toFixed(1);
+    timeVal.textContent = `${tMs} ms`;
+
+    const state = calculatePhysics(tNorm);
+
+    // カーソル位置更新
+    cursor.setAttribute('x1', state.cursorX);
+    cursor.setAttribute('x2', state.cursorX);
+    cursorHead.setAttribute('points', `${state.cursorX - 4},10 ${state.cursorX + 4},10 ${state.cursorX},18`);
+
+    // k-space 軌跡描画
+    // k-space原点 (cx=120, cy=65)
+    const kxSvg = 120 + state.kx;
+    const kySvg = 65 - state.ky;
+    kspacePoint.setAttribute('cx', kxSvg);
+    kspacePoint.setAttribute('cy', kySvg);
+    kspaceCoord.textContent = `kx: ${(state.kx / 80).toFixed(2)}, ky: ${(state.ky / 45).toFixed(2)}`;
+
+    // 軌跡パス
+    if (tNorm < 88) {
+      kspaceTrail.setAttribute('d', `M 120,65`);
+    } else {
+      kspaceTrail.setAttribute('d', `M 120,65 L 120,${65 - state.ky} L ${kxSvg},${kySvg}`);
+    }
+
+    // モーメント表示
+    m0Val.textContent = state.m0.toFixed(2);
+    m1Val.textContent = state.m1.toFixed(2);
+    m1Val.style.color = Math.abs(state.m1) < 0.08 ? "#16a34a" : "#b91c1c";
+
+    // 位相分散バー
+    phaseDispVal.textContent = `${state.phaseDispDeg.toFixed(0)}° (${state.phaseDispDeg > 90 ? '位相相殺・無信号化' : state.phaseDispDeg > 30 ? '信号低下' : 'コヒーレント'})`;
+    phaseDispVal.style.color = state.phaseDispDeg > 90 ? "#b91c1c" : state.phaseDispDeg > 30 ? "#d97706" : "#16a34a";
+    phaseDispBar.style.width = `${(state.phaseDispDeg / 180) * 100}%`;
+    phaseDispBar.style.background = state.phaseDispDeg > 90 ? "#ef4444" : state.phaseDispDeg > 30 ? "#f59e0b" : "#10b981";
+
+    // 解説テキスト更新
+    let activeEvent = events[0];
+    for (let i = events.length - 1; i >= 0; i--) {
+      if (tNorm >= events[i].t) {
+        activeEvent = events[i];
+        break;
+      }
+    }
+    expNow.innerHTML = activeEvent.now;
+    expNext.innerHTML = activeEvent.next;
+  }
+
+  // アニメーションループ
+  function step() {
+    if (!isPlaying) return;
+    let val = parseFloat(slider.value) + 3;
+    if (val > 1000) {
+      val = 0;
+    }
+    slider.value = val;
+    render();
+    animTimer = requestAnimationFrame(step);
+  }
+
+  // イベントリスナー
+  playBtn.addEventListener('click', () => {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+      playBtn.textContent = '⏸ 一時停止';
+      animTimer = requestAnimationFrame(step);
+    } else {
+      playBtn.textContent = '▶ 再生';
+      cancelAnimationFrame(animTimer);
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    isPlaying = false;
+    cancelAnimationFrame(animTimer);
+    playBtn.textContent = '▶ 再生';
+    slider.value = 0;
+    render();
+  });
+
+  slider.addEventListener('input', () => {
+    if (isPlaying) {
+      isPlaying = false;
+      cancelAnimationFrame(animTimer);
+      playBtn.textContent = '▶ 再生';
+    }
+    render();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    const current = parseFloat(slider.value);
+    const prevEv = [...events].reverse().find(e => e.t < current - 15);
+    slider.value = prevEv ? prevEv.t : 0;
+    render();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const current = parseFloat(slider.value);
+    const nextEv = events.find(e => e.t > current + 15);
+    slider.value = nextEv ? nextEv.t : 1000;
+    render();
+  });
+
+  flowCompSelect.addEventListener('change', () => {
+    updateGreadWaveform();
+    render();
+  });
+
+  stenosisSelect.addEventListener('change', () => {
+    render();
+  });
+
+  // 初期化実行
+  updateGreadWaveform();
+  render();
+})();
+</script>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材：マルチスライス撮像におけるクロストークとインターリーブ撮像</title>
+<style>
+  /* --- 基本リセット & タイポグラフィ --- */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    line-height: 1.65;
+    color: #1e293b;
+    background-color: #f8fafc;
+    padding: 24px 16px;
+  }
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* --- カード基本スタイル --- */
+  .card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+    padding: 24px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+  .card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-primary { background-color: #e0e7ff; color: #3730a3; }
+  .badge-success { background-color: #dcfce7; color: #166534; }
+  .badge-warning { background-color: #fef3c7; color: #92400e; }
+  .badge-danger  { background-color: #fee2e2; color: #991b1b; }
+  .badge-info    { background-color: #e0f2fe; color: #075985; }
+
+  /* --- 採点サマリー専用スタイル --- */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .summary-stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .summary-stat-box .label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .summary-stat-box .value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .text-pass { color: #16a34a !important; }
+  .qa-block {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #3b82f6;
+  }
+  .qa-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .qa-content {
+    font-size: 0.95rem;
+    color: #1e293b;
+    line-height: 1.6;
+  }
+  .eval-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 640px) {
+    .eval-row { grid-template-columns: 1fr; }
+  }
+  .eval-card {
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .eval-card-good {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #14532d;
+  }
+  .eval-card-fix {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #78350f;
+  }
+
+  /* --- 数式・解説ボックス --- */
+  .math-card {
+    background-color: #fdfefe;
+    border: 1px solid #cbd5e1;
+    border-left: 5px solid #6366f1;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+  .math-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 14px 0;
+    overflow-x: auto;
+    padding: 8px 0;
+  }
+  math {
+    font-size: 1.15rem;
+  }
+  .formula-breakdown {
+    margin-top: 14px;
+    font-size: 0.88rem;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .formula-breakdown th, .formula-breakdown td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+  }
+  .formula-breakdown th {
+    color: #475569;
+    font-weight: 700;
+    background: #f8fafc;
+  }
+
+  /* --- 比較テーブル --- */
+  .table-responsive {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  table.data-table th, table.data-table td {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+  }
+  table.data-table th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+  }
+  table.data-table tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+
+  /* --- インタラクティブ・シミュレータ --- */
+  .interactive-container {
+    background-color: #0f172a;
+    border-radius: 12px;
+    padding: 20px;
+    color: #f8fafc;
+    margin: 16px 0;
+  }
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .btn {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  .btn:hover { background-color: #2563eb; }
+  .btn:active { transform: scale(0.98); }
+  .btn-outline {
+    background-color: transparent;
+    border: 1px solid #475569;
+    color: #e2e8f0;
+  }
+  .btn-outline:hover {
+    background-color: #1e293b;
+    border-color: #64748b;
+  }
+  .btn-active {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+  }
+  .sim-canvas-wrap {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    background-color: #1e293b;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  /* --- 臨床コールアウト --- */
+  .callout {
+    border-left: 4px solid #0284c7;
+    background-color: #f0f9ff;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 0.92rem;
+    color: #0c4a6e;
+  }
+  .callout strong {
+    color: #0369a1;
+  }
+
+  /* --- 印刷用スタイル --- */
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      color: #000000;
+    }
+    .card {
+      border: 1px solid #94a3b8;
+      box-shadow: none;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin-bottom: 20px;
+    }
+    .btn, .sim-controls {
+      display: none !important;
+    }
+    .interactive-container {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: 1px solid #cbd5e1;
+    }
+    .sim-canvas-wrap {
+      background: #ffffff !important;
+    }
+    svg text {
+      fill: #000000 !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ==================== 1. 採点サマリーカード ==================== -->
+  <header class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        学習達成度 &amp; 採点サマリー
+      </h2>
+      <span class="badge badge-primary">MRI物理・シーケンス工学</span>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-stat-box">
+        <span class="label">得点</span>
+        <span class="value text-pass">88 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">/ 100 点</span></span>
+      </div>
+      <div class="summary-stat-box">
+        <span class="label">判定</span>
+        <span class="value text-pass">合格水準 (合格)</span>
+      </div>
+      <div class="summary-stat-box">
+        <span class="label">学習優先度</span>
+        <span class="value" style="color: #f59e0b;">中（臨床・試験直結）</span>
+      </div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        問題（原文・変更なし）
+      </div>
+      <div class="qa-content" style="font-weight: 600;">
+        マルチスライス撮像でスライス間ギャップ（gap）をゼロにして連続撮像した場合に生じる「クロストーク（スライス間干渉）」の機序と、それが画像（コントラスト・SNR）に与える悪影響を説明してください。
+      </div>
+    </div>
+
+    <div class="qa-block" style="border-left-color: #64748b;">
+      <div class="qa-title">ユーザー解答（Predict 原文）</div>
+      <div class="qa-content" style="font-family: monospace; color: #334155;">
+        RFパルスのスライス断面プロファイルの裾野が隣接スライスと重複し、不要な部分飽和を起こす。
+      </div>
+    </div>
+
+    <div class="qa-block" style="border-left-color: #10b981;">
+      <div class="qa-title">元テキストの「解答・考え方」（変更なし）</div>
+      <div class="qa-content">
+        現実の選択励起RFパルスは周波数空間で完全な矩形にはならず、有限の sinc 関数の打ち切り等により励起プロファイルの裾野（サイドローブ）が広がっています。スライス間ギャップを設けずに隣り合うスライスを密着して撮像すると、隣接スライスを励起した際のRFパルスの裾野が目的スライスのスピンを部分的に励起・飽和してしまいます（クロストーク）。その結果、本来の励起直前の縦磁化が減少し、信号雑音比（SNR）の低下や、実効TRの短縮によるT1強調化（意図しないコントラストの変質）が生じます。これを防ぐために通常スライス厚の10〜30%程度のギャップを設けるか、インターリーブ撮像（奇数スライス→偶数スライス）を行います。
+      </div>
+    </div>
+
+    <div class="eval-row">
+      <div class="eval-card eval-card-good">
+        <strong>◎ 正しく理解できた点:</strong><br>
+        「RFパルスのスライス断面プロファイルの裾野の広がり」と「隣接スライスとの重複による部分飽和（Saturation）」という、クロストーク発生の根本的な物理メカニズムを的確に捉えられています。
+      </div>
+      <div class="eval-card eval-card-fix">
+        <strong>▲ 最大の修正点・補強ポイント:</strong><br>
+        部分飽和が画像に与える具体的影響として、単なる「SNR低下」にとどまらず、<strong>「実効TR（TR<sub>eff</sub>）の短縮に伴う意図しないT1強調化（コントラスト変化）」</strong>まで踏み込んで言語化できるようにしましょう。
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; font-size: 0.85rem; color: #64748b;">
+      <strong>根本的誤概念:</strong> なし。物理現象の捉え方は完全に正しいため、臨床画像評価（コントラストへの影響と対策法）の視点を付加することで満点答案となります。
+    </div>
+  </header>
+
+
+  <!-- ==================== 2. クロストーク発生の物理機序 ==================== -->
+  <section class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M2 12h5l3 9 4-18 3 9h5"></path></svg>
+        1. なぜクロストークは生じるのか？（励起プロファイルの数理）
+      </h2>
+    </div>
+
+    <p>
+      MRIにおいて任意のスライスを選択励起する場合、スライス選択傾斜磁場 <math><msub><mi>G</mi><mi>z</mi></msub></math> を印加しながら特定の周波数帯域（バンド幅 <math><mi>&Delta;</mi><mi>f</mi></math>）を持つRFパルスを照射します。
+      理想的なスライス選択とは、指定した厚み <math><mi>&Delta;</mi><mi>z</mi></math> の内部のみが100%励起され、外側は0%となる<strong>「完全な矩形（Boxcar）プロファイル」</strong>です。
+    </p>
+
+    <!-- 数式カード1 -->
+    <div class="math-card">
+      <strong>【重要式 1】スライス厚と周波数バンド幅の関係</strong>
+      <div class="math-display">
+        <math display="block">
+          <mi>&Delta;</mi><mi>z</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow><mi>&Delta;</mi><mi>f</mi></mrow>
+            <mrow>
+              <mfrac><mi>&gamma;</mi><mrow><mn>2</mn><mi>&pi;</mi></mrow></mfrac>
+              <mo>&sdot;</mo>
+              <msub><mi>G</mi><mi>z</mi></msub>
+            </mrow>
+          </mfrac>
+        </math>
+      </div>
+      <table class="formula-breakdown">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理量・意味</th>
+            <th>単位</th>
+            <th>比例・反比例関係と影響</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math><mi>&Delta;</mi><mi>z</mi></math></td>
+            <td>スライス厚（Slice thickness）</td>
+            <td>mm</td>
+            <td>目的とする断面の物理的な厚み</td>
+          </tr>
+          <tr>
+            <td><math><mi>&Delta;</mi><mi>f</mi></math></td>
+            <td>RF送信周波数バンド幅（Bandwidth）</td>
+            <td>Hz または kHz</td>
+            <td><math><mi>&Delta;</mi><mi>z</mi></math> に<strong>比例</strong>。狭くするとスライスは薄くなる</td>
+          </tr>
+          <tr>
+            <td><math><msub><mi>G</mi><mi>z</mi></msub></math></td>
+            <td>スライス選択傾斜磁場強度</td>
+            <td>mT/m</td>
+            <td><math><mi>&Delta;</mi><mi>z</mi></math> に<strong>反比例</strong>。強くするとスライスは薄くなる</td>
+          </tr>
+          <tr>
+            <td><math><mfrac><mi>&gamma;</mi><mrow><mn>2</mn><mi>&pi;</mi></mrow></mfrac></math></td>
+            <td>磁気回転比（プロトン <sup>1</sup>H）</td>
+            <td>42.58 MHz/T</td>
+            <td>定数</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 1.05rem; margin: 18px 0 8px; color: #1e293b;">■ sinc関数の有限打ち切りと周波数空間の広がり</h3>
+    <p>
+      周波数領域で完全な矩形波を作るためには、フーリエ変換の双対性から、時間領域において無限に続く <math><mi>sinc</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>=</mo><mfrac><mrow><mo>sin</mo><mo>(</mo><mi>&pi;</mi><mi>t</mi><mo>)</mo></mrow><mrow><mi>&pi;</mi><mi>t</mi></mrow></mfrac></math> パルスを照射し続ける必要があります。
+      しかし臨床撮像では、ミリ秒単位（2〜5 ms程度）でRF照射を終了させなければならないため、有限時間で波形を<strong>「打ち切り（Truncation）」</strong>せざるを得ません。
+    </p>
+    <p style="margin-top: 8px;">
+      この打ち切りによって周波数空間上にはリップルが生じ、スライスの境界が直角に切れ落ちず、外側へ向けて<strong>「サイドローブ（裾野）」</strong>が漏れ出します。
+      この状態でギャップをゼロ（密着）にして連続するスライスを励起すると、隣接スライスの端にあるプロトンが意図せずRFエネルギーを浴びてしまいます。これが<strong>クロストーク（Crosstalk）</strong>です。
+    </p>
+
+    <!-- Inline SVG: 励起プロファイルと重複 -->
+    <div style="margin: 20px 0; text-align: center;">
+      <svg viewBox="0 0 800 320" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <defs>
+          <linearGradient id="gradOverlap" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#ef4444" stop-opacity="0.05"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 軸 -->
+        <line x1="50" y1="260" x2="750" y2="260" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="50" y1="260" x2="50" y2="40" stroke="#94a3b8" stroke-width="2"/>
+        <text x="755" y="265" font-size="12" fill="#64748b" font-weight="bold">位置 z (周波数 f)</text>
+        <text x="30" y="35" font-size="12" fill="#64748b" font-weight="bold">励起フリップ角 α</text>
+
+        <!-- 理想の矩形プロファイル（点線） -->
+        <rect x="180" y="80" width="180" height="180" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <rect x="360" y="80" width="180" height="180" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <text x="230" y="70" font-size="11" fill="#94a3b8">理想: 矩形スライス 1</text>
+        <text x="410" y="70" font-size="11" fill="#94a3b8">理想: 矩形スライス 2</text>
+
+        <!-- スライス1 実際のプロファイル (青) -->
+        <path d="M 70 260 C 130 260 140 250 160 255 C 175 258 180 80 270 80 C 360 80 365 258 380 255 C 400 250 410 260 470 260" 
+              fill="none" stroke="#2563eb" stroke-width="3"/>
+        <text x="220" y="140" font-size="13" font-weight="bold" fill="#2563eb">スライス 1</text>
+
+        <!-- スライス2 実際のプロファイル (緑) -->
+        <path d="M 250 260 C 310 260 320 250 340 255 C 355 258 360 80 450 80 C 540 80 545 258 560 255 C 580 250 590 260 650 260" 
+              fill="none" stroke="#059669" stroke-width="3"/>
+        <text x="470" y="140" font-size="13" font-weight="bold" fill="#059669">スライス 2</text>
+
+        <!-- 重複領域（クロストークゾーン）のハイライト -->
+        <path d="M 340 255 C 355 258 360 160 365 160 C 370 160 375 258 380 255 Z" fill="url(#gradOverlap)" stroke="#dc2626" stroke-width="1.5"/>
+
+        <!-- 矢印と注記 -->
+        <line x1="365" y1="160" x2="365" y2="45" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <circle cx="365" cy="180" r="14" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+        <text x="360" y="185" font-size="14" font-weight="bold" fill="#dc2626">!</text>
+
+        <rect x="260" y="15" width="220" height="35" rx="6" fill="#fef2f2" stroke="#f87171" stroke-width="1"/>
+        <text x="270" y="32" font-size="12" font-weight="bold" fill="#991b1b">裾野（サイドローブ）の重複</text>
+        <text x="270" y="45" font-size="10" fill="#b91c1c">ギャップ＝0 によるクロストーク発生域</text>
+
+        <!-- 下部の境界注記 -->
+        <line x1="360" y1="260" x2="360" y2="285" stroke="#475569" stroke-width="1"/>
+        <text x="325" y="300" font-size="11" fill="#475569">境界 (Gap = 0)</text>
+      </svg>
+      <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">図1：スライスプロファイルの実態。有限sincパルスによる裾野が隣接スライスと干渉する。</div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 3. 画像への悪影響（SNR低下とコントラスト変質） ==================== -->
+  <section class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        2. 画像（SNR・コントラスト）に与える悪影響のメカニズム
+      </h2>
+    </div>
+
+    <!-- 数式カード2 -->
+    <div class="math-card">
+      <strong>【重要式 2】縦磁化の熱平衡回復と信号強度</strong>
+      <div class="math-display">
+        <math display="block">
+          <msub><mi>M</mi><mi>z</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo>
+          <mo>=</mo>
+          <msub><mi>M</mi><mn>0</mn></msub>
+          <mfenced open="[" close="]">
+            <mrow>
+              <mn>1</mn>
+              <mo>&minus;</mo>
+              <mo>exp</mo>
+              <mfenced separators="" open="(" close=")">
+                <mrow><mo>&minus;</mo><mfrac><mi>t</mi><msub><mi>T</mi><mn>1</mn></msub></mfrac></mrow>
+              </mfenced>
+            </mrow>
+          </mfenced>
+          <mo>&emsp;</mo>
+          <mo>&rArr;</mo>
+          <mo>&emsp;</mo>
+          <mtext>MR信号強度&nbsp;</mtext><mi>S</mi>
+          <mo>&prop;</mo>
+          <msub><mi>M</mi><mi>z</mi></msub><mo>(</mo><msub><mi>t</mi><mtext>励起直前</mtext></msub><mo>)</mo>
+          <mo>&sdot;</mo>
+          <mo>sin</mo><mi>&alpha;</mi>
+        </math>
+      </div>
+      <table class="formula-breakdown">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理量・意味</th>
+            <th>単位</th>
+            <th>クロストーク時の挙動</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math><msub><mi>M</mi><mi>z</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo></math></td>
+            <td>時刻 <math><mi>t</mi></math> における縦磁化成分</td>
+            <td>A/m</td>
+            <td>隣のスライスのRFで倒され、回復途中でリセットされるため<strong>大幅に低下</strong></td>
+          </tr>
+          <tr>
+            <td><math><msub><mi>M</mi><mn>0</mn></msub></math></td>
+            <td>静磁場下での熱平衡縦磁化</td>
+            <td>A/m</td>
+            <td>プロトン密度および静磁場強度 <math><msub><mi>B</mi><mn>0</mn></msub></math> に依存</td>
+          </tr>
+          <tr>
+            <td><math><mi>t</mi><mo>=</mo><msub><mi>TR</mi><mtext>eff</mtext></msub></math></td>
+            <td>実効的な繰り返し時間</td>
+            <td>ms</td>
+            <td>本来の <math><mi>TR</mi></math> より著しく短い時間間隔で照射されるため <strong><math><msub><mi>TR</mi><mtext>eff</mtext></msub><mo>&ll;</mo><mi>TR</mi></math></strong> となる</td>
+          </tr>
+          <tr>
+            <td><math><msub><mi>T</mi><mn>1</mn></msub></math></td>
+            <td>組織の縦緩和時間</td>
+            <td>ms</td>
+            <td>組織固有値（脳脊髄液：長、脳実質：中、脂肪：短）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px;">
+        <h4 style="color: #991b1b; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+          悪影響 1: 信号雑音比（SNR）の著しい低下
+        </h4>
+        <p style="font-size: 0.88rem; color: #7f1d1d; line-height: 1.5;">
+          目的スライスが本来のRF励起を受ける直前、隣接スライスを励起したRFパルスの裾野によってスピンの一部が部分励起（不要な部分飽和）を受けます。
+          これにより、本来倒すはずだった縦磁化 <math><msub><mi>M</mi><mi>z</mi></msub></math> が目減りした状態から励起が始まるため、発生するエコー信号が低下し、<strong>画像全体のSNRが低下</strong>してザラついた画像になります。
+        </p>
+      </div>
+
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px;">
+        <h4 style="color: #92400e; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 12l-4-4-4 4M12 16V8"/></svg>
+          悪影響 2: 実効TR短縮による意図しないT1強調化
+        </h4>
+        <p style="font-size: 0.88rem; color: #78350f; line-height: 1.5;">
+          連続（Sequential）撮像では、隣り合うスライスがわずか数十ミリ秒の間隔で次々と励起されます。
+          スライス境界領域のスピンにとっては、設定した <math><mi>TR</mi></math>（例: 3000 ms）よりもはるかに短い時間で連続してRFパルスを浴びることになり、<strong>実効的なTRが極端に短縮</strong>します。
+          これにより、T2強調像やプロトン密度強調像を撮像しているにもかかわらず、<strong>意図しない強いT1コントラストが混入</strong>し、病変組織と正常組織の明暗比が崩壊します。
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 4. インタラクティブ・シミュレータ ==================== -->
+  <section class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        3. 動的シミュレーション：連続撮像 vs インターリーブ撮像
+      </h2>
+      <span class="badge badge-success">視覚理解</span>
+    </div>
+    <p style="font-size: 0.9rem; color: #475569;">
+      スライスが照射される順番と、スライス境界部における縦磁化 <math><msub><mi>M</mi><mi>z</mi></msub></math> の回復挙動を比較できます。「再生」または「ステップ送り」を押して時間進行を確認してください。
+    </p>
+
+    <div class="interactive-container">
+      <div class="sim-controls">
+        <span style="font-size: 0.85rem; font-weight: 700; margin-right: 6px;">撮像方式:</span>
+        <button id="btnModeSeq" class="btn btn-outline btn-active" onclick="setMode('seq')">連続撮像 (Sequential)</button>
+        <button id="btnModeInt" class="btn btn-outline" onclick="setMode('int')">インターリーブ (Interleaved)</button>
+
+        <div style="width: 1px; height: 20px; background: #475569; margin: 0 8px;"></div>
+
+        <button id="btnPlay" class="btn" onclick="togglePlay()">
+          <span id="playIcon">▶</span> <span id="playText">再生</span>
+        </button>
+        <button class="btn btn-outline" onclick="stepSim()">ステップ送り</button>
+        <button class="btn btn-outline" onclick="resetSim()">リセット</button>
+
+        <span style="margin-left: auto; font-size: 0.85rem; color: #94a3b8;">
+          時間経過: <span id="timeDisplay" style="color: #38bdf8; font-family: monospace; font-weight: bold;">0 ms</span>
+        </span>
+      </div>
+
+      <div class="sim-canvas-wrap">
+        <svg id="simSvg" viewBox="0 0 760 260" width="100%" height="240">
+          <!-- 背景目盛り -->
+          <rect x="0" y="0" width="760" height="260" fill="#0f172a"/>
+
+          <!-- スライス配置ブロック (1〜6) -->
+          <g id="sliceBlocks">
+            <!-- JSで動的生成または静的配置 -->
+          </g>
+
+          <!-- 励起インジケータビーム -->
+          <line id="rfBeam" x1="-100" y1="20" x2="-100" y2="150" stroke="#f59e0b" stroke-width="4" stroke-dasharray="6,4" opacity="0"/>
+
+          <!-- 下部: 縦磁化回復メーター -->
+          <g transform="translate(60, 190)">
+            <text x="0" y="-10" font-size="12" fill="#94a3b8">各スライスの励起直前の縦磁化 Mz (SNRとコントラストの指標)</text>
+            <line x1="0" y1="40" x2="640" y2="40" stroke="#334155" stroke-width="2"/>
+            <text x="650" y="44" font-size="11" fill="#64748b">0%</text>
+            <line x1="0" y1="0" x2="640" y2="0" stroke="#334155" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="650" y="5" font-size="11" fill="#10b981">100%</text>
+
+            <g id="mzBars"></g>
+          </g>
+        </svg>
+      </div>
+
+      <div id="simLog" style="margin-top: 12px; font-size: 0.85rem; padding: 10px 14px; background: #1e293b; border-radius: 6px; color: #e2e8f0; min-height: 44px; display: flex; align-items: center;">
+        シミュレーション待機中。「再生」または「ステップ送り」を押してください。
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 5. インターリーブ撮像の臨床応用と詳細 ==================== -->
+  <section class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        4. インターリーブ撮像の臨床応用：どの場面・部位で使われるか？
+      </h2>
+      <span class="badge badge-primary">臨床現場での実践</span>
+    </div>
+
+    <p>
+      インターリーブ撮像（Interleaved Acquisition）とは、隣り合うスライスを順番に励起するのではなく、
+      <strong>「奇数番スライス群（1, 3, 5, 7...）」を先に取得し、次いで「偶数番スライス群（2, 4, 6, 8...）」を取得する手法</strong>です。
+    </p>
+
+    <div class="callout">
+      <strong>◆ なぜインターリーブでクロストークが消えるのか？</strong><br>
+      奇数スライスを撮像している間、隣り合う偶数スライスは励起されません。空間的に「スライス1枚分（100%分）の巨大なギャップ」を空けて励起するのと等価になります。
+      偶数スライスの励起が回ってくる頃には、奇数スライスの照射からおよそ <math><mfrac><mi>TR</mi><mn>2</mn></mfrac></math> （または1TR全体）という長い時間が経過しているため、裾野で乱された縦磁化はほぼ100%熱平衡状態まで回復しています。
+    </div>
+
+    <h3 style="font-size: 1.05rem; margin: 20px 0 10px; color: #0f172a;">■ 具体的な臨床適応部位と活用場面</h3>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">撮像部位・検査</th>
+            <th style="width: 28%;">シーケンス・設定例</th>
+            <th style="width: 50%;">インターリーブ撮像が不可欠な臨床的理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>頭部（Brain）<br>ルーチン検査</strong></td>
+            <td>2D FSE/TSE<br>・T2強調像 (T2WI)<br>・FLAIR<br>・プロトン密度強調像</td>
+            <td>
+              全脳をスライス厚 4〜5 mm、ギャップ 0.5〜1.0 mm（10〜20%）で密にカバーします。
+              特に<strong>FLAIR像やT2強調像ではTRが4000〜10000 msと極めて長い</strong>ため、TR内の不活時間に奇数・偶数を交互に詰め込むインターリーブ撮像が標準（デフォルト）です。
+              クロストークによる意図しないT1短縮（白質の暗転や脱髄斑のコントラスト低下）を防ぎ、微小脳梗塞や多発性硬化症プラークの明瞭度を保ちます。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>脊椎・脊髄（Spine）<br>頸椎・胸椎・腰椎</strong></td>
+            <td>2D FSE T2WI / T1WI<br>・矢状断（Sagittal）<br>・軸位断（Axial）</td>
+            <td>
+              脊髄実質、椎間板ヘルニア、後縦靱帯骨化症（OPLL）の診断では、<strong>病変の「見逃し（すり抜け）」を防ぐためにギャップを極力ゼロに近づけたい</strong>要求があります。
+              しかしギャップをゼロにすると脊髄内の信号が著しく低下（偽の空洞症様所見やコントラスト低下）するため、インターリーブ撮像を用いて実質的ギャップゼロに近い密着スライスを担保します。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>骨盤部（Pelvis）<br>前立腺・子宮・直腸</strong></td>
+            <td>2D 高分解能 T2WI<br>（Axial / Oblique）</td>
+            <td>
+              前立腺癌の被膜外浸潤評価や子宮内膜症、直腸癌の壁深達度診断では、スライス厚 3 mm、ギャップ 0〜0.5 mm の高精細な画像が求められます。
+              骨盤腔内の微小な解剖境界（前立腺被膜、神経血管束）の組織コントラストを維持しつつ、飛び飛びにならず連続した断層像を得るために不可欠です。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>脳機能画像（fMRI）<br>&amp; 拡散テンソル（DTI）</strong></td>
+            <td>2D Single-Shot EPI<br>（全脳多スライス）</td>
+            <td>
+              全脳を1〜2秒ごとに超高速連続スキャンします。連続順序（Sequential）で励起すると、先行スライスの励起が次のスライスに部分飽和を与え、<strong>血流・酸素代謝による微小なBOLD信号変化（1〜3%）がアーチファクトで完全に消失</strong>します。
+              そのため、fMRI解析ソフト（SPMやFSLなど）のプロトコルでもスライス順序「Interleaved」の指定が事実上の世界標準となっています。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>関節・四肢（MSK）<br>膝関節・肩関節</strong></td>
+            <td>2D プロトン密度強調像 (PDWI)<br>＋ 脂肪抑制 (FatSat)</td>
+            <td>
+              半月板断裂や関節唇の微細断裂の観察において、プロトン密度コントラストはクロストークによるT1混入に極めて敏感です。
+              ギャップを10%程度に絞りつつ、関節軟骨のハイシグナルと線維性軟骨の低信号コントラストを鋭敏に描出するためにインターリーブが適用されます。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- インターリーブの注意点（コーミングアーチファクト） -->
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-top: 16px;">
+      <h4 style="color: #334155; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        臨床上の注意点：インターリーブ特有の「体動段差（コーミングアーチファクト）」
+      </h4>
+      <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+        インターリーブ撮像では、奇数スライス群と偶数スライス群のデータ取得に時間差（約TR/2または別スキャン）が存在します。
+        そのため、<strong>撮像途中で患者が動いた場合、奇数スライスと偶数スライスの間で位置ズレが交互に発生</strong>し、冠状断や矢状断に再構成（MPR）した際に「櫛の歯状（Comb-like）のギザギザな段差」が現れることがあります。体動の激しい小児や不穏患者では注意が必要です。
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ==================== 6. クロストーク防止対策の比較 ==================== -->
+  <section class="card">
+    <div class="card-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+        5. クロストーク対策の総合比較（トレードオフ一覧）
+      </h2>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>対策手法</th>
+            <th>動作原理</th>
+            <th>長所（メリット）</th>
+            <th>短所・トレードオフ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>スライス間ギャップを空ける</strong><br>(10〜30%)</td>
+            <td>隣接するスライスの物理的距離を離し、RFプロファイルの裾野同士が触れないようにする。</td>
+            <td>・設定が極めて簡単<br>・撮像時間が延びない</td>
+            <td>・<strong>スライス間の病変を見逃す（すり抜け）リスク</strong><br>・カバレッジが粗くなる</td>
+          </tr>
+          <tr>
+            <td><strong>インターリーブ撮像</strong><br>(奇数&rarr;偶数励起)</td>
+            <td>1TR内で奇数スライスを先に撮像し、時間を空けて偶数スライスを撮像する。</td>
+            <td>・ギャップを最小限（0〜10%）に詰めてもクロストークがほぼゼロ<br>・SNRとコントラストが保たれる</td>
+            <td>・患者が動いた際に奇数・偶数間で<strong>交互の段差アーチファクト</strong>が生じる<br>・血流流入効果が複雑化する</td>
+          </tr>
+          <tr>
+            <td><strong>RFパルス形状の最適化</strong><br>(SLRパルス等の長パルス)</td>
+            <td>RF波形の持続時間を長くし、フーリエ変換プロファイルを矩形に極限まで近づける。</td>
+            <td>・ギャップをほぼゼロにできる<br>・2回に分ける必要がない</td>
+            <td>・RFパルス時間が延びるため<strong>最小TEが延長する</strong><br>・1TRあたりに撮像可能なスライス数が減少する</td>
+          </tr>
+          <tr>
+            <td><strong>3D（ボリューム）撮像法</strong><br>(3D FSE, 3D GRE等)</td>
+            <td>スラブ全体を一括励起し、スライス方向も傾斜磁場（位相エンコード）で空間分離する。</td>
+            <td>・<strong>原理的にクロストークが完全に存在しない</strong><br>・ギャップゼロ（完全連続）・等方性ボクセルが可能</td>
+            <td>・撮像時間が長くなりやすい<br>・スラブ全体に対する体動に弱い</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- ==================== JavaScript シミュレーション制御 ==================== -->
+<script>
+  // シミュレータ状態管理
+  let currentMode = 'seq'; // 'seq' or 'int'
+  let currentStep = 0;
+  let isPlaying = false;
+  let timer = null;
+
+  // スライス設定: 6スライス
+  const totalSlices = 6;
+  const seqOrder = [1, 2, 3, 4, 5, 6];
+  const intOrder = [1, 3, 5, 2, 4, 6];
+
+  // 各スライスのMz値 (初期値100%)
+  let mzValues = [100, 100, 100, 100, 100, 100];
+
+  function initSim() {
+    const blocksG = document.getElementById('sliceBlocks');
+    blocksG.innerHTML = '';
+    const barsG = document.getElementById('mzBars');
+    barsG.innerHTML = '';
+
+    const startX = 60;
+    const blockWidth = 95;
+    const gap = 8;
+
+    for (let i = 0; i < totalSlices; i++) {
+      const x = startX + i * (blockWidth + gap);
+
+      // スライス矩形
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('id', `slice-group-${i+1}`);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', 40);
+      rect.setAttribute('width', blockWidth);
+      rect.setAttribute('height', 100);
+      rect.setAttribute('rx', 6);
+      rect.setAttribute('fill', '#1e293b');
+      rect.setAttribute('stroke', '#475569');
+      rect.setAttribute('stroke-width', '2');
+      rect.setAttribute('id', `slice-rect-${i+1}`);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', x + blockWidth / 2);
+      text.setAttribute('y', 95);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '14');
+      text.setAttribute('font-weight', 'bold');
+      text.setAttribute('fill', '#94a3b8');
+      text.setAttribute('id', `slice-text-${i+1}`);
+      text.textContent = `Slice ${i+1}`;
+
+      const orderBadge = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      orderBadge.setAttribute('x', x + blockWidth / 2);
+      orderBadge.setAttribute('y', 125);
+      orderBadge.setAttribute('text-anchor', 'middle');
+      orderBadge.setAttribute('font-size', '11');
+      orderBadge.setAttribute('fill', '#64748b');
+      orderBadge.setAttribute('id', `slice-order-${i+1}`);
+      orderBadge.textContent = `順序: -`;
+
+      g.appendChild(rect);
+      g.appendChild(text);
+      g.appendChild(orderBadge);
+      blocksG.appendChild(g);
+
+      // Mz バー
+      const barG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bar.setAttribute('x', x + 15);
+      bar.setAttribute('y', 0);
+      bar.setAttribute('width', blockWidth - 30);
+      bar.setAttribute('height', 40);
+      bar.setAttribute('fill', '#10b981');
+      bar.setAttribute('id', `mz-bar-${i+1}`);
+
+      const barVal = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      barVal.setAttribute('x', x + blockWidth / 2);
+      barVal.setAttribute('y', -4);
+      barVal.setAttribute('text-anchor', 'middle');
+      barVal.setAttribute('font-size', '11');
+      barVal.setAttribute('fill', '#e2e8f0');
+      barVal.setAttribute('id', `mz-val-${i+1}`);
+      barVal.textContent = `100%`;
+
+      barG.appendChild(bar);
+      barG.appendChild(barVal);
+      barsG.appendChild(barG);
+    }
+
+    updateOrderLabels();
+  }
+
+  function updateOrderLabels() {
+    const order = (currentMode === 'seq') ? seqOrder : intOrder;
+    for (let i = 0; i < totalSlices; i++) {
+      const sliceNum = i + 1;
+      const stepIdx = order.indexOf(sliceNum) + 1;
+      const lbl = document.getElementById(`slice-order-${sliceNum}`);
+      if (lbl) lbl.textContent = `第 ${stepIdx} 励起`;
+    }
+  }
+
+  function setMode(mode) {
+    if (isPlaying) togglePlay();
+    currentMode = mode;
+    document.getElementById('btnModeSeq').className = (mode === 'seq') ? 'btn btn-outline btn-active' : 'btn btn-outline';
+    document.getElementById('btnModeInt').className = (mode === 'int') ? 'btn btn-outline btn-active' : 'btn btn-outline';
+    resetSim();
+  }
+
+  function resetSim() {
+    if (isPlaying) togglePlay();
+    currentStep = 0;
+    mzValues = [100, 100, 100, 100, 100, 100];
+    document.getElementById('timeDisplay').textContent = '0 ms';
+    document.getElementById('simLog').textContent = (currentMode === 'seq')
+      ? '【連続モード】隣り合うスライスを次々と励起します。クロストークに注目してください。'
+      : '【インターリーブモード】奇数番(1,3,5) &rarr; 偶数番(2,4,6) の順に間隔を空けて励起します。';
+
+    for (let i = 1; i <= totalSlices; i++) {
+      const rect = document.getElementById(`slice-rect-${i}`);
+      rect.setAttribute('fill', '#1e293b');
+      rect.setAttribute('stroke', '#475569');
+      updateMzDisplay(i, 100);
+    }
+    const beam = document.getElementById('rfBeam');
+    beam.setAttribute('opacity', '0');
+    updateOrderLabels();
+  }
+
+  function updateMzDisplay(sliceNum, val) {
+    const bar = document.getElementById(`mz-bar-${sliceNum}`);
+    const txt = document.getElementById(`mz-val-${sliceNum}`);
+    if (!bar || !txt) return;
+
+    const clamped = Math.max(0, Math.min(100, val));
+    const h = (clamped / 100) * 40;
+    const y = 40 - h;
+    bar.setAttribute('height', h);
+    bar.setAttribute('y', y);
+    txt.textContent = `${Math.round(clamped)}%`;
+
+    if (clamped < 65) {
+      bar.setAttribute('fill', '#ef4444'); // 赤: 重度飽和
+    } else if (clamped < 85) {
+      bar.setAttribute('fill', '#f59e0b'); // 黄: 軽度飽和
+    } else {
+      bar.setAttribute('fill', '#10b981'); // 緑: 正常
+    }
+  }
+
+  function stepSim() {
+    const order = (currentMode === 'seq') ? seqOrder : intOrder;
+    if (currentStep >= order.length) {
+      document.getElementById('simLog').innerHTML = `<strong>撮像完了:</strong> 全スライスの取得が終了しました。「リセット」を押してもう一方のモードと比較してください。`;
+      if (isPlaying) togglePlay();
+      return;
+    }
+
+    const targetSlice = order[currentStep];
+    const timePerSlice = 50; // ms
+    const currentTime = (currentStep + 1) * timePerSlice;
+    document.getElementById('timeDisplay').textContent = `${currentTime} ms`;
+
+    // RFビーム表示
+    const startX = 60;
+    const blockWidth = 95;
+    const gap = 8;
+    const beamX = startX + (targetSlice - 1) * (blockWidth + gap) + blockWidth / 2;
+    const beam = document.getElementById('rfBeam');
+    beam.setAttribute('x1', beamX);
+    beam.setAttribute('x2', beamX);
+    beam.setAttribute('opacity', '1');
+
+    // ハイライト
+    for (let i = 1; i <= totalSlices; i++) {
+      const r = document.getElementById(`slice-rect-${i}`);
+      if (i === targetSlice) {
+        r.setAttribute('fill', '#1e3a8a');
+        r.setAttribute('stroke', '#38bdf8');
+      } else {
+        r.setAttribute('fill', '#1e293b');
+        r.setAttribute('stroke', '#475569');
+      }
+    }
+
+    // クロストーク判定ロジック
+    if (currentMode === 'seq') {
+      // 連続撮像: 直前のスライス励起により隣接スライスのMzが激減する
+      if (currentStep > 0) {
+        // 直前スライスと隣接している場合
+        const prevSlice = order[currentStep - 1];
+        if (Math.abs(prevSlice - targetSlice) === 1) {
+          // クロストーク被爆
+          mzValues[targetSlice - 1] = 58; // 大幅な信号低下・実効TR短縮
+          document.getElementById('simLog').innerHTML = `<span style="color: #f87171; font-weight: bold;">[クロストーク発生!]</span> スライス ${targetSlice} は、直前に励起された隣のスライス ${prevSlice} の裾野を浴びて不要飽和。励起前 Mz は <strong>58%</strong> に低下！(SNR低下 &amp; T1強調化)`;
+        } else {
+          mzValues[targetSlice - 1] = 95;
+          document.getElementById('simLog').textContent = `スライス ${targetSlice} を励起中。`;
+        }
+      } else {
+        mzValues[targetSlice - 1] = 100;
+        document.getElementById('simLog').textContent = `スライス ${targetSlice} (最初) を励起中。初期状態のため Mz=100%`;
+      }
+    } else {
+      // インターリーブ撮像: 奇数を先に撮り、偶数を後で撮るため十分回復
+      if (currentStep < 3) {
+        // 奇数フェーズ: 隣はまだ誰も励起していない
+        mzValues[targetSlice - 1] = 100;
+        document.getElementById('simLog').innerHTML = `<span style="color: #38bdf8; font-weight: bold;">[奇数パス]</span> スライス ${targetSlice} を励起。両隣は非励起（ギャップ100%相当）のため干渉なし（Mz = 100%）。`;
+      } else {
+        // 偶数フェーズ: 奇数励起から十分な時間(150ms以上)が経過して回復
+        mzValues[targetSlice - 1] = 94;
+        document.getElementById('simLog').innerHTML = `<span style="color: #4ade80; font-weight: bold;">[偶数パス]</span> スライス ${targetSlice} を励起。奇数スライスの照射から時間が経過しているため、縦磁化は <strong>94%</strong> まで十分回復！`;
+      }
+    }
+
+    updateMzDisplay(targetSlice, mzValues[targetSlice - 1]);
+    currentStep++;
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    const btn = document.getElementById('btnPlay');
+    const icon = document.getElementById('playIcon');
+    const text = document.getElementById('playText');
+
+    if (isPlaying) {
+      icon.textContent = '❚❚';
+      text.textContent = '一時停止';
+      btn.style.backgroundColor = '#f59e0b';
+      timer = setInterval(() => {
+        const order = (currentMode === 'seq') ? seqOrder : intOrder;
+        if (currentStep >= order.length) {
+          togglePlay();
+        } else {
+          stepSim();
+        }
+      }, 900);
+    } else {
+      icon.textContent = '▶';
+      text.textContent = '再生';
+      btn.style.backgroundColor = '#3b82f6';
+      clearInterval(timer);
+    }
+  }
+
+  // 初期化実行
+  window.addEventListener('DOMContentLoaded', () => {
+    initSim();
+    resetSim();
+  });
+</script>
+
+</body>
+</html>

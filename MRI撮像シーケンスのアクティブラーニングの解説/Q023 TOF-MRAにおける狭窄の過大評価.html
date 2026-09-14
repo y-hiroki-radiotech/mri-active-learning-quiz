@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRI復習教材：Q023 TOF-MRAにおける狭窄の過大評価</title>
+  <style>
+    /* ベースリセット & システムフォント（完全オフライン仕様） */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      line-height: 1.65;
+      color: #1e293b;
+      background-color: #f1f5f9;
+      padding: 24px 16px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* 共通カードデザイン */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      padding: 24px;
+      overflow: hidden;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+    .badge-primary { background-color: #e0f2fe; color: #0369a1; }
+    .badge-secondary { background-color: #f1f5f9; color: #475569; }
+    .badge-success { background-color: #dcfce7; color: #15803d; }
+    .badge-warning { background-color: #fef3c7; color: #b45309; }
+    .badge-danger { background-color: #fee2e2; color: #b91c1c; }
+
+    /* 採点サマリーヘッダー */
+    .score-banner {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 24px;
+      align-items: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 640px) {
+      .score-banner { grid-template-columns: 1fr; text-align: center; }
+    }
+    .score-circle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-val {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+      color: #38bdf8;
+    }
+    .score-denom {
+      font-size: 1.1rem;
+      color: #94a3b8;
+    }
+    .eval-badge {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      background-color: #0284c7;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .summary-item {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .summary-item strong {
+      display: block;
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .summary-item span {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    /* 解答比較カード */
+    .answer-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    @media (max-width: 640px) {
+      .answer-compare { grid-template-columns: 1fr; }
+    }
+    .answer-box {
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+    .user-box {
+      background-color: #f8fafc;
+      border-left: 4px solid #f59e0b;
+    }
+    .model-box {
+      background-color: #f0fdf4;
+      border-left: 4px solid #10b981;
+    }
+    .box-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .user-box .box-label { color: #d97706; }
+    .model-box .box-label { color: #16a34a; }
+
+    /* 数式セクション (MathML & CSS) */
+    .math-card {
+      background: #fdfefe;
+      border-left: 4px solid #0284c7;
+    }
+    .math-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      overflow-x: auto;
+      text-align: center;
+      font-size: 1.15rem;
+    }
+    math {
+      font-family: "Cambria Math", "Latin Modern Math", STIXGeneral, serif;
+    }
+    .formula-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    .formula-table th, .formula-table td {
+      border: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .formula-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      width: 25%;
+    }
+
+    /* 図表・SVG */
+    .svg-container {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* インタラクティブ・コントロール */
+    .ctrl-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      background: #f1f5f9;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .btn {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #0369a1; }
+    .btn-secondary {
+      background: #64748b;
+    }
+    .btn-secondary:hover { background: #475569; }
+    .status-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* ポイントリスト */
+    .point-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .point-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .point-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .icon-ok { background: #dcfce7; color: #16a34a; }
+    .icon-warn { background: #fef3c7; color: #d97706; }
+    .icon-info { background: #e0f2fe; color: #0284c7; }
+
+    /* 印刷 / PDF 設定 */
+    @media print {
+      body {
+        background-color: #ffffff;
+        color: #000000;
+        padding: 0;
+      }
+      .container {
+        max-width: 100%;
+        gap: 16px;
+      }
+      .card, .score-banner {
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .score-banner {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-bottom: 2px solid #000000 !important;
+      }
+      .score-val { color: #000000 !important; }
+      .eval-badge { border: 1px solid #000000; color: #000000 !important; background: none !important; }
+      .ctrl-panel { display: none !important; }
+      .svg-container { border: 1px solid #64748b; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 1. 採点サマリーセクション -->
+  <header class="score-banner">
+    <div class="score-circle-wrap">
+      <div class="score-val">75</div>
+      <div class="score-denom">/ 100 点</div>
+      <div class="eval-badge">合格水準（物理機序補強を推奨）</div>
+    </div>
+    <div>
+      <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">MRI専門医・認定技師試験 演習問題レビュー</div>
+      <h1 style="font-size: 1.4rem; font-weight: 800; margin: 4px 0 12px 0;">Q023：TOF-MRAにおける狭窄度の過大評価機序</h1>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <span class="badge badge-primary">分野：MRA (Time of Flight)</span>
+        <span class="badge badge-warning">難易度：応用</span>
+        <span class="badge badge-danger">学習優先度：最重要 (★★★★★)</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-title">採点結果サマリー</div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <strong>正しく理解できた点</strong>
+        <span>血管径変化に伴う「乱流発生」と「信号低下」の因果関係を正確に把握。</span>
+      </div>
+      <div class="summary-item">
+        <strong>最大の修正点</strong>
+        <span>乱流が信号低下を招く根本物理機序「ボクセル内位相分散」の記述不足。</span>
+      </div>
+      <div class="summary-item">
+        <strong>根本的誤概念の脱却</strong>
+        <span>「乱流＝単に血流が減衰する」ではなく「位相干渉による巨視的横磁化の消失」と捉える。</span>
+      </div>
+      <div class="summary-item">
+        <strong>臨床現場での処方箋</strong>
+        <span>TE短縮、高分解能化、PC法や造影MRA、Black-blood併用を検討。</span>
+      </div>
+    </div>
+
+    <div class="answer-compare">
+      <div class="answer-box user-box">
+        <span class="box-label">受講者の解答</span>
+        狭窄部位は血管が太いところから細いところ、そして太いところへと変化する部分である。そのため、乱流がおこる。乱流によって信号強度が低下するから。
+      </div>
+      <div class="answer-box model-box">
+        <span class="box-label">模範解答</span>
+        狭窄部から狭窄後部にかけて急激な流速上昇と血管径拡大が生じ、<strong>ジェット流・乱流</strong>が発生する。これにより微小ボクセル内に多方向・多速度のスピンが混在し、<strong>ボクセル内位相分散（intravoxel dephasing）</strong>をきたして信号強度が急激に消失（signal void）する。さらに末梢側の遅延流による<strong>TOF loss（飽和効果）</strong>が加わるため、実際の血管径よりも高度に狭窄、あるいは閉塞しているように過大評価される。
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 原理解説：血管形状変化と乱流の流体力学 -->
+  <section class="card">
+    <div class="card-title">現象の流体力学：狭窄部での流速増大とレイノルズ数</div>
+    <p style="font-size: 0.95rem; margin-bottom: 12px;">
+      血管狭窄部では、流体の連続の式 (<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>A</mi><mn>1</mn></msub><msub><mi>v</mi><mn>1</mn></msub><mo>=</mo><msub><mi>A</mi><mn>2</mn></msub><msub><mi>v</mi><mn>2</mn></msub></math>) に従い、断面積の狭小化に反比例して局所流速が著しく上昇（ジェット流）します。狭窄直後で急激に径が拡張すると、運動エネルギーの散逸と剥離流により<strong>渦流（vortex）および乱流（turbulence）</strong>へ遷移します。
+    </p>
+
+    <!-- レイノルズ数の数式解説 (MathML) -->
+    <div class="math-block">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mi>R</mi><mi>e</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mrow><mi>&#x3C1;</mi><mo>&#x22C5;</mo><mi>v</mi><mo>&#x22C5;</mo><mi>D</mi></mrow>
+          <mi>&#x3B7;</mi>
+        </mfrac>
+      </math>
+    </div>
+
+    <table class="formula-table">
+      <thead>
+        <tr>
+          <th>記号</th>
+          <th>物理量 / 意味</th>
+          <th>単位</th>
+          <th>本現象（狭窄後）における変化と影響</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mi>e</mi></math></td>
+          <td>レイノルズ数（慣性力 / 粘性力）</td>
+          <td>無次元</td>
+          <td>臨界値（血管内で約2000〜2300）を超えると層流から乱流へ移行する。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>v</mi></math></td>
+          <td>流速</td>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">m</mi><mo>/</mo><mi mathvariant="normal">s</mi></math></td>
+          <td>狭窄部中心で急激に増大。<strong>比例関係</strong>でレイノルズ数を跳ね上げる。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>D</mi></math></td>
+          <td>流路直径（局所血管径）</td>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">m</mi></math></td>
+          <td>狭窄部直後で急拡大。流れの剥離（flow separation）を誘発する。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3C1;</mi><mo>,</mo><mi>&#x3B7;</mi></math></td>
+          <td>血液の密度 / 粘度</td>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>kg</mi><mo>/</mo><msup><mi mathvariant="normal">m</mi><mn>3</mn></msup><mo>,</mo><mi>Pa</mi><mo>&#x22C5;</mo><mi mathvariant="normal">s</mi></math></td>
+          <td>生体定数。貧血等で粘度低下（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3B7;</mi><mo>&#x2193;</mo></math>）すると乱流が助長される。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 3. MRI物理原理：ボクセル内位相分散（Intravoxel Dephasing） -->
+  <section class="card math-card">
+    <div class="card-title">最重要原理：ボクセル内位相分散（Intravoxel Dephasing）の数学的証明</div>
+    <p style="font-size: 0.95rem;">
+      MRIでは、傾斜磁場 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>G</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> の印加中に運動するスピンは、その移動速度・加速度に応じた位相シフトを蓄積します。
+    </p>
+
+    <div class="math-block">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mi>&#x3D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+        <mo>=</mo>
+        <mi>&#x3B3;</mi>
+        <msubsup>
+          <mo>&#x222B;</mo>
+          <mrow><mn>0</mn></mrow>
+          <mrow><mi>t</mi></mrow>
+        </msubsup>
+        <mi>G</mi><mo stretchy="false">(</mo><msup><mi>t</mi><mo>&#x2032;</mo></msup><mo stretchy="false">)</mo>
+        <mo>&#x22C5;</mo>
+        <mi>x</mi><mo stretchy="false">(</mo><msup><mi>t</mi><mo>&#x2032;</mo></msup><mo stretchy="false">)</mo>
+        <mspace width="0.2em"/><mi>d</mi><msup><mi>t</mi><mo>&#x2032;</mo></msup>
+        <mo>=</mo>
+        <mi>&#x3B3;</mi>
+        <mrow><mo>(</mo>
+          <msub><mi>x</mi><mn>0</mn></msub><msub><mi>m</mi><mn>0</mn></msub>
+          <mo>+</mo>
+          <mi>v</mi><msub><mi>m</mi><mn>1</mn></msub>
+          <mo>+</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac><mi>a</mi><msub><mi>m</mi><mn>2</mn></msub>
+          <mo>+</mo>
+          <mo>&#x22EF;</mo>
+        <mo>)</mo></mrow>
+      </math>
+    </div>
+
+    <p style="font-size: 0.95rem; margin-top: 8px;">
+      1つの解像度ボクセル内に存在する総磁化ベクトル <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>M</mi><mrow><mi>x</mi><mi>y</mi></mrow></msub></math> は、ボクセル内の全スピンベクトルの複素積分（ベクトル和）となります。
+    </p>
+
+    <div class="math-block">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mi>S</mi>
+        <mo>&#x221D;</mo>
+        <mrow><mo>|</mo>
+          <msub><mi>M</mi><mrow><mi>x</mi><mi>y</mi></mrow></msub>
+        <mo>|</mo></mrow>
+        <mo>=</mo>
+        <mrow><mo>|</mo>
+          <msub><mo>&#x222B;</mo><mrow><mtext>voxel</mtext></mrow></msub>
+          <mi>&#x3C1;</mi><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo>
+          <msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>i</mi><mi>&#x3D5;</mi><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo></mrow></msup>
+          <mspace width="0.2em"/><mi>d</mi><mi mathvariant="bold">r</mi>
+        <mo>|</mo></mrow>
+      </math>
+    </div>
+
+    <table class="formula-table">
+      <thead>
+        <tr>
+          <th>血流状態</th>
+          <th>ボクセル内のスピン速度分布</th>
+          <th>位相角 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3D5;</mi></math> の揃い方</th>
+          <th>受信信号強度 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>S</mi></math></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>層流（正常）</strong></td>
+          <td>放物線状で規則的（勾配がなだらか）</td>
+          <td>位相が揃っている（コヒーレント）</td>
+          <td><span class="badge badge-success">高信号</span>（血管描出良好）</td>
+        </tr>
+        <tr>
+          <td><strong>乱流・渦流（狭窄部）</strong></td>
+          <td>局所的にランダム・多方向のベクトル</td>
+          <td>位相が完全に分散・逆位相干渉</td>
+          <td><span class="badge badge-danger">信号消失（Signal Void）</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 4. 模式図 & アニメーション：狭窄血管・ボクセル内位相分散 -->
+  <section class="card">
+    <div class="card-title">構造模式図：層流・狭窄ジェット・乱流およびスピン位相分散</div>
+    <div class="svg-container">
+      <svg id="mra-svg" viewBox="0 0 850 360" width="100%" height="360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+            <polygon points="0 0, 6 2, 0 4" fill="#0284c7"/>
+          </marker>
+          <marker id="red-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+            <polygon points="0 0, 6 2, 0 4" fill="#ef4444"/>
+          </marker>
+          <marker id="spin-arrow" markerWidth="5" markerHeight="3" refX="4" refY="1.5" orient="auto">
+            <polygon points="0 0, 5 1.5, 0 3" fill="#3b82f6"/>
+          </marker>
+        </defs>
+
+        <!-- 血管外壁背景 -->
+        <rect x="10" y="20" width="830" height="320" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1"/>
+
+        <!-- 血管の内腔形状 -->
+        <!-- 正常部(x:30-220, y:70-270) -> 狭窄部(x:320-370, y:145-195) -> 拡張部(x:460-820, y:70-270) -->
+        <path d="M 30,70 L 220,70 Q 280,70 320,145 L 370,145 Q 410,70 470,70 L 820,70 
+                 L 820,270 L 470,270 Q 410,270 370,195 L 320,195 Q 280,270 220,270 L 30,270 Z" 
+              fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+
+        <!-- 動脈プラーク（狭窄部位） -->
+        <path d="M 220,70 Q 345,150 470,70 Z" fill="#f59e0b" opacity="0.85" stroke="#b45309" stroke-width="1.5"/>
+        <path d="M 220,270 Q 345,190 470,270 Z" fill="#f59e0b" opacity="0.85" stroke="#b45309" stroke-width="1.5"/>
+        <text x="345" y="115" font-size="13" font-weight="bold" fill="#78350f" text-anchor="middle">粥腫（プラーク）</text>
+        <text x="345" y="245" font-size="13" font-weight="bold" fill="#78350f" text-anchor="middle">狭窄率 80%</text>
+
+        <!-- 正常部血流ベクトル（層流） -->
+        <g id="laminar-flow">
+          <line x1="60" y1="110" x2="160" y2="110" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowhead)"/>
+          <line x1="60" y1="170" x2="190" y2="170" stroke="#0284c7" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+          <line x1="60" y1="230" x2="160" y2="230" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowhead)"/>
+          <text x="120" y="95" font-size="12" fill="#0369a1" font-weight="bold" text-anchor="middle">層流（パラボラ流）</text>
+        </g>
+
+        <!-- 狭窄部ジェット流 -->
+        <g id="jet-flow">
+          <line x1="310" y1="165" x2="420" y2="165" stroke="#ef4444" stroke-width="4" marker-end="url(#red-arrow)"/>
+          <line x1="310" y1="175" x2="420" y2="175" stroke="#ef4444" stroke-width="4" marker-end="url(#red-arrow)"/>
+          <text x="380" y="155" font-size="12" fill="#b91c1c" font-weight="bold" text-anchor="middle">高速ジェット流</text>
+        </g>
+
+        <!-- 狭窄後乱流・渦流 -->
+        <g id="turbulent-flow">
+          <!-- 渦巻き矢印 -->
+          <path d="M 490,110 Q 530,90 530,125 T 480,140" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="3,3"/>
+          <path d="M 490,230 Q 530,250 530,215 T 480,200" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="3,3"/>
+          <!-- ランダムベクトル -->
+          <line x1="560" y1="140" x2="610" y2="110" stroke="#dc2626" stroke-width="2" marker-end="url(#red-arrow)"/>
+          <line x1="550" y1="190" x2="620" y2="210" stroke="#dc2626" stroke-width="2" marker-end="url(#red-arrow)"/>
+          <line x1="580" y1="170" x2="650" y2="160" stroke="#dc2626" stroke-width="2.5" marker-end="url(#red-arrow)"/>
+          <text x="560" y="95" font-size="12" fill="#b91c1c" font-weight="bold" text-anchor="middle">剥離・乱流・渦流（再循環）</text>
+        </g>
+
+        <!-- ボクセル枠の対比表示 -->
+        <!-- ボクセルA（正常） -->
+        <rect x="90" y="130" width="70" height="70" fill="rgba(56, 189, 248, 0.15)" stroke="#0284c7" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="125" y="218" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">ボクセル A</text>
+
+        <!-- ボクセルB（狭窄後） -->
+        <rect x="520" y="130" width="70" height="70" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="555" y="218" font-size="11" font-weight="bold" fill="#b91c1c" text-anchor="middle">ボクセル B</text>
+
+        <!-- 下部：ボクセル内スピン位相の詳細表示盤 -->
+        <g transform="translate(0, 240)">
+          <!-- ボクセルA 位相ベクトル総和 -->
+          <circle cx="125" cy="50" r="28" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+          <line id="spin-a1" x1="125" y1="50" x2="148" y2="50" stroke="#0284c7" stroke-width="2" marker-end="url(#spin-arrow)"/>
+          <line id="spin-a2" x1="125" y1="50" x2="147" y2="45" stroke="#0284c7" stroke-width="2" marker-end="url(#spin-arrow)"/>
+          <line id="spin-a3" x1="125" y1="50" x2="147" y2="55" stroke="#0284c7" stroke-width="2" marker-end="url(#spin-arrow)"/>
+          <text x="125" y="95" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">位相コヒーレント (高信号)</text>
+
+          <!-- ボクセルB 位相ベクトル総和 -->
+          <circle cx="555" cy="50" r="28" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+          <!-- バラバラなスピン群 -->
+          <g id="animated-spins">
+            <line class="spin-b" x1="555" y1="50" x2="578" y2="50" stroke="#ef4444" stroke-width="1.5" marker-end="url(#red-arrow)"/>
+            <line class="spin-b" x1="555" y1="50" x2="535" y2="35" stroke="#ef4444" stroke-width="1.5" marker-end="url(#red-arrow)"/>
+            <line class="spin-b" x1="555" y1="50" x2="555" y2="76" stroke="#ef4444" stroke-width="1.5" marker-end="url(#red-arrow)"/>
+            <line class="spin-b" x1="555" y1="50" x2="540" y2="68" stroke="#ef4444" stroke-width="1.5" marker-end="url(#red-arrow)"/>
+            <line class="spin-b" x1="555" y1="50" x2="570" y2="30" stroke="#ef4444" stroke-width="1.5" marker-end="url(#red-arrow)"/>
+          </g>
+          <circle cx="555" cy="50" r="3" fill="#b91c1c"/>
+          <text x="555" y="95" font-size="11" font-weight="bold" fill="#b91c1c" text-anchor="middle">ベクトル和 ≒ 0 (無信号化)</text>
+
+          <!-- 結果表示（MIPでの見え方） -->
+          <rect x="680" y="15" width="140" height="70" rx="6" fill="#0f172a"/>
+          <path d="M 690,40 L 730,40 Q 740,48 745,48 Q 750,48 760,40 L 810,40" stroke="#38bdf8" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <!-- 信号欠損部（過大評価） -->
+          <rect x="742" y="30" width="30" height="20" fill="#0f172a"/>
+          <text x="750" y="24" font-size="10" fill="#f87171" font-weight="bold" text-anchor="middle">完全途絶（偽閉塞）</text>
+          <text x="750" y="75" font-size="10" fill="#94a3b8" text-anchor="middle">MIP表示：過大評価</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- 操作UI（完全ローカル動作） -->
+    <div class="ctrl-panel">
+      <button class="btn" id="btn-toggle">位相アニメーション一時停止</button>
+      <button class="btn btn-secondary" id="btn-reset">初期状態にリセット</button>
+      <span class="status-text" id="status-text">状態：ボクセル内スピンのランダム回転中（位相分散）</span>
+    </div>
+  </section>
+
+  <!-- 5. 臨床的波及効果と対策 -->
+  <section class="card">
+    <div class="card-title">臨床的影響と診療放射線技師がとるべき最適化処方</div>
+    <ul class="point-list">
+      <li class="point-item">
+        <span class="point-icon icon-warn">!</span>
+        <div>
+          <strong>臨床診断におけるリスク：偽閉塞（Pseudo-occlusion）</strong><br>
+          軽度〜中等度狭窄が高度狭窄に見えたり、高度狭窄部が完全に無信号となり「完全閉塞」と誤診される危険性があります。これにより治療方針（血管内治療・内膜剥離術など）の判断に影響を及ぼす可能性があります。
+        </div>
+      </li>
+      <li class="point-item">
+        <span class="point-icon icon-info">i</span>
+        <div>
+          <strong>遅い血流によるスピン飽和（TOF Loss）の寄与</strong><br>
+          狭窄直後の再循環領域や壁近傍では血流が極端に遅くなり、スラブ内に長時間滞在します。連続するRFパルスにより縦磁化が回復せず飽和（Saturation）し、インフロー効果が得られなくなることも信号低下の大きな要因です。
+        </div>
+      </li>
+      <li class="point-item">
+        <span class="point-icon icon-ok">&#x2713;</span>
+        <div>
+          <strong>現場での画質改善・偽像低減テクニック</strong>
+          <table class="formula-table" style="margin-top: 8px;">
+            <thead>
+              <tr>
+                <th>対策パラメータ</th>
+                <th>物理メカニズム</th>
+                <th>トレードオフ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>TEの最短化（Ultra-short TE）</strong></td>
+                <td>傾斜磁場印加時間が短縮し、スピンが位相をずらす猶予を与えない。</td>
+                <td>受信バンド幅の拡大に伴うSNRの低下。</td>
+              </tr>
+              <tr>
+                <td><strong>高分解能化（小ボクセル）</strong></td>
+                <td>ボクセル内の流速・方向のばらつき幅が小さくなり、位相相殺が減少。</td>
+                <td>SNRの低下および撮像時間の延長。</td>
+              </tr>
+              <tr>
+                <td><strong>流速補正（Flow Comp.）</strong></td>
+                <td>1次モーメント <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub><mo>=</mo><mn>0</mn></math> とし、等速運動による位相シフトを相殺。</td>
+                <td>最短TEがわずかに延長する可能性。</td>
+              </tr>
+              <tr>
+                <td><strong>造影MRA / 血管壁イメージング</strong></td>
+                <td>T1短縮効果（Gd）依存またはブラックブラッド（MSDE）で形態評価。</td>
+                <td>造影剤投与の侵襲性、撮像時間の増加。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+  // 完全オフラインで動作するSVGインタラクティブスクリプト
+  (function() {
+    let isRunning = true;
+    let animId = null;
+    let angle = 0;
+    
+    const spins = document.querySelectorAll('.spin-b');
+    const toggleBtn = document.getElementById('btn-toggle');
+    const resetBtn = document.getElementById('btn-reset');
+    const statusText = document.getElementById('status-text');
+
+    const baseAngles = [0, 72, 144, 216, 288];
+    const speeds = [1.2, -1.8, 2.5, -0.9, 1.6]; // 各スピン異なる角速度（乱流）
+
+    function renderAnimation() {
+      if (isRunning) {
+        angle += 0.05;
+        spins.forEach((spin, index) => {
+          const currentA = baseAngles[index] + (angle * speeds[index] * 180 / Math.PI);
+          const rad = currentA * Math.PI / 180;
+          const r = 24;
+          const cx = 555;
+          const cy = 50;
+          const x2 = cx + r * Math.cos(rad);
+          const y2 = cy + r * Math.sin(rad);
+          spin.setAttribute('x2', x2.toFixed(2));
+          spin.setAttribute('y2', y2.toFixed(2));
+        });
+      }
+      animId = requestAnimationFrame(renderAnimation);
+    }
+
+    toggleBtn.addEventListener('click', function() {
+      isRunning = !isRunning;
+      if (isRunning) {
+        toggleBtn.textContent = '位相アニメーション一時停止';
+        statusText.textContent = '状態：ボクセル内スピンのランダム回転中（位相分散）';
+      } else {
+        toggleBtn.textContent = 'アニメーション再開';
+        statusText.textContent = '状態：一時停止中（静止ベクトル分布）';
+      }
+    });
+
+    resetBtn.addEventListener('click', function() {
+      angle = 0;
+      spins.forEach((spin, index) => {
+        const rad = baseAngles[index] * Math.PI / 180;
+        const r = 24;
+        const cx = 555;
+        const cy = 50;
+        const x2 = cx + r * Math.cos(rad);
+        const y2 = cy + r * Math.sin(rad);
+        spin.setAttribute('x2', x2.toFixed(2));
+        spin.setAttribute('y2', y2.toFixed(2));
+      });
+      if (!isRunning) {
+        isRunning = true;
+        toggleBtn.textContent = '位相アニメーション一時停止';
+        statusText.textContent = '状態：ボクセル内スピンのランダム回転中（位相分散）';
+      }
+    });
+
+    // 起動
+    renderAnimation();
+  })();
+</script>
+
+</body>
+</html>
