@@ -7,6 +7,7 @@
   "use strict";
   const STORAGE_KEY="mri-learning-review-v1";
   const STAGES=[
+    {id:"day0",days:0,label:"今日の復習"},
     {id:"day1",days:1,label:"昨日の復習"},
     {id:"day7",days:7,label:"先週の復習"}
   ];

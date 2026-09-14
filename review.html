@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="新しく追加されたMRI教材を翌日・7日後に復習するページ">
+  <meta name="description" content="新しく追加されたMRI教材を当日・翌日・7日後に復習するページ">
   <meta name="theme-color" content="#0b6675">
   <title>復習する — MRI Learning</title>
   <link rel="manifest" href="manifest.webmanifest">
@@ -15,13 +15,14 @@
 <body>
   <header>
     <div class="header-inner">
-      <div><small>MRI REVIEW</small><h1>復習する</h1><p>新しい教材を、翌日と1週間後にもう一度。</p></div>
+      <div><small>MRI REVIEW</small><h1>復習する</h1><p>新しい教材を、当日・翌日・1週間後にもう一度。</p></div>
       <div class="header-actions"><a class="header-link" href="index.html">教材一覧へ</a><label>表示<select id="theme"><option value="system">自動</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
     </div>
   </header>
   <main>
     <section class="finder review-summary"><div><small>TODAY'S REVIEW</small><h2>今日の復習</h2><p>予定日にできなかった教材も、完了するまでここに残ります。</p></div><strong id="total" aria-live="polite">読み込み中…</strong></section>
     <div id="content">
+      <section class="review-section" aria-labelledby="day0Title"><div class="section-title"><div><small>DAY 0</small><h2 id="day0Title">今日の復習</h2><p>今日追加された教材をその日のうちに行う復習です。</p></div><strong id="day0Count">0件</strong></div><div id="day0Grid" class="grid"></div><div id="day0Empty" class="message"><p>現在、未完了の当日復習はありません。</p></div></section>
       <section class="review-section" aria-labelledby="day1Title"><div class="section-title"><div><small>DAY 1</small><h2 id="day1Title">昨日の復習</h2><p>新規追加の翌日に行う復習です。</p></div><strong id="day1Count">0件</strong></div><div id="day1Grid" class="grid"></div><div id="day1Empty" class="message"><p>現在、未完了の翌日復習はありません。</p></div></section>
       <section class="review-section" aria-labelledby="day7Title"><div class="section-title"><div><small>DAY 7</small><h2 id="day7Title">先週の復習</h2><p>新規追加から7日後に行う復習です。</p></div><strong id="day7Count">0件</strong></div><div id="day7Grid" class="grid"></div><div id="day7Empty" class="message"><p>現在、未完了の7日後復習はありません。</p></div></section>
       <details class="completed"><summary>復習済みの教材</summary><div id="completedGrid" class="grid"></div><div id="completedEmpty" class="message"><p>復習済みの教材はまだありません。</p></div></details>

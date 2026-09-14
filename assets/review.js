@@ -22,7 +22,7 @@ function render(){
     grid.replaceChildren(...items.map(material=>makeCard(material,stage)));grid.hidden=!items.length;empty.hidden=Boolean(items.length);el[`${stage.id}Count`].textContent=`${items.length}件`;
   }
   el.completedGrid.replaceChildren(...completed.map(record=>makeCard(record.material,record.stage,true)));
-  el.completedGrid.hidden=!completed.length;el.completedEmpty.hidden=Boolean(completed.length);el.total.textContent=`未完了 ${pending.day1.length+pending.day7.length}件`;
+  el.completedGrid.hidden=!completed.length;el.completedEmpty.hidden=Boolean(completed.length);el.total.textContent=`未完了 ${pending.day0.length+pending.day1.length+pending.day7.length}件`;
 }
 
 async function load(){
@@ -32,7 +32,7 @@ async function load(){
 }
 
 function init(){
-  for(const id of ["content","error","total","day1Grid","day1Empty","day1Count","day7Grid","day7Empty","day7Count","completedGrid","completedEmpty"])el[id]=document.querySelector(`#${id}`);
+  for(const id of ["content","error","total","day0Grid","day0Empty","day0Count","day1Grid","day1Empty","day1Count","day7Grid","day7Empty","day7Count","completedGrid","completedEmpty"])el[id]=document.querySelector(`#${id}`);
   const theme=document.querySelector("#theme"),saved=localStorage.getItem("mri-learning-theme")||"system";if(saved!=="system")document.documentElement.dataset.theme=saved;theme.value=saved;theme.onchange=()=>{localStorage.setItem("mri-learning-theme",theme.value);if(theme.value==="system")document.documentElement.removeAttribute("data-theme");else document.documentElement.dataset.theme=theme.value};
   document.querySelector("#retry").onclick=()=>{el.content.hidden=false;load()};load();if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
 }

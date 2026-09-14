@@ -10,13 +10,19 @@ test("JSTの日付と復習予定日を計算する",()=>{
   assert.equal(review.addDays("2026-12-31",1),"2027-01-01");
 });
 
-test("追加翌日と7日後に独立した復習を提示する",()=>{
+test("追加当日・翌日・7日後に独立した復習を提示する",()=>{
   const progress=review.parseProgress(null),item=material();
-  let pending=review.pendingByStage([item],progress,"2026-09-11");
+  let pending=review.pendingByStage([item],progress,"2026-09-10");
+  assert.deepEqual(pending.day0.map(value=>value.id),["lesson-1"]);
+  assert.equal(pending.day1.length,0);
+  assert.equal(pending.day7.length,0);
+  pending=review.pendingByStage([item],progress,"2026-09-11");
   assert.deepEqual(pending.day1.map(value=>value.id),["lesson-1"]);
   assert.equal(pending.day7.length,0);
+  review.setComplete(progress,item.id,"day0",true,"2026-09-10T01:00:00Z");
   review.setComplete(progress,item.id,"day1",true,"2026-09-11T01:00:00Z");
   pending=review.pendingByStage([item],progress,"2026-09-17");
+  assert.equal(pending.day0.length,0);
   assert.equal(pending.day1.length,0);
   assert.deepEqual(pending.day7.map(value=>value.id),["lesson-1"]);
 });
