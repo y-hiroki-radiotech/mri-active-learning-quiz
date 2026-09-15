@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRI復習教材：PC-MRAにおけるVENC設定の物理と最適化</title>
+  <style>
+    /* ベースリセット & カラー変数 */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-subcard: #0f172a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --accent-amber: #f59e0b;
+      --border-color: #334155;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.65;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* タイトルヘッダー */
+    .header-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      letter-spacing: 0.05em;
+    }
+    .badge-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .question-box {
+      background: rgba(15, 23, 42, 0.6);
+      border-left: 4px solid var(--accent-cyan);
+      padding: 14px 16px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      font-size: 15px;
+      color: #cbd5e1;
+    }
+
+    /* 採点サマリーカード */
+    .summary-card {
+      background: var(--bg-card);
+      border: 2px solid #334155;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .score-group {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .score-val {
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--accent-rose);
+      line-height: 1;
+    }
+    .score-max {
+      font-size: 18px;
+      color: var(--text-muted);
+    }
+    .status-pill {
+      font-size: 14px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 700px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+    .grid-cell {
+      background: var(--bg-subcard);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .grid-cell.full-width {
+      grid-column: 1 / -1;
+    }
+    .cell-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .c-green { color: var(--accent-emerald); }
+    .c-rose { color: var(--accent-rose); }
+    .c-amber { color: var(--accent-amber); }
+    .c-cyan { color: var(--accent-cyan); }
+
+    .cell-content {
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    /* 詳細解説カード */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    /* 数式ブロック */
+    .math-block {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-md);
+      padding: 18px;
+      text-align: center;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    math {
+      font-size: 18px;
+      color: var(--accent-cyan);
+    }
+
+    /* 変数テーブル */
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+    .param-table th, .param-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .param-table th {
+      background: rgba(30, 41, 59, 0.8);
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+    .param-table td {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    /* インタラクティブシミュレータ */
+    .sim-container {
+      background: #090d16;
+      border: 1px solid #334155;
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .slider-container {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    /* SVGコンテナ */
+    .svg-wrap {
+      width: 100%;
+      overflow-x: auto;
+      background: #020617;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      padding: 8px 0;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* リスト */
+    .detail-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .detail-list li {
+      position: relative;
+      padding-left: 20px;
+    }
+    .detail-list li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-size: 10px;
+      top: 4px;
+    }
+
+    /* 印刷 / PDF 最適化 */
+    @media print {
+      body {
+        background-color: #fff !important;
+        color: #000 !important;
+        padding: 0;
+      }
+      .container {
+        max-width: 100%;
+        gap: 12px;
+      }
+      .header-card, .summary-card, .card, .grid-cell {
+        background: #fff !important;
+        color: #000 !important;
+        border: 1px solid #999 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .question-box {
+        background: #f1f5f9 !important;
+        color: #111 !important;
+        border-left: 4px solid #333 !important;
+      }
+      .math-block, .sim-container, .svg-wrap {
+        background: #fff !important;
+        border: 1px solid #ccc !important;
+      }
+      svg text {
+        fill: #000 !important;
+      }
+      .param-table th {
+        background: #e2e8f0 !important;
+        color: #000 !important;
+      }
+      .param-table td {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .sim-controls {
+        display: none !important;
+      }
+      .score-val {
+        color: #b91c1c !important;
+      }
+      .c-green, .c-rose, .c-amber, .c-cyan {
+        color: #000 !important;
+        font-weight: bold;
+      }
+      math {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー＆問題提示 -->
+  <header class="header-card">
+    <div class="badge-row">
+      <span class="badge badge-cyan">Q024 応用</span>
+      <span class="badge badge-amber">PC-MRA / 流速エンコード</span>
+    </div>
+    <h1>PC-MRAにおけるVENC最適設定の物理機序</h1>
+    <div class="question-box">
+      <strong>【問題】</strong><br>
+      PC-MRAでVENCを実際の最大流速より低く設定すると何が起きますか。逆に高すぎると何が問題になり得るか、元資料から直接言える範囲で考えてください。
+    </div>
+  </header>
+
+  <!-- 採点サマリーカード -->
+  <section class="summary-card">
+    <div class="summary-header">
+      <div class="score-group">
+        <span class="score-val">35</span>
+        <span class="score-max">/ 100 点</span>
+      </div>
+      <div class="status-pill">判定：要見直し（根本概念の再確認）</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="grid-cell">
+        <div class="cell-title c-cyan">正答の要点</div>
+        <div class="cell-content">
+          <strong>① VENCが低すぎる場合：</strong>位相シフトが ±180° (±π) を超え、<strong>位相エイリアシング（折り返し現象）</strong>が発生。血管中央の高流速部が逆流として誤認されたり、黒抜け（低信号化）を起こす。<br>
+          <strong>② VENCが高すぎる場合：</strong>位相差が微小化（Δφ ≪ π）し、<strong>コントラスト雑音比（CNR）・信号雑音比（SNR）が著しく低下</strong>。遅い血流が背景ノイズに埋没して描出不良となる。
+        </div>
+      </div>
+
+      <div class="grid-cell">
+        <div class="cell-title c-amber">ユーザー解答</div>
+        <div class="cell-content">
+          「PC-MRAは極性が異なる双極傾斜磁場を2回かけて撮影し、その差分を取ることで血流による位相変化だけを抽出する。その中でVENCは抽出したい血流の速さに合わせて設定する。このパラメータは測定可能な最大速度をあらわしていて、小さくすることで遅い血流も描出できるが、高すぎるとすべての血管が描出される可能性がある。」
+        </div>
+      </div>
+
+      <div class="grid-cell">
+        <div class="cell-title c-green">正しく理解できた点</div>
+        <div class="cell-content">
+          ・双極傾斜磁場（バイポーラ勾配）を印加し、位相差分によって血流信号を抽出する基本原理を把握している。<br>
+          ・VENCが「測定可能な最大速度」を定義する設定パラメータである点を的確に捉えている。
+        </div>
+      </div>
+
+      <div class="grid-cell">
+        <div class="cell-title c-rose">最大の修正点</div>
+        <div class="cell-content">
+          ・「低く設定したとき」の重大現象である<strong>位相エイリアシング（±180°の折り返し）</strong>について言及がない。<br>
+          ・「高すぎる場合」に「すべての血管が描出される」と回答しているが、実際は<strong>真逆（位相差が微小になり、遅い血管がノイズに埋もれて見えなくなる）</strong>である。
+        </div>
+      </div>
+
+      <div class="grid-cell full-width">
+        <div class="cell-title c-rose">根本的誤概念とその処方箋</div>
+        <div class="cell-content">
+          VENCを「設定値より速いもの／遅いものを拾う閾値フィルター」のように捉えている可能性があります。VENCは<strong>「位相 ±180° に割り当てる流速スケールの最大目盛り（ダイナミックレンジ）」</strong>です。目盛りを大きく（VENCを高く）しすぎると、わずかな流速に対する位相変化が小さくなりすぎてコントラストが消失します。
+        </div>
+      </div>
+
+      <div class="grid-cell full-width">
+        <div class="cell-title c-amber">学習優先度：最重要 ★★★</div>
+        <div class="cell-content">
+          第26・27章（MR血管撮影）および第39章（専門医模擬試験・問35）におけるPC法の最頻出テーマです。定量流速計測の成否を分ける最重要概念です。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数式理論カード -->
+  <section class="card">
+    <div class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      重要数式と物理学的パラメータの定義
+    </div>
+
+    <p style="font-size:14px; color:#cbd5e1;">
+      双極傾斜磁場（バイポーラ勾配）の印加により、静止組織は位相がリフェーズされて正味ゼロになりますが、一定速度 <math display="inline"><mi>v</mi></math> で運動するスピンは速度に比例した位相シフト <math display="inline"><mi>&Delta;&phi;</mi></math> を獲得します。
+    </p>
+
+    <!-- 数式1: 位相と流速の関係 -->
+    <div class="math-block">
+      <math display="block">
+        <mi>&Delta;&phi;</mi>
+        <mo>=</mo>
+        <mi>&gamma;</mi>
+        <mo>&sdot;</mo>
+        <mi>&Delta;</mi>
+        <msub><mi>M</mi><mn>1</mn></msub>
+        <mo>&sdot;</mo>
+        <mi>v</mi>
+        <mo>=</mo>
+        <mi>&pi;</mi>
+        <mo>&sdot;</mo>
+        <mfrac>
+          <mi>v</mi>
+          <mi>VENC</mi>
+        </mfrac>
+      </math>
+    </div>
+
+    <!-- 数式2: VENCの定義式 -->
+    <div class="math-block">
+      <math display="block">
+        <mi>VENC</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mi>&pi;</mi>
+          <mrow>
+            <mi>&gamma;</mi>
+            <mo>&sdot;</mo>
+            <mi>&Delta;</mi>
+            <msub><mi>M</mi><mn>1</mn></msub>
+          </mrow>
+        </mfrac>
+      </math>
+    </div>
+
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>記号</th>
+          <th>物理的意味</th>
+          <th>単位</th>
+          <th>VENCとの比例・反比例関係</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>&Delta;&phi;</strong></td>
+          <td>スピンが獲得する正味の位相シフト量</td>
+          <td>rad（または度）</td>
+          <td>流速 <math display="inline"><mi>v</mi></math> に比例、<strong>VENC に反比例</strong></td>
+        </tr>
+        <tr>
+          <td><strong>VENC</strong></td>
+          <td>速度エンコード感度（&Delta;&phi; = &plusmn;&pi; となる速度）</td>
+          <td>cm/s</td>
+          <td>傾斜磁場1次モーメント差 <math display="inline"><mi>&Delta;</mi><msub><mi>M</mi><mn>1</mn></msub></math> に<strong>反比例</strong></td>
+        </tr>
+        <tr>
+          <td><strong>&gamma;</strong></td>
+          <td>磁気回転比（プロトン：2.675 &times; 10<sup>8</sup>）</td>
+          <td>rad / (s&sdot;T)</td>
+          <td>定数</td>
+        </tr>
+        <tr>
+          <td><strong>&Delta;M<sub>1</sub></strong></td>
+          <td>2回の双極傾斜磁場における1次モーメントの差</td>
+          <td>mT&sdot;s<sup>2</sup> / m</td>
+          <td>傾斜磁場強度 <math display="inline"><mi>G</mi></math> や印加時間 <math display="inline"><mi>&tau;</mi></math> で制御</td>
+        </tr>
+        <tr>
+          <td><strong>v</strong></td>
+          <td>ボクセル内スピンの流速</td>
+          <td>cm/s</td>
+          <td>測定対象の物理量</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 現象比較図（SVG） -->
+  <section class="card">
+    <div class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m10 15 5-3-5-3v6z"></path></svg>
+      VENC設定による血管プロファイルと画像描出の対比
+    </div>
+
+    <div class="svg-wrap">
+      <svg width="860" height="320" viewBox="0 0 860 320">
+        <!-- 背景グリッド -->
+        <rect width="860" height="320" fill="#030712"/>
+
+        <!-- 3つのケースの区画線 -->
+        <line x1="286" y1="20" x2="286" y2="300" stroke="#1e293b" stroke-dasharray="4"/>
+        <line x1="573" y1="20" x2="573" y2="300" stroke="#1e293b" stroke-dasharray="4"/>
+
+        <!-- CASE 1: 低すぎるVENC (エイリアシング) -->
+        <g transform="translate(10, 20)">
+          <text x="133" y="24" fill="#f43f5e" font-size="15" font-weight="bold" text-anchor="middle">① VENC &lt; 実流速（低すぎる）</text>
+          
+          <!-- 血管断面図 -->
+          <circle cx="133" cy="90" r="45" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+          <circle cx="133" cy="90" r="40" fill="#3b82f6" opacity="0.9"/>
+          <!-- 中心部折り返し (黒抜け・逆転) -->
+          <circle cx="133" cy="90" r="22" fill="#020617" stroke="#f43f5e" stroke-width="2"/>
+          <text x="133" y="94" fill="#f43f5e" font-size="10" font-weight="bold" text-anchor="middle">黒抜け(反転)</text>
+
+          <!-- プロファイルグラフ -->
+          <line x1="30" y1="230" x2="240" y2="230" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="30" y1="160" x2="30" y2="250" stroke="#64748b" stroke-width="1.5"/>
+          <!-- 限界線 +π -->
+          <line x1="30" y1="180" x2="240" y2="180" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2"/>
+          <text x="25" y="184" fill="#f43f5e" font-size="9" text-anchor="end">+180°</text>
+          <!-- 放物線の折り返しカーブ -->
+          <path d="M 50 230 Q 80 180 95 180 L 95 245 Q 133 260 171 245 L 171 180 Q 186 180 216 230" fill="none" stroke="#f43f5e" stroke-width="2.5"/>
+
+          <text x="133" y="280" fill="#cbd5e1" font-size="11" text-anchor="middle">流速が±180°を超過し</text>
+          <text x="133" y="296" fill="#f43f5e" font-size="11" font-weight="bold" text-anchor="middle">中央が高流速なのに黒く抜ける</text>
+        </g>
+
+        <!-- CASE 2: 適正VENC -->
+        <g transform="translate(296, 20)">
+          <text x="133" y="24" fill="#10b981" font-size="15" font-weight="bold" text-anchor="middle">② VENC &approx; 実最大流速（適正）</text>
+          
+          <!-- 血管断面図 -->
+          <circle cx="133" cy="90" r="45" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+          <radialGradient id="grad-good" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="60%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#0369a1"/>
+          </radialGradient>
+          <circle cx="133" cy="90" r="40" fill="url(#grad-good)"/>
+          <text x="133" y="94" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">高コントラスト</text>
+
+          <!-- プロファイルグラフ -->
+          <line x1="30" y1="230" x2="240" y2="230" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="30" y1="160" x2="30" y2="250" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="30" y1="180" x2="240" y2="180" stroke="#10b981" stroke-width="1" stroke-dasharray="2"/>
+          <text x="25" y="184" fill="#10b981" font-size="9" text-anchor="end">+180°</text>
+          <!-- 綺麗な放物線 (最大値がちょうど+180°付近) -->
+          <path d="M 50 230 Q 133 175 216 230" fill="none" stroke="#10b981" stroke-width="2.5"/>
+
+          <text x="133" y="280" fill="#cbd5e1" font-size="11" text-anchor="middle">最大流速が約160°〜170°</text>
+          <text x="133" y="296" fill="#10b981" font-size="11" font-weight="bold" text-anchor="middle">SNR・CNRともに最大化</text>
+        </g>
+
+        <!-- CASE 3: 高すぎるVENC -->
+        <g transform="translate(583, 20)">
+          <text x="133" y="24" fill="#f59e0b" font-size="15" font-weight="bold" text-anchor="middle">③ VENC &gt;&gt; 実流速（高すぎる）</text>
+          
+          <!-- 血管断面図 -->
+          <circle cx="133" cy="90" r="45" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+          <circle cx="133" cy="90" r="40" fill="#334155" opacity="0.6"/>
+          <circle cx="133" cy="90" r="25" fill="#475569" opacity="0.8"/>
+          <text x="133" y="94" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="middle">淡い描出(低CNR)</text>
+
+          <!-- プロファイルグラフ -->
+          <line x1="30" y1="230" x2="240" y2="230" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="30" y1="160" x2="30" y2="250" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="30" y1="180" x2="240" y2="180" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/>
+          <text x="25" y="184" fill="#64748b" font-size="9" text-anchor="end">+180°</text>
+          <!-- 極めて低い放物線 -->
+          <path d="M 50 230 Q 133 222 216 230" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+          <text x="133" y="215" fill="#f59e0b" font-size="9" text-anchor="middle">&Delta;&phi; がわずか数度</text>
+
+          <text x="133" y="280" fill="#cbd5e1" font-size="11" text-anchor="middle">位相差が極小でノイズに埋没</text>
+          <text x="133" y="296" fill="#f59e0b" font-size="11" font-weight="bold" text-anchor="middle">遅い血管が消失（描出不能）</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- インタラクティブ・VENCシミュレータ -->
+  <section class="card">
+    <div class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+      動的理解：VENCインタラクティブ・シミュレーター
+    </div>
+    <p style="font-size:13px; color:#94a3b8;">
+      血管内の最高流速を <strong>100 cm/s</strong>（層流放物線分布）に固定しています。スライダーで VENC を動かし、位相シフト量と再構成画像（断面）の変化をリアルタイムに確認してください。
+    </p>
+
+    <div class="sim-container">
+      <div class="control-row">
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>設定 VENC 値</span>
+            <span id="venc-disp" style="color:var(--accent-cyan);">100 cm/s</span>
+          </div>
+          <input type="range" id="venc-slider" min="30" max="300" step="5" value="100">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="setVenc(50)">低すぎる (50)</button>
+          <button class="btn" onclick="setVenc(110)">適正 (110)</button>
+          <button class="btn" onclick="setVenc(250)">高すぎる (250)</button>
+        </div>
+      </div>
+
+      <div class="svg-wrap">
+        <svg id="sim-svg" width="700" height="200" viewBox="0 0 700 200">
+          <!-- 背景 -->
+          <rect width="700" height="200" fill="#090d16"/>
+
+          <!-- 左側：血管断面シミュレーション -->
+          <g transform="translate(100, 100)">
+            <circle cx="0" cy="0" r="60" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+            <circle id="vessel-outer" cx="0" cy="0" r="54" fill="#0284c7"/>
+            <circle id="vessel-inner" cx="0" cy="0" r="28" fill="#e0f2fe"/>
+            <text x="0" y="80" fill="#cbd5e1" font-size="12" text-anchor="middle">血管断面シミュレーション</text>
+          </g>
+
+          <!-- 右側：位相シフト曲線グラフ -->
+          <g transform="translate(260, 20)">
+            <text x="0" y="12" fill="#94a3b8" font-size="12" font-weight="bold">位相プロファイル [&Delta;&phi;] (管径方向)</text>
+            <!-- 軸 -->
+            <line x1="30" y1="90" x2="380" y2="90" stroke="#475569" stroke-width="1.5"/>
+            <line x1="30" y1="20" x2="30" y2="160" stroke="#475569" stroke-width="1.5"/>
+            <!-- ±180°ライン -->
+            <line x1="30" y1="35" x2="380" y2="35" stroke="#f43f5e" stroke-width="1" stroke-dasharray="3"/>
+            <text x="25" y="38" fill="#f43f5e" font-size="10" text-anchor="end">+180°</text>
+            <line x1="30" y1="145" x2="380" y2="145" stroke="#f43f5e" stroke-width="1" stroke-dasharray="3"/>
+            <text x="25" y="148" fill="#f43f5e" font-size="10" text-anchor="end">-180°</text>
+
+            <!-- プロットパス -->
+            <path id="sim-path" d="" fill="none" stroke="#06b6d4" stroke-width="3"/>
+            <text id="sim-status-text" x="205" y="175" fill="#06b6d4" font-size="13" font-weight="bold" text-anchor="middle">適正状態</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 臨床現場での判断指針カード -->
+  <section class="card">
+    <div class="card-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      臨床現場におけるトレードオフと最適化の思考プロセス
+    </div>
+
+    <ul class="detail-list">
+      <li>
+        <strong>VENC設定の鉄則：</strong>
+        目標血管の予想最大流速の<strong>約1.1〜1.2倍（10〜20%高め）</strong>に設定するのがセオリーです。流速がVENCを超えない安全域を確保しつつ、位相シフトを可能な限り ±180° に近づけて最高のCNRを引き出します。
+      </li>
+      <li>
+        <strong>低すぎたときの臨床的落とし穴（偽狭窄・偽閉塞）：</strong>
+        大動脈弁狭窄（AS）や頸動脈狭窄部など、ジェット流が生じる部位でVENCが不足すると、中央の最高速部で折り返しが生じ、急激な低信号化を呈します。これを「血流途絶（閉塞）」「血栓形成」と誤読するリスクがあります（第39章 問35・問85参照）。
+      </li>
+      <li>
+        <strong>高すぎたときの臨床的落とし穴（末梢血管の消失）：</strong>
+        「速い動脈も遅い静脈も一度に描出したい」とVENCを過大（例：200 cm/s）にすると、流速 10〜20 cm/s 程度の遅い静脈や分枝動脈は位相シフトがわずか数度しか得られず、背景組織や熱雑音のなかに完全に埋没して描出されなくなります。
+      </li>
+      <li>
+        <strong>複数流速の共存への対処：</strong>
+        門脈（15〜25 cm/s）と腹部大動脈（100〜150 cm/s）のように流速差が激しい場合、単一のVENCで両方を最適描出することは不可能です。VENCを変えて2回撮像するか、多重VENC（Multi-VENC）シーケンスを選択します。
+      </li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+  // インタラクティブシミュレータのスクリプト
+  const slider = document.getElementById('venc-slider');
+  const vencDisp = document.getElementById('venc-disp');
+  const simPath = document.getElementById('sim-path');
+  const simStatus = document.getElementById('sim-status-text');
+  const vesselOuter = document.getElementById('vessel-outer');
+  const vesselInner = document.getElementById('vessel-inner');
+
+  const V_MAX = 100; // 最大流速 100 cm/s
+
+  function updateSim() {
+    const venc = parseFloat(slider.value);
+    vencDisp.textContent = venc + " cm/s";
+
+    // プロットパス作成 (中心 X=205, Y_base=90, ±180°は Y=35 と Y=145 (幅 55px))
+    // r は -1 から +1
+    let points = [];
+    let isAliased = false;
+
+    for (let i = 0; i <= 60; i++) {
+      let r = -1 + (i / 30); // -1 to 1
+      let v = V_MAX * (1 - r * r); // 放物線流速
+      let phaseDeg = (v / venc) * 180; // 位相(度)
+
+      // エイリアシング判定
+      let dispPhase = phaseDeg;
+      if (dispPhase > 180) {
+        isAliased = true;
+        dispPhase = dispPhase - 360; // ラップアラウンド
+      }
+
+      let px = 205 + r * 150; // X軸幅 300px
+      let py = 90 - (dispPhase / 180) * 55; // Y座標
+      points.push({x: px, y: py, isAliased: phaseDeg > 180});
+    }
+
+    // パス文字列生成
+    let d = "";
+    for (let i = 0; i < points.length; i++) {
+      if (i === 0) {
+        d += `M ${points[i].x} ${points[i].y}`;
+      } else {
+        // ラップアラウンドの不連続面チェック
+        if (Math.abs(points[i].y - points[i-1].y) > 60) {
+          d += ` M ${points[i].x} ${points[i].y}`;
+        } else {
+          d += ` L ${points[i].x} ${points[i].y}`;
+        }
+      }
+    }
+    simPath.setAttribute('d', d);
+
+    // 断面図 & ステータス更新
+    if (isAliased) {
+      simPath.setAttribute('stroke', '#f43f5e');
+      simStatus.textContent = "警告：位相エイリアシング発生中（中央が反転・黒抜け）";
+      simStatus.setAttribute('fill', '#f43f5e');
+
+      // 断面：外側は白/水色、内側は黒
+      vesselOuter.setAttribute('fill', '#38bdf8');
+      vesselInner.style.display = 'block';
+      // エイリアスする半径を計算: v > venc => 100*(1-r^2) > venc => r^2 < 1 - venc/100
+      let rAlias = Math.sqrt(Math.max(0, 1 - venc / V_MAX));
+      vesselInner.setAttribute('r', (rAlias * 54).toFixed(1));
+      vesselInner.setAttribute('fill', '#020617');
+      vesselInner.setAttribute('stroke', '#f43f5e');
+      vesselInner.setAttribute('stroke-width', '2');
+    } else {
+      vesselInner.style.display = 'none';
+      let ratio = V_MAX / venc; // 0.33 〜 1.0
+      if (ratio > 0.7) {
+        // 適正
+        simPath.setAttribute('stroke', '#10b981');
+        simStatus.textContent = "至適設定：高コントラスト・SNR良好";
+        simStatus.setAttribute('fill', '#10b981');
+        vesselOuter.setAttribute('fill', '#f0f9ff');
+      } else {
+        // 高すぎる
+        simPath.setAttribute('stroke', '#f59e0b');
+        simStatus.textContent = "感度低下：位相差が小さく背景ノイズに埋没";
+        simStatus.setAttribute('fill', '#f59e0b');
+        // 色を暗く
+        let lightness = Math.max(15, Math.floor(ratio * 70));
+        vesselOuter.setAttribute('fill', `hsl(215, 60%, ${lightness}%)`);
+      }
+    }
+  }
+
+  function setVenc(val) {
+    slider.value = val;
+    updateSim();
+  }
+
+  slider.addEventListener('input', updateSim);
+  updateSim();
+</script>
+
+</body>
+</html>

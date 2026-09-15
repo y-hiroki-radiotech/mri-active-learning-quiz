@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRIシーケンス動的シミュレータ：PC-MRAとバイポーラ勾配の物理</title>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #151d30;
+      --bg-card-hover: #1c2742;
+      --bg-input: #0b1120;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-highlight: #38bdf8;
+      --border-color: #24324f;
+      --border-light: #334155;
+      --accent-cyan: #06b6d4;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+      --radius-lg: 14px;
+      --radius-md: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "BIZ UDPGothic", Meiryo, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 20px 14px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ヘッダー */
+    .header-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .badge-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      letter-spacing: 0.04em;
+    }
+    .badge-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.4); }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 13.5px;
+      color: var(--text-sub);
+    }
+
+    /* メインシミュレータパネル */
+    .sim-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    /* コントロールツールバー */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+    }
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .btn:hover {
+      background: var(--border-light);
+      border-color: var(--accent-cyan);
+    }
+    .btn-active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 240px;
+    }
+    .slider-wrap label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    /* 2列レイアウト：シーケンス図 ＋ 物理可視化 */
+    .sim-body {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .sim-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .seq-container, .spin-container {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-sub);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    svg text {
+      font-family: inherit;
+      user-select: none;
+    }
+
+    /* パラメータ操作バー */
+    .param-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+    }
+    .param-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .param-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    /* 解説モジュール群 */
+    .explain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .explain-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .explain-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .explain-card.highlight-now {
+      border-left: 4px solid var(--accent-cyan);
+    }
+    .explain-card.highlight-next {
+      border-left: 4px solid var(--accent-amber);
+    }
+    .card-label {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-label.now { color: var(--accent-cyan); }
+    .card-label.next { color: var(--accent-amber); }
+    .explain-text {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+    .explain-text strong {
+      color: #fff;
+    }
+
+    /* 数式のお気持ちカード */
+    .math-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .math-container {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+      overflow-x: auto;
+    }
+    math {
+      font-size: 17px;
+      color: var(--accent-cyan);
+    }
+    .math-desc {
+      font-size: 13.5px;
+      color: #cbd5e1;
+    }
+    .math-desc strong {
+      color: #38bdf8;
+    }
+
+    /* 印刷対応 */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0;
+      }
+      .toolbar, .param-bar, .btn-group, input[type=range] {
+        display: none !important;
+      }
+      .sim-card, .explain-card, .math-card, .header-card {
+        background: #fff !important;
+        color: #000 !important;
+        border: 1px solid #999 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+      }
+      svg text {
+        fill: #000 !important;
+      }
+      .explain-text, .math-desc, .subtitle {
+        color: #222 !important;
+      }
+      math {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <header class="header-card">
+    <div class="badge-bar">
+      <span class="badge badge-cyan">Level 4: 完全動的シミュレータ</span>
+      <span class="badge badge-blue">PC-MRA (Phase Contrast)</span>
+      <span class="badge badge-green">バイポーラ傾斜磁場と速度エンコード</span>
+    </div>
+    <h1>MRIシーケンス動的シミュレータ：位相コントラスト法 (PC-MRA)</h1>
+    <div class="subtitle">
+      バイポーラ傾斜磁場による傾斜磁場モーメント積分、静止スピンと流動スピンの位相挙動、k-space収集とVENC（速度エンコード）の連動を時間軸に沿って追体験します。
+    </div>
+  </header>
+
+  <!-- インタラクティブ動的シミュレータ -->
+  <section class="sim-card">
+    
+    <!-- 操作ツールバー -->
+    <div class="toolbar">
+      <div class="btn-group">
+        <button class="btn btn-active" id="play-btn" onclick="togglePlay()">⏸ 一時停止</button>
+        <button class="btn" onclick="resetSim()">⏮ リセット</button>
+        <button class="btn" onclick="stepSim(-1)">⏪ 前へ</button>
+        <button class="btn" onclick="stepSim(1)">⏭ 次へ</button>
+      </div>
+
+      <div class="slider-wrap">
+        <label for="time-slider">時間カーソル (t): <span id="time-disp" style="color:var(--accent-cyan); width:45px; display:inline-block;">0.0 ms</span></label>
+        <input type="range" id="time-slider" min="0" max="100" step="0.5" value="0">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="speed-05" onclick="setSpeed(0.5)">0.5x</button>
+        <button class="btn btn-active" id="speed-10" onclick="setSpeed(1.0)">1.0x</button>
+        <button class="btn" id="speed-20" onclick="setSpeed(2.0)">2.0x</button>
+      </div>
+    </div>
+
+    <!-- パラメータ操作UI -->
+    <div class="param-bar">
+      <div class="param-item">
+        <div class="param-header">
+          <span>血流流速 (v)</span>
+          <span id="v-disp" style="color:var(--accent-highlight);">80 cm/s</span>
+        </div>
+        <input type="range" id="v-slider" min="-160" max="160" step="5" value="80">
+      </div>
+      <div class="param-item">
+        <div class="param-header">
+          <span>設定 VENC</span>
+          <span id="venc-disp" style="color:var(--accent-amber);">100 cm/s</span>
+        </div>
+        <input type="range" id="venc-slider" min="30" max="200" step="5" value="100">
+      </div>
+      <div class="param-item">
+        <div class="param-header">
+          <span>状態サマリー</span>
+          <span id="ratio-disp" style="color:var(--accent-green); font-weight:700;">適正 (v/VENC = 0.80)</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-sub);" id="alias-warning">
+          位相差 Δφ = +144.0° (適正レンジ内)
+        </div>
+      </div>
+    </div>
+
+    <!-- メインビジュアル：シーケンス図 ＋ スピン位相/k-space -->
+    <div class="sim-body">
+      
+      <!-- 左側：汎用シーケンスタイムライン -->
+      <div class="seq-container">
+        <div class="section-title">
+          <span>パルスシーケンス波形 (Pulse Sequence Timeline)</span>
+          <span id="event-tag" style="color:var(--accent-cyan); font-weight:700;">Excitation</span>
+        </div>
+
+        <svg id="seq-svg" viewBox="0 0 540 380" width="100%" height="auto">
+          <!-- 背景グリッド -->
+          <defs>
+            <pattern id="seq-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#162032" stroke-width="0.8"/>
+            </pattern>
+            <!-- 勾配塗りつぶし用ハッチング -->
+            <pattern id="hatch-pos" width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#06b6d4" stroke-width="1.5" opacity="0.4"/>
+            </pattern>
+            <pattern id="hatch-neg" width="6" height="6" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#f43f5e" stroke-width="1.5" opacity="0.4"/>
+            </pattern>
+          </defs>
+          <rect width="540" height="380" fill="#050811"/>
+          <rect width="540" height="380" fill="url(#seq-grid)"/>
+
+          <!-- イベント背景帯 -->
+          <!-- t=0~15: RF/Slice -->
+          <rect x="50" y="20" width="60" height="340" fill="rgba(59, 130, 246, 0.05)"/>
+          <!-- t=25~65: Flow Bipolar -->
+          <rect x="150" y="20" width="160" height="340" fill="rgba(6, 182, 212, 0.06)"/>
+          <!-- t=75~95: Readout/ADC -->
+          <rect x="350" y="20" width="80" height="340" fill="rgba(16, 185, 129, 0.06)"/>
+
+          <!-- レーン基準線 (Y座標: RF=55, Gflow=125, Gslice=195, Gphase=255, Gread=315, ADC=355) -->
+          <!-- 1. RF レーン -->
+          <text x="10" y="58" fill="#94a3b8" font-size="11" font-weight="700">RF</text>
+          <line x1="45" y1="55" x2="520" y2="55" stroke="#334155" stroke-width="1"/>
+          <!-- RFパルス (Sinc波/ガウシアン形模式) -->
+          <path d="M 50 55 C 65 55, 70 25, 80 25 C 90 25, 95 55, 110 55" fill="none" stroke="#38bdf8" stroke-width="2.2"/>
+          <text x="80" y="20" fill="#38bdf8" font-size="10" font-weight="bold" text-anchor="middle">α° (Flip)</text>
+
+          <!-- 2. G_flow (バイポーラ傾斜磁場) レーン -->
+          <text x="10" y="128" fill="#06b6d4" font-size="11" font-weight="700">G flow</text>
+          <line x1="45" y1="125" x2="520" y2="125" stroke="#334155" stroke-width="1"/>
+          <!-- 正葉 (Lobe 1) -->
+          <path d="M 150 125 L 165 95 L 215 95 L 230 125 Z" fill="url(#hatch-pos)" stroke="#06b6d4" stroke-width="1.8"/>
+          <!-- 負葉 (Lobe 2: 面積等価) -->
+          <path d="M 230 125 L 245 155 L 295 155 L 310 125 Z" fill="url(#hatch-neg)" stroke="#06b6d4" stroke-width="1.8"/>
+          <text x="190" y="112" fill="#06b6d4" font-size="10" font-weight="bold" text-anchor="middle">+G (τ)</text>
+          <text x="270" y="145" fill="#f43f5e" font-size="10" font-weight="bold" text-anchor="middle">-G (τ)</text>
+          <text x="230" y="86" fill="#38bdf8" font-size="10" text-anchor="middle">双極勾配 (Bipolar)</text>
+
+          <!-- 3. G_slice レーン -->
+          <text x="10" y="198" fill="#94a3b8" font-size="11" font-weight="700">G slice</text>
+          <line x1="45" y1="195" x2="520" y2="195" stroke="#334155" stroke-width="1"/>
+          <!-- スライス選択＋リフェーズ勾配 -->
+          <path d="M 50 195 L 60 175 L 100 175 L 110 195 L 120 210 L 140 210 L 150 195" fill="none" stroke="#64748b" stroke-width="1.8"/>
+          <text x="80" y="170" fill="#64748b" font-size="9" text-anchor="middle">励起選択</text>
+          <text x="130" y="222" fill="#64748b" font-size="9" text-anchor="middle">Rephase</text>
+
+          <!-- 4. G_phase レーン -->
+          <text x="10" y="258" fill="#94a3b8" font-size="11" font-weight="700">G phase</text>
+          <line x1="45" y1="255" x2="520" y2="255" stroke="#334155" stroke-width="1"/>
+          <!-- 位相エンコードステップ模式 -->
+          <path d="M 310 255 L 320 240 L 340 240 L 350 255" fill="none" stroke="#a855f7" stroke-width="1.5"/>
+          <path d="M 310 255 L 320 270 L 340 270 L 350 255" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="2"/>
+          <line x1="320" y1="255" x2="340" y2="255" stroke="#a855f7" stroke-width="1"/>
+
+          <!-- 5. G_read レーン -->
+          <text x="10" y="318" fill="#94a3b8" font-size="11" font-weight="700">G read</text>
+          <line x1="45" y1="315" x2="520" y2="315" stroke="#334155" stroke-width="1"/>
+          <!-- プリフェーズ ＆ 読み出し勾配 -->
+          <path d="M 310 315 L 320 330 L 340 330 L 350 315 L 360 295 L 420 295 L 430 315" fill="none" stroke="#10b981" stroke-width="1.8"/>
+          <text x="330" y="343" fill="#10b981" font-size="9" text-anchor="middle">Prephase</text>
+          <text x="390" y="290" fill="#10b981" font-size="9" text-anchor="middle">Readout (Gx)</text>
+
+          <!-- 6. ADC / Echo レーン -->
+          <text x="10" y="362" fill="#10b981" font-size="11" font-weight="700">ADC/Sig</text>
+          <line x1="45" y1="360" x2="520" y2="360" stroke="#334155" stroke-width="1"/>
+          <!-- ADC ゲートウィンドウ -->
+          <rect x="360" y="354" width="60" height="12" fill="rgba(16, 185, 129, 0.25)" stroke="#10b981" stroke-width="1.5" rx="2"/>
+          <text x="390" y="364" fill="#10b981" font-size="9" font-weight="bold" text-anchor="middle">ADC ON</text>
+          <!-- 勾配エコー (Signal) -->
+          <path d="M 360 360 Q 390 330 420 360" fill="none" stroke="#f59e0b" stroke-width="2.2"/>
+          <text x="390" y="335" fill="#f59e0b" font-size="9" font-weight="bold" text-anchor="middle">Echo (TE)</text>
+
+          <!-- TEブラケット表示 -->
+          <line x1="80" y1="372" x2="390" y2="372" stroke="#cbd5e1" stroke-width="1"/>
+          <line x1="80" y1="368" x2="80" y2="376" stroke="#cbd5e1" stroke-width="1"/>
+          <line x1="390" y1="368" x2="390" y2="376" stroke="#cbd5e1" stroke-width="1"/>
+          <text x="235" y="370" fill="#cbd5e1" font-size="10" font-weight="bold" text-anchor="middle">TE (Echo Time)</text>
+
+          <!-- 現在時刻カーソル (縦線) -->
+          <line id="time-cursor" x1="50" y1="15" x2="50" y2="375" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="4,2"/>
+          <polygon id="cursor-head" points="45,15 55,15 50,22" fill="#f43f5e"/>
+        </svg>
+      </div>
+
+      <!-- 右側：スピン位相・モーメント・k-space動的追跡 -->
+      <div class="spin-container">
+        <div class="section-title">
+          <span>磁化・スピン位相とモーメント (Spin Phase Dynamics)</span>
+        </div>
+
+        <svg id="spin-svg" viewBox="0 0 340 380" width="100%" height="auto">
+          <rect width="340" height="380" fill="#050811"/>
+
+          <!-- 1. スピン位相ダイアグラム (静止 vs 流動スピン) -->
+          <!-- 左円：静止スピン (Static Spins) -->
+          <g transform="translate(85, 80)">
+            <circle cx="0" cy="0" r="48" fill="#0b1329" stroke="#334155" stroke-width="1.5"/>
+            <line x1="0" y1="-48" x2="0" y2="48" stroke="#1e293b" stroke-width="1"/>
+            <line x1="-48" y1="0" x2="48" y2="0" stroke="#1e293b" stroke-width="1"/>
+            <!-- 静止スピンベクトル (針) -->
+            <line id="vec-static" x1="0" y1="0" x2="0" y2="-42" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="0" cy="0" r="4" fill="#10b981"/>
+            <text x="0" y="62" fill="#10b981" font-size="11" font-weight="bold" text-anchor="middle">静止スピン (v = 0)</text>
+            <text id="phi-static-text" x="0" y="76" fill="#cbd5e1" font-size="10" text-anchor="middle">φ = 0.0°</text>
+          </g>
+
+          <!-- 右円：流動スピン (Flowing Spins) -->
+          <g transform="translate(245, 80)">
+            <circle cx="0" cy="0" r="48" fill="#0b1329" stroke="#334155" stroke-width="1.5"/>
+            <line x1="0" y1="-48" x2="0" y2="48" stroke="#1e293b" stroke-width="1"/>
+            <line x1="-48" y1="0" x2="48" y2="0" stroke="#1e293b" stroke-width="1"/>
+            <!-- 基準点点線 -->
+            <line x1="0" y1="0" x2="0" y2="-44" stroke="#475569" stroke-width="1.5" stroke-dasharray="2"/>
+            <!-- 流動スピンベクトル (針) -->
+            <line id="vec-flow" x1="0" y1="0" x2="0" y2="-42" stroke="#06b6d4" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="0" cy="0" r="4" fill="#06b6d4"/>
+            <text x="0" y="62" fill="#06b6d4" font-size="11" font-weight="bold" text-anchor="middle">流動スピン (v ≠ 0)</text>
+            <text id="phi-flow-text" x="0" y="76" fill="#cbd5e1" font-size="10" text-anchor="middle">Δφ = +0.0°</text>
+          </g>
+
+          <!-- 2. 勾配モーメント積分メーター M0 & M1 -->
+          <g transform="translate(20, 185)">
+            <text x="0" y="14" fill="#94a3b8" font-size="11" font-weight="bold">傾斜磁場モーメント積分 (Gradient Moments)</text>
+            
+            <!-- M0 (0次モーメント: 面積総和 ∫G dt) -->
+            <text x="0" y="36" fill="#cbd5e1" font-size="11">0次モーメント M₀ = ∫ G(t) dt :</text>
+            <rect x="180" y="26" width="120" height="12" fill="#151d30" stroke="#334155" rx="3"/>
+            <rect id="bar-m0" x="240" y="26" width="0" height="12" fill="#10b981" rx="3"/>
+            <line x1="240" y1="23" x2="240" y2="41" stroke="#f1f5f9" stroke-width="1.5"/>
+            <text id="val-m0" x="305" y="36" fill="#10b981" font-size="10" font-weight="bold">0.0</text>
+
+            <!-- M1 (1次モーメント: 速度感度 ∫ t·G dt) -->
+            <text x="0" y="62" fill="#cbd5e1" font-size="11">1次モーメント M₁ = ∫ t·G(t) dt :</text>
+            <rect x="180" y="52" width="120" height="12" fill="#151d30" stroke="#334155" rx="3"/>
+            <rect id="bar-m1" x="240" y="52" width="0" height="12" fill="#06b6d4" rx="3"/>
+            <line x1="240" y1="49" x2="240" y2="67" stroke="#f1f5f9" stroke-width="1.5"/>
+            <text id="val-m1" x="305" y="62" fill="#06b6d4" font-size="10" font-weight="bold">0.0</text>
+          </g>
+
+          <!-- 3. k-space Trajectory ＆ 信号形成 -->
+          <g transform="translate(20, 275)">
+            <text x="0" y="14" fill="#94a3b8" font-size="11" font-weight="bold">k-space現在位置 (kx ∝ ∫ Gx dt)</text>
+            
+            <!-- k-space枠 -->
+            <rect x="40" y="26" width="220" height="60" fill="#090f1d" stroke="#334155" stroke-width="1"/>
+            <line x1="40" y1="56" x2="260" y2="56" stroke="#1e293b" stroke-width="1"/>
+            <line x1="150" y1="26" x2="150" y2="86" stroke="#1e293b" stroke-width="1"/>
+            <text x="150" y="22" fill="#64748b" font-size="9" text-anchor="middle">k-space 中心 (kx=0)</text>
+
+            <!-- kx移動軌跡線 -->
+            <line id="k-trajectory" x1="150" y1="56" x2="150" y2="56" stroke="#10b981" stroke-width="2.5"/>
+            <!-- 現在位置マーカー -->
+            <circle id="k-cursor" cx="150" cy="56" r="4.5" fill="#f59e0b"/>
+            <text id="k-disp" x="270" y="60" fill="#f59e0b" font-size="10" font-weight="bold">kx: 0.0</text>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- 動的解説パネル（現在と次） -->
+    <div class="explain-grid">
+      
+      <!-- 今何が起きている？ -->
+      <div class="explain-card highlight-now">
+        <div class="card-label now">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          今、MRIの中で何が起きている？ (現在の物理イベント)
+        </div>
+        <div class="explain-text" id="now-explain">
+          RF励起パルス（α°）とスライス選択勾配（Gslice）が印加されています。熱平衡状態にあったプロトンの縦磁化が傾き、横磁化成分 $M_{xy}$ が発生しました。すべてのスピンが同位相で歳差運動を開始します。
+        </div>
+      </div>
+
+      <!-- 次に何が起こる？ -->
+      <div class="explain-card highlight-next">
+        <div class="card-label next">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"></path></svg>
+          次に何が起こる？ (因果関係と後続イベント)
+        </div>
+        <div class="explain-text" id="next-explain">
+          スライスの位相乱れを補正した後、<strong>バイポーラ傾斜磁場の正極性葉（+G）</strong>が印加されます。局所磁場勾配により、勾配方向の位置に応じたスピンの位相分散（dephasing）が始まります。
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- 数式のお気持ち解説カード -->
+  <section class="math-card">
+    <div style="font-size:16px; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      この数式のお気持ち：なぜバイポーラ勾配で「血流の速度」だけが抜けるのか？
+    </div>
+
+    <!-- 数式表示ブロック (MathML) -->
+    <div class="math-container">
+      <math display="block">
+        <mi>&Delta;&phi;</mi>
+        <mo>=</mo>
+        <mi>&gamma;</mi>
+        <mo>&sdot;</mo>
+        <mi>v</mi>
+        <mo>&sdot;</mo>
+        <msubsup>
+          <mo>&int;</mo>
+          <mn>0</mn>
+          <mi>t</mi>
+        </msubsup>
+        <mi>&tau;</mi>
+        <mo>&sdot;</mo>
+        <mi>G</mi>
+        <mo stretchy="false">(</mo>
+        <mi>&tau;</mi>
+        <mo stretchy="false">)</mo>
+        <mi>d</mi>
+        <mi>&tau;</mi>
+        <mo>=</mo>
+        <mi>&gamma;</mi>
+        <mo>&sdot;</mo>
+        <msub><mi>M</mi><mn>1</mn></msub>
+        <mo>&sdot;</mo>
+        <mi>v</mi>
+        <mo>=</mo>
+        <mi>&pi;</mi>
+        <mo>&sdot;</mo>
+        <mfrac>
+          <mi>v</mi>
+          <mi>VENC</mi>
+        </mfrac>
+      </math>
+    </div>
+
+    <div class="math-desc">
+      傾斜磁場をかけると、スピンの位相は「位置の積分」によって決まります。スピンの位置をテイラー展開すると <math display="inline"><mi>x</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>v</mi><mi>t</mi></math> と表せます。
+      <br><br>
+      <strong>① 静止組織（v = 0）の相殺（M₀ = 0 のお気持ち）：</strong><br>
+      バイポーラ勾配はプラスの山とマイナスの谷の面積が完全に等しいため、正味の面積 <math display="inline"><msub><mi>M</mi><mn>0</mn></msub><mo>=</mo><mo>&int;</mo><mi>G</mi><mi>d</mi><mi>t</mi><mo>=</mo><mn>0</mn></math> になります。したがって静止している組織は、山で進んだ位相が谷で完全に引き戻され、<strong>最終的な位相変化がゼロ（消滅）</strong>になります。背景組織が真っ黒に消えるのはこのためです。
+      <br><br>
+      <strong>② 流動する血液（v ≠ 0）の位相獲得（M₁ ≠ 0 のお気持ち）：</strong><br>
+      血液は山を通過している時と谷を通過している時で「異なる場所」に移動しています。そのためプラスとマイナスが完全には打ち消し合わず、移動速度 <math display="inline"><mi>v</mi></math> に比例した<strong>1次モーメント差（位相シフト Δφ）</strong>が残ります。
+      <br><br>
+      <strong>③ VENC（Velocity Encoding）の正体：</strong><br>
+      位相シフトがちょうど上限の <strong>±180°（±π）</strong> に達する流速限界が VENC です。流速が VENC を超えると、時計の針が12時を過ぎて逆回転に見えるのと同様に<strong>位相エイリアシング（反転・黒抜け）</strong>が発生します。
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // シミュレーション状態変数
+  let simTime = 0;       // 0 ~ 100
+  let isPlaying = true;
+  let playSpeed = 1.0;
+  let animFrameId = null;
+
+  // DOM要素キャッシュ
+  const slider = document.getElementById('time-slider');
+  const timeDisp = document.getElementById('time-disp');
+  const playBtn = document.getElementById('play-btn');
+  const timeCursor = document.getElementById('time-cursor');
+  const cursorHead = document.getElementById('cursor-head');
+  const eventTag = document.getElementById('event-tag');
+
+  // スピン・モーメント・k-space要素
+  const vecStatic = document.getElementById('vec-static');
+  const vecFlow = document.getElementById('vec-flow');
+  const phiStaticText = document.getElementById('phi-static-text');
+  const phiFlowText = document.getElementById('phi-flow-text');
+  const barM0 = document.getElementById('bar-m0');
+  const barM1 = document.getElementById('bar-m1');
+  const valM0 = document.getElementById('val-m0');
+  const valM1 = document.getElementById('val-m1');
+  const kCursor = document.getElementById('k-cursor');
+  const kTraj = document.getElementById('k-trajectory');
+  const kDisp = document.getElementById('k-disp');
+
+  // パラメータスライダー
+  const vSlider = document.getElementById('v-slider');
+  const vencSlider = document.getElementById('venc-slider');
+  const vDisp = document.getElementById('v-disp');
+  const vencDisp = document.getElementById('venc-disp');
+  const ratioDisp = document.getElementById('ratio-disp');
+  const aliasWarning = document.getElementById('alias-warning');
+
+  // 解説テキスト
+  const nowExplain = document.getElementById('now-explain');
+  const nextExplain = document.getElementById('next-explain');
+
+  // パラメータ変更イベント
+  function onParamChange() {
+    const v = parseFloat(vSlider.value);
+    const venc = parseFloat(vencSlider.value);
+    vDisp.textContent = (v >= 0 ? "+" : "") + v + " cm/s";
+    vencDisp.textContent = venc + " cm/s";
+
+    const ratio = Math.abs(v) / venc;
+    const phaseDeg = (v / venc) * 180;
+
+    if (Math.abs(phaseDeg) > 180) {
+      ratioDisp.textContent = `エイリアシング発生 (|v| > VENC)`;
+      ratioDisp.style.color = "var(--accent-rose)";
+      let folded = phaseDeg > 180 ? phaseDeg - 360 : phaseDeg + 360;
+      aliasWarning.textContent = `計算位相 ${phaseDeg.toFixed(1)}° → 折り返し見かけ位相: ${folded.toFixed(1)}° (血流信号が逆流または黒抜け)`;
+      aliasWarning.style.color = "var(--accent-rose)";
+    } else if (ratio < 0.3 && v !== 0) {
+      ratioDisp.textContent = `感度低下 (v/VENC = ${ratio.toFixed(2)})`;
+      ratioDisp.style.color = "var(--accent-amber)";
+      aliasWarning.textContent = `位相差 Δφ = ${phaseDeg.toFixed(1)}° (位相差が微小で背景ノイズに埋没)`;
+      aliasWarning.style.color = "var(--accent-amber)";
+    } else {
+      ratioDisp.textContent = `至適設定 (v/VENC = ${ratio.toFixed(2)})`;
+      ratioDisp.style.color = "var(--accent-green)";
+      aliasWarning.textContent = `位相差 Δφ = ${phaseDeg.toFixed(1)}° (高コントラスト・良好なCNR)`;
+      aliasWarning.style.color = "var(--accent-green)";
+    }
+
+    render(simTime);
+  }
+
+  vSlider.addEventListener('input', onParamChange);
+  vencSlider.addEventListener('input', onParamChange);
+
+  // 時間 t に応じた物理状態の計算
+  function calculatePhysics(t) {
+    const v = parseFloat(vSlider.value);
+    const venc = parseFloat(vencSlider.value);
+    const maxPhase = (v / venc) * 180; // 最終的に獲得する位相差
+
+    let Gflow = 0;
+    let m0 = 0;
+    let m1 = 0;
+    let phiStatic = 0;
+    let phiFlow = 0;
+    let kx = 0;
+    let eventName = "準備";
+    let nowDesc = "";
+    let nextDesc = "";
+
+    // タイムラインイベント判定
+    if (t < 15) {
+      // 1. RF励起 & Gslice (0 ~ 15)
+      eventName = "RF励起 & スライス選択";
+      let p = t / 15;
+      phiStatic = 0;
+      phiFlow = 0;
+      m0 = 0;
+      m1 = 0;
+      kx = 0;
+      nowDesc = "RF励起パルス（α°）とスライス選択傾斜磁場が印加されています。縦磁化 Mz が倒れ、横磁化 Mxy が発生。全スピンが同位相で歳差運動を始めます。";
+      nextDesc = "励起終了後、スライス厚方向の位相分散をリフェーズする補正勾配がかかります。";
+    } else if (t < 25) {
+      // 2. Gslice リフェーズ (15 ~ 25)
+      eventName = "スライス再収束 (Rephasing)";
+      phiStatic = 0;
+      phiFlow = 0;
+      m0 = 0;
+      m1 = 0;
+      kx = 0;
+      nowDesc = "負極性のスライス勾配により、スライス選択時に生じたスライス厚方向の位相ズレを巻き戻し、横磁化の位相を均一に揃えています。";
+      nextDesc = "いよいよPC-MRAの核心である<strong>バイポーラ傾斜磁場の第1葉（正極性勾配 +G）</strong>が始まります。";
+    } else if (t < 45) {
+      // 3. バイポーラ 正極性葉 (25 ~ 45, 幅20)
+      eventName = "バイポーラ正葉 (+G 印加中)";
+      let p = (t - 25) / 20; // 0 ~ 1
+      Gflow = 1.0;
+      m0 = p * 1.0;
+      m1 = p * 0.5;
+
+      // 静止スピン：勾配に比例してディフェーズ（最大90°まで開く模式）
+      phiStatic = p * 90;
+      // 流動スピン：移動効果が加わり、静止スピンよりも速く位相が進む
+      phiFlow = phiStatic + p * (maxPhase * 0.5);
+
+      kx = 0;
+      nowDesc = "バイポーラ勾配の正葉（+G）を印加中。局所磁場勾配により静止スピンも流動スピンも急速にディフェーズ（位相分散）していきます。流動スピンは勾配に沿って移動しているため、静止スピンと異なる位相蓄積を受けます。";
+      nextDesc = "正葉終了直後、ただちに極性を反転した<strong>負極性葉（-G）</strong>が印加され、静止スピンの巻き戻し（リフェーズ）が始まります。";
+    } else if (t < 65) {
+      // 4. バイポーラ 負極性葉 (45 ~ 65, 幅20)
+      eventName = "バイポーラ負葉 (-G 印加中)";
+      let p = (t - 45) / 20; // 0 ~ 1
+      Gflow = -1.0;
+      m0 = 1.0 - p * 1.0; // 1.0 -> 0.0 に戻る
+      m1 = 0.5 + p * 0.5; // 0.5 -> 1.0 に蓄積
+
+      // 静止スピン：90°からぴったり 0°へ巻き戻る (Rephase)
+      phiStatic = 90 * (1 - p);
+      // 流動スピン：位置がずれたため 0°には戻らず、正味の Δφ に収束する
+      phiFlow = phiStatic + (0.5 + p * 0.5) * maxPhase;
+
+      kx = 0;
+      nowDesc = "バイポーラ勾配の負葉（-G）を印加中。逆向きの勾配により、静止スピンは完全に巻き戻され位相が 0°（再収束）へ向かいます。一方、移動した血液スピンは完全には戻らず、速度に比例した正味の位相差 Δφ が残留します！";
+      nextDesc = "バイポーラ印加完了後、周波数エンコードプリフェーズ（Gread）により k-space の端へ移動します。";
+    } else if (t < 75) {
+      // 5. Gread プリフェーズ & Gphase (65 ~ 75)
+      eventName = "プリフェーズ & 位相エンコード";
+      let p = (t - 65) / 10;
+      Gflow = 0;
+      m0 = 0;
+      m1 = 1.0;
+      phiStatic = 0;
+      phiFlow = maxPhase;
+
+      // k-space を中心(0)から左端(-1.0)へ移動
+      kx = -p * 1.0;
+
+      nowDesc = "バイポーラ勾配が終了しました。静止組織の位相は完全に相殺されてゼロに戻り、血流のみが流速に応じた位相差 Δφ を保持しています。リードアウトプリフェーズ勾配により、k-spaceの負側端へエンコード位置を移動させます。";
+      nextDesc = "リードアウト勾配を正極性に反転し、ADCをONにしてエコー信号をサンプリングします。";
+    } else if (t < 95) {
+      // 6. リードアウト & ADC ON (75 ~ 95, 幅20)
+      eventName = "リードアウト & ADC収集 (Echo形成)";
+      let p = (t - 75) / 20; // 0 ~ 1
+      Gflow = 0;
+      m0 = 0;
+      m1 = 1.0;
+      phiStatic = 0;
+      phiFlow = maxPhase;
+
+      // k-space を -1.0 から +1.0 へスキャン（p=0.5 で kx=0, エコーピーク）
+      kx = -1.0 + p * 2.0;
+
+      if (p < 0.4) {
+        nowDesc = "ADCがONになりデータ収集が開始されました。リードアウト傾斜磁場（Gx）により k-space を左から右へと走査しています。";
+      } else if (p <= 0.6) {
+        nowDesc = "<strong>【TE時刻到達・エコーピーク】</strong> k-space中心（kx = 0）を通過中！全体の画像コントラストがここで決定されます。この瞬間のエコー信号の位相から血流速度が算出されます。";
+      } else {
+        nowDesc = "エコーピークを通過し、k-spaceの高周波領域（輪郭・解像度データ）を収集しています。";
+      }
+      nextDesc = "k-space走査終了後、ADCをOFFにして残存横磁化を処理（スポイル）し、次のTRへと移行します。";
+    } else {
+      // 7. スポイラー & TR終了 (95 ~ 100)
+      eventName = "TR終了・スポイラー";
+      phiStatic = 0;
+      phiFlow = maxPhase;
+      m0 = 0;
+      m1 = 1.0;
+      kx = 1.0;
+      nowDesc = "1回のパルスシーケンス（1 TR）が完了しました。静止組織の信号は差分処理で完全に消去され、位相差 Δφ を持つ血管のみが高信号として再構成されます。";
+      nextDesc = "次の位相エンコードステップ（Ky）に進み、新たなTRのRF励起が始まります。";
+    }
+
+    return { Gflow, m0, m1, phiStatic, phiFlow, kx, eventName, nowDesc, nextDesc };
+  }
+
+  // 描画更新
+  function render(t) {
+    slider.value = t;
+    timeDisp.textContent = t.toFixed(1) + " ms";
+
+    // シーケンス図上のカーソル位置更新
+    // タイムライン X座標: t=0 が X=50, t=100 が X=500 (幅450px, 1msあたり4.5px)
+    const cursorX = 50 + t * 4.5;
+    timeCursor.setAttribute('x1', cursorX);
+    timeCursor.setAttribute('x2', cursorX);
+    cursorHead.setAttribute('points', `${cursorX-5},15 ${cursorX+5},15 ${cursorX},22`);
+
+    // 物理計算実行
+    const phys = calculatePhysics(t);
+    eventTag.textContent = phys.eventName;
+    nowExplain.innerHTML = phys.nowDesc;
+    nextExplain.innerHTML = phys.nextDesc;
+
+    // スピン針の回転 (時計の12時位置 = -90°が 0 rad)
+    // 静止スピン
+    const radStatic = (phys.phiStatic - 90) * (Math.PI / 180);
+    const sx = Math.cos(radStatic) * 42;
+    const sy = Math.sin(radStatic) * 42;
+    vecStatic.setAttribute('x2', sx.toFixed(1));
+    vecStatic.setAttribute('y2', sy.toFixed(1));
+    phiStaticText.textContent = `φ = ${phys.phiStatic.toFixed(1)}°`;
+
+    // 流動スピン (エイリアシング考慮の見かけ角度)
+    let dispFlowDeg = phys.phiFlow;
+    // -180 ~ +180 に折り返しラップ
+    while (dispFlowDeg > 180) dispFlowDeg -= 360;
+    while (dispFlowDeg < -180) dispFlowDeg += 360;
+
+    const radFlow = (dispFlowDeg - 90) * (Math.PI / 180);
+    const fx = Math.cos(radFlow) * 42;
+    const fy = Math.sin(radFlow) * 42;
+    vecFlow.setAttribute('x2', fx.toFixed(1));
+    vecFlow.setAttribute('y2', fy.toFixed(1));
+    phiFlowText.textContent = `Δφ = ${(dispFlowDeg >= 0 ? "+" : "") + dispFlowDeg.toFixed(1)}°`;
+
+    // エイリアシング警告色
+    if (Math.abs(phys.phiFlow) > 180) {
+      vecFlow.setAttribute('stroke', '#f43f5e');
+      phiFlowText.setAttribute('fill', '#f43f5e');
+    } else {
+      vecFlow.setAttribute('stroke', '#06b6d4');
+      phiFlowText.setAttribute('fill', '#cbd5e1');
+    }
+
+    // 勾配モーメントバー更新 (中心X=240, 幅最大60px)
+    // M0: 0 ~ 1
+    const wM0 = phys.m0 * 50;
+    barM0.setAttribute('x', 240);
+    barM0.setAttribute('width', Math.max(0, wM0));
+    valM0.textContent = phys.m0.toFixed(2);
+
+    // M1: 0 ~ 1
+    const wM1 = phys.m1 * 50;
+    barM1.setAttribute('x', 240);
+    barM1.setAttribute('width', Math.max(0, wM1));
+    valM1.textContent = phys.m1.toFixed(2);
+
+    // k-space位置更新 (中心X=150, 幅±90px, kxは -1.0 ~ +1.0)
+    const kxPx = 150 + phys.kx * 80;
+    kCursor.setAttribute('cx', kxPx);
+    kDisp.textContent = `kx: ${(phys.kx >= 0 ? "+" : "") + phys.kx.toFixed(2)}`;
+    // 軌跡線 (プリフェーズ以降)
+    if (t >= 65) {
+      kTraj.setAttribute('x1', 150);
+      kTraj.setAttribute('x2', kxPx);
+    } else {
+      kTraj.setAttribute('x1', 150);
+      kTraj.setAttribute('x2', 150);
+    }
+  }
+
+  // アニメーションループ
+  let lastTimestamp = null;
+  function animationLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const delta = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
+    if (isPlaying) {
+      // 1TR = 約 6秒 でループ再生 (playSpeed依存)
+      simTime += (delta * 16.6) * playSpeed;
+      if (simTime > 100) {
+        simTime = 0;
+      }
+      render(simTime);
+    }
+
+    animFrameId = requestAnimationFrame(animationLoop);
+  }
+
+  // 再生/一時停止
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    playBtn.textContent = isPlaying ? "⏸ 一時停止" : "▶ 再生";
+    playBtn.classList.toggle('btn-active', isPlaying);
+  }
+
+  // リセット
+  function resetSim() {
+    simTime = 0;
+    render(0);
+  }
+
+  // ステップ移動
+  function stepSim(direction) {
+    isPlaying = false;
+    playBtn.textContent = "▶ 再生";
+    playBtn.classList.remove('btn-active');
+
+    // イベント境界点: 0, 15, 25, 45, 65, 75, 85(TE), 95, 100
+    const points = [0, 15, 25, 45, 65, 75, 85, 95, 100];
+    if (direction > 0) {
+      let next = points.find(p => p > simTime + 0.1);
+      simTime = next !== undefined ? next : 0;
+    } else {
+      let prev = [...points].reverse().find(p => p < simTime - 0.1);
+      simTime = prev !== undefined ? prev : 100;
+    }
+    render(simTime);
+  }
+
+  // 速度変更
+  function setSpeed(speed) {
+    playSpeed = speed;
+    document.getElementById('speed-05').classList.toggle('btn-active', speed === 0.5);
+    document.getElementById('speed-10').classList.toggle('btn-active', speed === 1.0);
+    document.getElementById('speed-20').classList.toggle('btn-active', speed === 2.0);
+  }
+
+  // スライダー直接操作
+  slider.addEventListener('input', (e) => {
+    simTime = parseFloat(e.target.value);
+    render(simTime);
+  });
+
+  // 初期化起動
+  onParamChange();
+  render(0);
+  animFrameId = requestAnimationFrame(animationLoop);
+</script>
+
+</body>
+</html>

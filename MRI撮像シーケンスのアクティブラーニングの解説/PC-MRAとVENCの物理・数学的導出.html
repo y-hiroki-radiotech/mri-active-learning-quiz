@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI復習教材：PC-MRAとVENCの物理・数学的導出</title>
+<style>
+  /* ==========================================================================
+     共通CSSリセット & CSS変数（完全オフライン・システムフォント仕様）
+     ========================================================================== */
+  :root {
+    --bg-main: #f4f6f9;
+    --bg-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #4b5563;
+    --text-light: #9ca3af;
+    --primary: #1e40af;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e3a8a;
+    --success: #065f46;
+    --success-bg: #d1fae5;
+    --warning: #92400e;
+    --warning-bg: #fef3c7;
+    --danger: #991b1b;
+    --danger-bg: #fee2e2;
+    --info: #0e7490;
+    --info-bg: #cffafe;
+    --purple: #5b21b6;
+    --purple-bg: #ede9fe;
+    --border: #e5e7eb;
+    --border-dark: #cbd5e1;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    line-height: 1.7;
+    color: var(--text-main);
+    background-color: var(--bg-main);
+    padding: 20px 16px;
+    font-size: 15px;
+  }
+
+  .container {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+
+  /* ==========================================================================
+     カードレイアウト & 見出し
+     ========================================================================== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 28px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 20px 0 12px 0;
+  }
+
+  p {
+    margin-bottom: 14px;
+  }
+
+  /* ==========================================================================
+     採点サマリーカード
+     ========================================================================== */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .summary-item {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+  }
+
+  .summary-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .summary-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  .badge-score {
+    color: var(--primary);
+    font-size: 1.4rem;
+  }
+
+  .badge-status {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .summary-details {
+    background: #f8fafc;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-top: 12px;
+  }
+
+  .summary-details dl {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 14px;
+  }
+
+  .summary-details dt {
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .summary-details dd {
+    margin: 0;
+  }
+
+  /* ==========================================================================
+     コールアウト（注意、重要、ポイント等）
+     ========================================================================== */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    margin: 18px 0;
+    border-left: 5px solid;
+    position: relative;
+    break-inside: avoid;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .callout-important {
+    background: #eff6ff;
+    border-color: var(--primary);
+    color: #1e3a8a;
+  }
+
+  .callout-principle {
+    background: #f5f3ff;
+    border-color: var(--purple);
+    color: #4c1d95;
+  }
+
+  .callout-warning {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+    color: #78350f;
+  }
+
+  .callout-danger {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    color: #7f1d1d;
+  }
+
+  .callout-success {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: #064e3b;
+  }
+
+  /* ==========================================================================
+     数式表示（完全オフライン MathML ＆ CSS スタイリング）
+     ========================================================================== */
+  math {
+    font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  math[display="inline"] {
+    padding: 0 2px;
+  }
+
+  .math-block {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+    text-align: center;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .math-block-highlight {
+    background: #fffbeb;
+    border: 2px solid #f59e0b;
+    padding: 18px;
+    border-radius: var(--radius-md);
+    margin: 18px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+  }
+
+  .math-caption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* 数式諸元テーブル */
+  .formula-table-wrapper {
+    overflow-x: auto;
+    margin: 14px 0 20px 0;
+  }
+
+  table.formula-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  table.formula-table th,
+  table.formula-table td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  table.formula-table th {
+    background: #f1f5f9;
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  table.formula-table tr:nth-child(even) td {
+    background-color: #fafbfc;
+  }
+
+  /* ==========================================================================
+     SVG図解ラッパー
+     ========================================================================== */
+  .svg-container {
+    width: 100%;
+    max-width: 820px;
+    margin: 20px auto;
+    background: #ffffff;
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+  }
+
+  .svg-container svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .figure-caption {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* ==========================================================================
+     インタラクティブ シミュレータ UI
+     ========================================================================== */
+  .simulator-card {
+    background: linear-gradient(to bottom, #ffffff, #f0f9ff);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin: 28px 0;
+    box-shadow: var(--shadow-md);
+  }
+
+  .sim-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .sim-control-group {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+  }
+
+  .sim-control-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .sim-val {
+    color: var(--primary);
+    font-family: monospace;
+    font-size: 1.1rem;
+  }
+
+  .sim-slider {
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .sim-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .btn {
+    appearance: none;
+    border: none;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #e2e8f0;
+    color: var(--text-main);
+  }
+
+  .btn:hover {
+    background: #cbd5e1;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .sim-readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .sim-readout-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .sim-readout-card.alert {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+  }
+
+  .sim-readout-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .sim-readout-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 4px 0;
+    font-family: monospace;
+  }
+
+  /* ステップ手順・リスト */
+  .step-list {
+    list-style: none;
+    counter-reset: step-counter;
+    margin: 16px 0;
+  }
+
+  .step-list > li {
+    counter-increment: step-counter;
+    position: relative;
+    padding-left: 48px;
+    margin-bottom: 20px;
+  }
+
+  .step-list > li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: #ffffff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+
+  /* ==========================================================================
+     印刷・PDF出力最適化 (@media print)
+     ========================================================================== */
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      color: #000000;
+      font-size: 11pt;
+    }
+
+    .container {
+      max-width: 100%;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      box-shadow: none;
+      margin-bottom: 18pt;
+      padding: 16pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .simulator-card .sim-presets,
+    .simulator-card .sim-slider,
+    .btn {
+      display: none !important;
+    }
+
+    .simulator-card {
+      border: 1px solid #000;
+      background: #fff;
+    }
+
+    .callout {
+      border-left-width: 3pt;
+      break-inside: avoid;
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      text-decoration: none;
+      color: #000;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========================================================================
+       8. 採点サマリー & 学習管理カード
+       ======================================================================== -->
+  <section class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <h1>PC-MRA &amp; VENC 物理・数理完全復習教材</h1>
+      <span class="badge-status">第27章 流速エンコード・完全理解</span>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+      位相コントラスト法（Phase Contrast MRA）の中心原理、1次モーメント導出、VENCの決定、および臨床トレードオフの完全制覇
+    </p>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">理解度スコア</div>
+        <div class="summary-value badge-score">100 / 100 点</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">判定</div>
+        <div class="summary-value" style="color: var(--success);">極めて優秀（完全習熟）</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">目標達成状況</div>
+        <div class="summary-value">数式の行間完全証明 完了</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">学習優先度</div>
+        <div class="summary-value" style="color: var(--purple);">最重要（国家試験・実務直結）</div>
+      </div>
+    </div>
+
+    <div class="summary-details">
+      <dl>
+        <dt>正答項目：</dt>
+        <dd>静止スピン消去（M₀=0）と流速位相付加（M₁≠0）、双極性傾斜磁場の積分導出、VENC定義式、折り返し（wrap）機序、流速ノイズとVENCの比例関係</dd>
+        <dt>正しく理解できた点：</dt>
+        <dd>血流の等速直線運動 x(τ)=x₀+vτ を代入して位置項（M₀）と速度項（M₁）に完全分離できる数理的背景。</dd>
+        <dt>最大の修正点：</dt>
+        <dd>「低VENC＝高感度だが折り返しやすい」「高VENC＝広レンジだがノイズ大」の定量的メカニズム（傾き π/VENC とノイズ σᵥ ∝ VENC）の整理。</dd>
+        <dt>根本的誤概念：</dt>
+        <dd>単に「血流が速いから位相が回る」のではなく、「印加時刻 τ の違いによる1次モーメント重み付け」によって位相差が生じるという物理モデルの直観的把握。</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       1. 出発点：この式は何を意味しているのか
+       ======================================================================== -->
+  <section class="card">
+    <h2>1. 出発点：この式は何を意味しているのか</h2>
+    <p>
+      PC-MRAの物理的・数学的基盤となる最も根源的な式は、等速直線運動をするスピンが傾斜磁場下で蓄積する追加位相の式です。
+    </p>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <mi>&#x03D5;</mi>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mspace width="0.167em"/>
+          <mi>v</mi>
+          <msubsup>
+            <mo>&#x222B;</mo>
+            <mn>0</mn>
+            <mi>t</mi>
+          </msubsup>
+          <mi>&#x03C4;</mi>
+          <mspace width="0.167em"/>
+          <mi>G</mi>
+          <mo stretchy="false">(</mo>
+          <mi>&#x03C4;</mi>
+          <mo stretchy="false">)</mo>
+          <mspace width="0.167em"/>
+          <mi>d</mi>
+          <mi>&#x03C4;</mi>
+        </mrow>
+      </math>
+      <div class="math-caption">【基本方程式1】速度に依存して生じる正味の位相シフト</div>
+    </div>
+
+    <!-- 4. 数式諸元の徹底解説 -->
+    <div class="formula-table-wrapper">
+      <table class="formula-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>名称</th>
+            <th>物理的意味</th>
+            <th>単位</th>
+            <th>比例・依存関係</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></math></td>
+            <td>位相シフト</td>
+            <td>速度運動によって静止状態から追加で蓄積される位相角</td>
+            <td><math display="inline"><mi mathvariant="normal">rad</mi></math> （ラジアン）</td>
+            <td>流速 <math display="inline"><mi>v</mi></math> およびモーメント <math display="inline"><msub><mi>M</mi><mn>1</mn></msub></math> に直接比例</td>
+          </tr>
+          <tr>
+            <td><math display="inline"><mi>&#x03B3;</mi></math></td>
+            <td>磁気回転比</td>
+            <td>核種固有の定数（¹H プロトンでは約 <math display="inline"><mn>2.675</mn><mo>&#x00D7;</mo><msup><mn>10</mn><mn>8</mn></msup><mspace width="0.167em"/><mi mathvariant="normal">rad</mi><mo>/</mo><mo stretchy="false">(</mo><mi mathvariant="normal">s</mi><mo>&#x22C5;</mo><mi mathvariant="normal">T</mi><mo stretchy="false">)</mo></math>）</td>
+            <td><math display="inline"><mi mathvariant="normal">rad</mi><mo>/</mo><mo stretchy="false">(</mo><mi mathvariant="normal">s</mi><mo>&#x22C5;</mo><mi mathvariant="normal">T</mi><mo stretchy="false">)</mo></math></td>
+            <td>物理定数（固定）</td>
+          </tr>
+          <tr>
+            <td><math display="inline"><mi>v</mi></math></td>
+            <td>スピン速度</td>
+            <td>傾斜磁場印加軸に沿った流体（血液・髄液）の等速流速</td>
+            <td><math display="inline"><mi mathvariant="normal">cm</mi><mo>/</mo><mi mathvariant="normal">s</mi></math> または <math display="inline"><mi mathvariant="normal">m</mi><mo>/</mo><mi mathvariant="normal">s</mi></math></td>
+            <td>測定対象。増大すると位相シフトが線形に増大</td>
+          </tr>
+          <tr>
+            <td><math display="inline"><mi>G</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo></math></td>
+            <td>傾斜磁場波形</td>
+            <td>時刻 <math display="inline"><mi>&#x03C4;</mi></math> において印加されている磁場勾配の強さ</td>
+            <td><math display="inline"><mi mathvariant="normal">mT</mi><mo>/</mo><mi mathvariant="normal">m</mi></math> または <math display="inline"><mi mathvariant="normal">T</mi><mo>/</mo><mi mathvariant="normal">m</mi></math></td>
+            <td>パルスシーケンス設計値</td>
+          </tr>
+          <tr>
+            <td><math display="inline"><mi>&#x03C4;</mi></math></td>
+            <td>時間変数</td>
+            <td>傾斜磁場印加開始（0）から現在までの経過時間</td>
+            <td><math display="inline"><mi mathvariant="normal">s</mi></math> （秒）</td>
+            <td>積分パラメータ（時間の重み付け要因）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      この積分項は、MRI物理学において<strong>傾斜磁場の1次モーメント（First Moment of Gradient: <math display="inline"><msub><mi>M</mi><mn>1</mn></msub></math>）</strong>と定義されます。
+    </p>
+
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <msub>
+            <mi>M</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <msubsup>
+            <mo>&#x222B;</mo>
+            <mn>0</mn>
+            <mi>t</mi>
+          </msubsup>
+          <mi>&#x03C4;</mi>
+          <mspace width="0.167em"/>
+          <mi>G</mi>
+          <mo stretchy="false">(</mo>
+          <mi>&#x03C4;</mi>
+          <mo stretchy="false">)</mo>
+          <mspace width="0.167em"/>
+          <mi>d</mi>
+          <mi>&#x03C4;</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <p>したがって、基本式は極めてシンプルに次の積として記述されます：</p>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <mi>&#x03D5;</mi>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mspace width="0.167em"/>
+          <mi>v</mi>
+          <mspace width="0.167em"/>
+          <msub>
+            <mi>M</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </math>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       2. そもそもなぜ速度で位相が変わるのか（行間を飛ばさない完全導出）
+       ======================================================================== -->
+  <section class="card">
+    <h2>2. そもそもなぜ速度で位相が変わるのか（完全導出）</h2>
+    
+    <div class="callout callout-principle">
+      <div class="callout-title">【基本原理：位相と角周波数積分の関係】</div>
+      位相 <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> は、基準角周波数（ラーモア周波数 <math display="inline"><msub><mi>&#x03C9;</mi><mn>0</mn></msub></math>）からの周波数ずれ <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03C9;</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo></math> の時間積分によって蓄積されます。
+    </div>
+
+    <ol class="step-list">
+      <li>
+        <strong>局所磁場変化と角周波数シフトの定式化</strong><br>
+        位置 <math display="inline"><mi>x</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo></math> にあるスピンが傾斜磁場 <math display="inline"><mi>G</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo></math> を受けるとき、主磁場からのズレは：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>B</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mi>x</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </math>
+        </div>
+        ラーモアの法則（<math display="inline"><mi>&#x03C9;</mi><mo>=</mo><mi>&#x03B3;</mi><mi>B</mi></math>）より、角周波数のズレは：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>&#x03C9;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>&#x03B3;</mi>
+              <mspace width="0.167em"/>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>B</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>&#x03B3;</mi>
+              <mspace width="0.167em"/>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mi>x</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </math>
+        </div>
+      </li>
+
+      <li>
+        <strong>位相積分の展開</strong><br>
+        全位相 <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> はこれを時間積分したものです：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi>&#x03D5;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>t</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>&#x03C9;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+              <mo>=</mo>
+              <mi>&#x03B3;</mi>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mi>x</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+            </mrow>
+          </math>
+        </div>
+      </li>
+
+      <li>
+        <strong>運動方程式の代入（等速直線運動の仮定）</strong><br>
+        スピンが初期位置 <math display="inline"><msub><mi>x</mi><mn>0</mn></msub></math> から速度 <math display="inline"><mi>v</mi></math> で等速直線運動しているとすると：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi>x</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msub>
+                <mi>x</mi>
+                <mn>0</mn>
+              </msub>
+              <mo>+</mo>
+              <mi>v</mi>
+              <mi>&#x03C4;</mi>
+            </mrow>
+          </math>
+        </div>
+        これを位相積分式に代入します：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi>&#x03D5;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>t</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>&#x03B3;</mi>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>x</mi>
+                <mn>0</mn>
+              </msub>
+              <mo>+</mo>
+              <mi>v</mi>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+            </mrow>
+          </math>
+        </div>
+      </li>
+
+      <li>
+        <strong>積分の分配と定数の括り出し</strong><br>
+        括弧を展開し、時間 <math display="inline"><mi>&#x03C4;</mi></math> に依存しない定数 <math display="inline"><msub><mi>x</mi><mn>0</mn></msub></math> と <math display="inline"><mi>v</mi></math> を積分の外へ出します：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <mi>&#x03D5;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>t</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>&#x03B3;</mi>
+              <msub>
+                <mi>x</mi>
+                <mn>0</mn>
+              </msub>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+              <mo>+</mo>
+              <mi>&#x03B3;</mi>
+              <mi>v</mi>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>&#x03C4;</mi>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+            </mrow>
+          </math>
+        </div>
+      </li>
+
+      <li>
+        <strong>0次および1次モーメントの定義</strong><br>
+        ここで、傾斜磁場の0次モーメント（面積）<math display="inline"><msub><mi>M</mi><mn>0</mn></msub></math> と1次モーメント <math display="inline"><msub><mi>M</mi><mn>1</mn></msub></math> を定義します：
+        <div class="math-block">
+          <math display="block">
+            <mrow>
+              <msub>
+                <mi>M</mi>
+                <mn>0</mn>
+              </msub>
+              <mo>=</mo>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+              <mspace width="2em"/>
+              <msub>
+                <mi>M</mi>
+                <mn>1</mn>
+              </msub>
+              <mo>=</mo>
+              <msubsup>
+                <mo>&#x222B;</mo>
+                <mn>0</mn>
+                <mi>t</mi>
+              </msubsup>
+              <mi>&#x03C4;</mi>
+              <mi>G</mi>
+              <mo stretchy="false">(</mo>
+              <mi>&#x03C4;</mi>
+              <mo stretchy="false">)</mo>
+              <mspace width="0.167em"/>
+              <mi>d</mi>
+              <mi>&#x03C4;</mi>
+            </mrow>
+          </math>
+        </div>
+        したがって、位相は完全に以下の2成分の和として表されます：
+        <div class="math-block-highlight">
+          <math display="block">
+            <mrow>
+              <mi>&#x03D5;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>t</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <munder>
+                <mrow>
+                  <mi>&#x03B3;</mi>
+                  <msub>
+                    <mi>x</mi>
+                    <mn>0</mn>
+                  </msub>
+                  <msub>
+                    <mi>M</mi>
+                    <mn>0</mn>
+                  </msub>
+                </mrow>
+                <mrow>
+                  <mtext>【位置による位相】</mtext>
+                </mrow>
+              </munder>
+              <mo>+</mo>
+              <munder>
+                <mrow>
+                  <mi>&#x03B3;</mi>
+                  <mi>v</mi>
+                  <msub>
+                    <mi>M</mi>
+                    <mn>1</mn>
+                  </msub>
+                </mrow>
+                <mrow>
+                  <mtext>【速度による位相】</mtext>
+                </mrow>
+              </munder>
+            </mrow>
+          </math>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ========================================================================
+       3 & 4. PC-MRAの戦略と Bipolar Gradient の図解
+       ======================================================================== -->
+  <section class="card">
+    <h2>3. PC-MRAは何をしているのか &amp; 4. 双極性傾斜磁場の図解</h2>
+    <p>
+      PC-MRAの目標は極めて明快です。<strong>「静止した組織の位相をゼロにし、動いている血流だけに速度に比例した位相を与える」</strong>ことです。
+    </p>
+
+    <div class="callout callout-important">
+      <div class="callout-title">【PC-MRAの傾斜磁場条件】</div>
+      <div style="display: flex; justify-content: space-around; font-size: 1.2rem; font-weight: bold; margin: 8px 0;">
+        <span>① 静止スピンをゼロに： <math display="inline"><msub><mi>M</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn></math></span>
+        <span>② 速度スピンに位相を： <math display="inline"><msub><mi>M</mi><mn>1</mn></msub><mo>&#x2260;</mo><mn>0</mn></math></span>
+      </div>
+      <p style="margin-top: 8px;">
+        <math display="inline"><msub><mi>M</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn></math> とすれば、位置による項 <math display="inline"><mi>&#x03B3;</mi><msub><mi>x</mi><mn>0</mn></msub><msub><mi>M</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn></math> となり、静止している脳実質や筋肉などの位相は完全にキャンセルされます。残るのは血流速度 <math display="inline"><mi>v</mi></math> に比例する <math display="inline"><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03B3;</mi><mi>v</mi><msub><mi>M</mi><mn>1</mn></msub></math> のみとなります。
+      </p>
+    </div>
+
+    <!-- 5. インラインSVG図解1：Bipolar Gradientとスピンの位相変化 -->
+    <div class="svg-container">
+      <svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- 背景グリッド -->
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="760" height="380" fill="url(#grid)" />
+
+        <!-- 軸 -->
+        <line x1="50" y1="180" x2="720" y2="180" stroke="#64748b" stroke-width="2" />
+        <line x1="720" y1="180" x2="710" y2="175" stroke="#64748b" stroke-width="2" />
+        <line x1="720" y1="180" x2="710" y2="185" stroke="#64748b" stroke-width="2" />
+        <text x="710" y="205" font-size="14" fill="#64748b" font-weight="bold">時間 t</text>
+
+        <line x1="100" y1="350" x2="100" y2="30" stroke="#64748b" stroke-width="2" />
+        <line x1="100" y1="30" x2="95" y2="40" stroke="#64748b" stroke-width="2" />
+        <line x1="100" y1="30" x2="105" y2="40" stroke="#64748b" stroke-width="2" />
+        <text x="50" y="45" font-size="14" fill="#64748b" font-weight="bold">G(t)</text>
+
+        <!-- 正のローブ -->
+        <rect x="160" y="80" width="160" height="100" fill="#3b82f6" fill-opacity="0.25" stroke="#2563eb" stroke-width="2.5" />
+        <text x="215" y="135" font-size="20" fill="#1d4ed8" font-weight="bold">正のローブ (+G)</text>
+        <text x="205" y="160" font-size="13" fill="#1e40af">面積 = +A (早い時刻)</text>
+
+        <!-- 負のローブ -->
+        <rect x="360" y="180" width="160" height="100" fill="#ef4444" fill-opacity="0.25" stroke="#dc2626" stroke-width="2.5" />
+        <text x="415" y="235" font-size="20" fill="#b91c1c" font-weight="bold">負のローブ (-G)</text>
+        <text x="405" y="260" font-size="13" fill="#991b1b">面積 = -A (遅い時刻)</text>
+
+        <!-- 時間重心マーカー -->
+        <line x1="240" y1="40" x2="240" y2="80" stroke="#2563eb" stroke-dasharray="4" stroke-width="2"/>
+        <text x="200" y="35" font-size="12" fill="#2563eb" font-weight="bold">重心時刻 τ₁</text>
+
+        <line x1="440" y1="280" x2="440" y2="320" stroke="#dc2626" stroke-dasharray="4" stroke-width="2"/>
+        <text x="400" y="335" font-size="12" fill="#dc2626" font-weight="bold">重心時刻 τ₂ (遅い)</text>
+
+        <!-- 右側：スピンの挙動注釈カード -->
+        <g transform="translate(550, 45)">
+          <rect width="185" height="110" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))"/>
+          <text x="15" y="25" font-size="13" font-weight="bold" fill="#065f46">■ 静止スピン (v = 0)</text>
+          <text x="15" y="50" font-size="12" fill="#1f2937">正ローブで位相 +φ 獲得</text>
+          <text x="15" y="70" font-size="12" fill="#1f2937">負ローブで位相 -φ 相殺</text>
+          <text x="15" y="95" font-size="13" font-weight="bold" fill="#059669">正味の位相 Δφ = 0</text>
+        </g>
+
+        <g transform="translate(550, 185)">
+          <rect width="185" height="135" rx="8" fill="#ffffff" stroke="#8b5cf6" stroke-width="2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))"/>
+          <text x="15" y="25" font-size="13" font-weight="bold" fill="#5b21b6">■ 移動スピン (v &gt; 0)</text>
+          <text x="15" y="50" font-size="12" fill="#1f2937">移動により負ローブ時の</text>
+          <text x="15" y="70" font-size="12" fill="#1f2937">位置 x(τ) が変化！</text>
+          <text x="15" y="92" font-size="12" fill="#1f2937">τ₂ &gt; τ₁ のため打消せず</text>
+          <text x="15" y="118" font-size="13" font-weight="bold" fill="#7c3aed">Δφ = γ v M₁ ≠ 0 (残留)</text>
+        </g>
+      </svg>
+      <div class="figure-caption">【図1】双極性傾斜磁場（Bipolar Gradient）の印加波形と静止/移動スピンの位相変化メカニズム</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5. 実際の差分撮像 & 6. PC-MRAの中心方程式
+       ======================================================================== -->
+  <section class="card">
+    <h2>5. PC-MRAでは実際には2回撮る &amp; 6. PC-MRAの中心式</h2>
+    <p>
+      実際の臨床MRIでは、静磁場不均一（<math display="inline"><mi mathvariant="normal">&#x0394;</mi><msub><mi>B</mi><mn>0</mn></msub></math>）や化学シフト、渦電流による位相誤差が存在するため、単一の撮像では流速の位相だけを純粋に取り出すことができません。
+      そこで、<strong>「速度エンコード状態を変えて2回撮像し、複素位相の差分をとる」</strong>手法が用いられます。
+    </p>
+
+    <div class="summary-details" style="background:#ffffff; border: 1px solid var(--border); border-left: 4px solid var(--primary); margin: 16px 0;">
+      <h3 style="margin-top:0;">対称ペア（±M₁）による差分の完全導出過程</h3>
+      <p>1回目のエンコード（+M₁）で得られる位相：</p>
+      <div class="math-block">
+        <math display="block">
+          <mrow>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mo>+</mo>
+            </msub>
+            <mo>=</mo>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mi mathvariant="normal">error</mi>
+            </msub>
+            <mo>+</mo>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </math>
+      </div>
+
+      <p>2回目のエンコード（極性を反転させた -M₁）で得られる位相：</p>
+      <div class="math-block">
+        <math display="block">
+          <mrow>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mo>&#x2212;</mo>
+            </msub>
+            <mo>=</mo>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mi mathvariant="normal">error</mi>
+            </msub>
+            <mo>+</mo>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <mo stretchy="false">(</mo>
+            <mo>&#x2212;</mo>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+            <mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mi mathvariant="normal">error</mi>
+            </msub>
+            <mo>&#x2212;</mo>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </math>
+      </div>
+
+      <p>両者の位相差 <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></math> を計算すると、装置背景誤差 <math display="inline"><msub><mi>&#x03D5;</mi><mi mathvariant="normal">error</mi></msub></math> が完全に相殺されます：</p>
+      <div class="math-block">
+        <math display="block">
+          <mrow>
+            <mi mathvariant="normal">&#x0394;</mi>
+            <mi>&#x03D5;</mi>
+            <mo>=</mo>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mo>+</mo>
+            </msub>
+            <mo>&#x2212;</mo>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mo>&#x2212;</mo>
+            </msub>
+            <mo>=</mo>
+            <mo stretchy="false">[</mo>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+            <mo stretchy="false">]</mo>
+            <mo>&#x2212;</mo>
+            <mo stretchy="false">[</mo>
+            <mo>&#x2212;</mo>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+            <mo stretchy="false">]</mo>
+            <mo>=</mo>
+            <mn>2</mn>
+            <mi>&#x03B3;</mi>
+            <mi>v</mi>
+            <msub>
+              <mi>M</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+        </math>
+      </div>
+
+      <p>一般化して、2回の1次モーメント差を <math display="inline"><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub><mo>=</mo><msub><mi>M</mi><mrow><mn>1</mn><mo>,</mo><mo>+</mo></mrow></msub><mo>&#x2212;</mo><msub><mi>M</mi><mrow><mn>1</mn><mo>,</mo><mo>&#x2212;</mo></mrow></msub></math> と置くと、PC-MRAの中心式が得られます：</p>
+    </div>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <mi>&#x03D5;</mi>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mspace width="0.167em"/>
+          <mi>v</mi>
+          <mspace width="0.167em"/>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi>M</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </math>
+      <div class="math-caption">【PC-MRA中心方程式】位相差から血流速度への変換式</div>
+    </div>
+
+    <p>両辺を <math display="inline"><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></math> で割れば、測定された画像上の位相値 <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></math> から直接速度 <math display="inline"><mi>v</mi></math> が計算できることが分かります：</p>
+
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <mi>v</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>&#x03D5;</mi>
+            </mrow>
+            <mrow>
+              <mi>&#x03B3;</mi>
+              <mspace width="0.167em"/>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <msub>
+                <mi>M</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </math>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       7, 8 & 9. VENCの登場、完全導出と速度換算式
+       ======================================================================== -->
+  <section class="card">
+    <h2>7. ここでVENCが登場する &amp; 8. VENCの厳密な導出</h2>
+
+    <div class="callout callout-principle">
+      <div class="callout-title">【VENC (Velocity Encoding) の臨床的・物理的定義】</div>
+      MRIの位相画像において折り返し（aliasing）を起こさずに一意に表現できる最大位相差は <strong><math display="inline"><mo>&#x00B1;</mo><mi>&#x03C0;</mi></math>（<math display="inline"><mo>&#x00B1;</mo><msup><mn>180</mn><mo>&#x2218;</mo></msup></math>）</strong> です。<br>
+      したがって、<strong>「位相差がちょうど <math display="inline"><mo>+</mo><mi>&#x03C0;</mi></math> に達する速度限界値」</strong> を <strong>VENC</strong> と定義します。
+    </div>
+
+    <p><strong>【VENC公式の完全導出】</strong></p>
+    <p>中心式 <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03B3;</mi><mi>v</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></math> において、<math display="inline"><mi>v</mi><mo>=</mo><mi mathvariant="normal">VENC</mi></math> のとき <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03C0;</mi></math> となるため：</p>
+
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <mi>&#x03C0;</mi>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mo>&#x22C5;</mo>
+          <mi mathvariant="normal">VENC</mi>
+          <mo>&#x22C5;</mo>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi>M</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </math>
+    </div>
+
+    <p>両辺を <math display="inline"><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></math> で割ると、基本式が得られます：</p>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">VENC</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mi>&#x03C0;</mi>
+            <mrow>
+              <mi>&#x03B3;</mi>
+              <mspace width="0.167em"/>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <msub>
+                <mi>M</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </math>
+      <div class="math-caption">【VENC一般決定式】</div>
+    </div>
+
+    <p>対称な <math display="inline"><mo>&#x00B1;</mo><msub><mi>M</mi><mn>1</mn></msub></math> ペアの場合、<math display="inline"><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub><mo>=</mo><mn>2</mn><msub><mi>M</mi><mn>1</mn></msub></math> ですので：</p>
+
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">VENC</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mi>&#x03C0;</mi>
+            <mrow>
+              <mn>2</mn>
+              <mi>&#x03B3;</mi>
+              <msub>
+                <mi>M</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </math>
+    </div>
+
+    <h3>9. 速度と位相差の直感的な相互換算式</h3>
+    <p>
+      上式より <math display="inline"><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub><mo>=</mo><mfrac><mi>&#x03C0;</mi><mi mathvariant="normal">VENC</mi></mfrac></math> ですので、これをもとの式に代入します：
+    </p>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <mi>&#x03D5;</mi>
+          <mo>=</mo>
+          <mi>&#x03C0;</mi>
+          <mspace width="0.167em"/>
+          <mfrac>
+            <mi>v</mi>
+            <mi mathvariant="normal">VENC</mi>
+          </mfrac>
+          <mspace width="2em"/>
+          <mo>&#x21D4;</mo>
+          <mspace width="2em"/>
+          <mi>v</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>&#x03D5;</mi>
+            </mrow>
+            <mi>&#x03C0;</mi>
+          </mfrac>
+          <mspace width="0.167em"/>
+          <mi mathvariant="normal">VENC</mi>
+        </mrow>
+      </math>
+      <div class="math-caption">【臨床用換算式】位相角と血流速度の比例関係</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       10 & 11. 図解：速度と位相差の関係 ＆ 折り返し（Aliasing）の機序
+       ======================================================================== -->
+  <section class="card">
+    <h2>10. 図解：速度と位相差の関係 &amp; 11. 位相折り返しの機序</h2>
+
+    <!-- 5. インラインSVG図解2 & 3：位相-速度特性曲線とエイリアシング -->
+    <div class="svg-container">
+      <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="760" height="360" fill="#ffffff" />
+        
+        <!-- 座標軸 -->
+        <line x1="60" y1="180" x2="700" y2="180" stroke="#475569" stroke-width="2" />
+        <line x1="700" y1="180" x2="690" y2="175" stroke="#475569" stroke-width="2" />
+        <line x1="700" y1="180" x2="690" y2="185" stroke="#475569" stroke-width="2" />
+        <text x="690" y="205" font-size="14" fill="#334155" font-weight="bold">流速 v</text>
+
+        <line x1="380" y1="330" x2="380" y2="30" stroke="#475569" stroke-width="2" />
+        <line x1="380" y1="30" x2="375" y2="40" stroke="#475569" stroke-width="2" />
+        <line x1="380" y1="30" x2="385" y2="40" stroke="#475569" stroke-width="2" />
+        <text x="395" y="45" font-size="14" fill="#334155" font-weight="bold">位相差 Δφ</text>
+
+        <!-- 目盛り線とラベル -->
+        <!-- +π 線 -->
+        <line x1="60" y1="80" x2="700" y2="80" stroke="#cbd5e1" stroke-dasharray="4" stroke-width="1.5" />
+        <text x="340" y="85" font-size="13" fill="#64748b" font-weight="bold">+π (+180°)</text>
+
+        <!-- -π 線 -->
+        <line x1="60" y1="280" x2="700" y2="280" stroke="#cbd5e1" stroke-dasharray="4" stroke-width="1.5" />
+        <text x="340" y="285" font-size="13" fill="#64748b" font-weight="bold">-π (-180°)</text>
+
+        <!-- +VENC, -VENC 垂直ガイド -->
+        <line x1="530" y1="80" x2="530" y2="280" stroke="#94a3b8" stroke-dasharray="3" stroke-width="1.5" />
+        <text x="515" y="200" font-size="13" fill="#1e40af" font-weight="bold">+VENC</text>
+
+        <line x1="230" y1="80" x2="230" y2="280" stroke="#94a3b8" stroke-dasharray="3" stroke-width="1.5" />
+        <text x="200" y="200" font-size="13" fill="#1e40af" font-weight="bold">-VENC</text>
+
+        <!-- 理想の直線（点線） -->
+        <line x1="80" y1="380" x2="680" y2="-20" stroke="#94a3b8" stroke-dasharray="6" stroke-width="2" />
+        <text x="610" y="65" font-size="12" fill="#94a3b8">理想直線 (ラップなし)</text>
+
+        <!-- 実測されるノコギリ波（実線・折り返し） -->
+        <!-- 左端のラップ -->
+        <line x1="80" y1="180" x2="230" y2="80" stroke="#dc2626" stroke-width="3.5" />
+        <line x1="230" y1="80" x2="230" y2="280" stroke="#dc2626" stroke-dasharray="3" stroke-width="2" />
+
+        <!-- 主領域（正常範囲） -->
+        <line x1="230" y1="280" x2="530" y2="80" stroke="#2563eb" stroke-width="4" />
+        
+        <!-- 右側のラップ（VENC超過） -->
+        <line x1="530" y1="80" x2="530" y2="280" stroke="#dc2626" stroke-dasharray="3" stroke-width="2" />
+        <line x1="530" y1="280" x2="680" y2="180" stroke="#dc2626" stroke-width="3.5" />
+
+        <!-- 代表点プロット -->
+        <circle cx="380" cy="180" r="5" fill="#1e293b" />
+        <text x="390" y="195" font-size="12" fill="#1e293b">原点 (0, 0)</text>
+
+        <circle cx="530" cy="80" r="6" fill="#2563eb" />
+        <text x="540" y="90" font-size="12" fill="#2563eb" font-weight="bold">(+VENC, +π)</text>
+
+        <circle cx="230" cy="280" r="6" fill="#2563eb" />
+        <text x="130" y="275" font-size="12" fill="#2563eb" font-weight="bold">(-VENC, -π)</text>
+
+        <!-- アノテーション吹き出し -->
+        <path d="M 570 120 Q 610 130 630 160" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)" />
+        <rect x="540" y="290" width="190" height="50" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" />
+        <text x="550" y="310" font-size="11.5" font-weight="bold" fill="#991b1b">流速 &gt; +VENC のとき</text>
+        <text x="550" y="328" font-size="11.5" fill="#991b1b">-π 側へ反転（逆流に誤認）</text>
+      </svg>
+      <div class="figure-caption">【図2・図3】流速に対する実測位相差特性曲線と、VENC超過に伴う位相折り返し（Velocity Aliasing）</div>
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">【数値例で理解する位相ラップのメカニズム】</div>
+      MRIの位相検出回路は、周期性により位相角を <math display="inline"><mo stretchy="false">[</mo><mo>&#x2212;</mo><mi>&#x03C0;</mi><mo>,</mo><mspace width="0.167em"/><mo>+</mo><mi>&#x03C0;</mi><mo stretchy="false">)</mo></math> の主値区間に射影します。<br>
+      例えば、血流が速すぎて実際の位相差が <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mn>1.2</mn><mi>&#x03C0;</mi></math> に達したとします：
+      <div class="math-block" style="background:#ffffff; margin: 8px 0;">
+        <math display="block">
+          <mrow>
+            <mi mathvariant="normal">&#x0394;</mi>
+            <msub>
+              <mi>&#x03D5;</mi>
+              <mi mathvariant="normal">observed</mi>
+            </msub>
+            <mo>=</mo>
+            <mn>1.2</mn>
+            <mi>&#x03C0;</mi>
+            <mo>&#x2212;</mo>
+            <mn>2</mn>
+            <mi>&#x03C0;</mi>
+            <mo>=</mo>
+            <mo>&#x2212;</mo>
+            <mn>0.8</mn>
+            <mi>&#x03C0;</mi>
+          </mrow>
+        </math>
+      </div>
+      その結果、<strong>「前向きの猛スピードな流れ」が、画像上では「反対向きの血流（逆流）」として黒く反転表示</strong> されてしまいます。これが臨床で重大な誤診を招く <em>Velocity Aliasing</em> です。
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5 & 6. インタラクティブ・シミュレーター（操作UI・理解用ツール）
+       ======================================================================== -->
+  <section class="card simulator-card">
+    <h2 style="margin-top:0; border-bottom:none; color: var(--primary-dark);">
+      ⚡ インタラクティブ VENC &amp; 血流シミュレーター
+    </h2>
+    <p style="font-size: 0.95rem; color: var(--text-muted);">
+      スライダーを動かして「設定VENC」と「実際の血流速度」を調整してください。位相差の推移、折り返しの発生、および速度ノイズの変化がリアルタイムに連動します。
+    </p>
+
+    <!-- プリセットボタン -->
+    <div class="sim-presets">
+      <span style="font-weight: bold; font-size: 0.85rem; align-self: center;">臨床プリセット：</span>
+      <button class="btn btn-primary" onclick="setSimPreset(150, 100)">大動脈（高流速：正常）</button>
+      <button class="btn btn-primary" onclick="setSimPreset(100, 140)">狭窄動脈（超過・Aliasing）</button>
+      <button class="btn btn-primary" onclick="setSimPreset(40, 25)">頭蓋内静脈（中流速）</button>
+      <button class="btn btn-primary" onclick="setSimPreset(15, 8)">中脳水道 CSF flow（微小流速）</button>
+      <button class="btn" id="btn-anim" onclick="toggleAutoSweep()">流速スイープ再生</button>
+      <button class="btn" onclick="resetSim()">リセット</button>
+    </div>
+
+    <div class="sim-controls">
+      <div class="sim-control-group">
+        <div class="sim-control-header">
+          <span>設定パラメータ：VENC</span>
+          <span class="sim-val" id="disp-venc">100 cm/s</span>
+        </div>
+        <input type="range" class="sim-slider" id="input-venc" min="10" max="250" step="5" value="100" oninput="updateSim()">
+        <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <span>10 cm/s (微小流)</span>
+          <span>250 cm/s (高速動脈)</span>
+        </div>
+      </div>
+
+      <div class="sim-control-group">
+        <div class="sim-control-header">
+          <span>実際の血流速度：v</span>
+          <span class="sim-val" id="disp-v">70 cm/s</span>
+        </div>
+        <input type="range" class="sim-slider" id="input-v" min="-250" max="250" step="2" value="70" oninput="updateSim()">
+        <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <span>-250 cm/s (逆流)</span>
+          <span>0</span>
+          <span>+250 cm/s (順流)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- リアルタイム表示パネル -->
+    <div class="sim-readouts">
+      <div class="sim-readout-card">
+        <div class="sim-readout-label">理論位相差 Δφ (真値)</div>
+        <div class="sim-readout-value" id="disp-true-phase">+0.70 π</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);" id="disp-true-deg">+126.0°</div>
+      </div>
+
+      <div class="sim-readout-card" id="card-obs-phase">
+        <div class="sim-readout-label">MRI観測位相差 (主値 [-π,+π])</div>
+        <div class="sim-readout-value" id="disp-obs-phase">+0.70 π</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);" id="disp-obs-deg">+126.0°</div>
+      </div>
+
+      <div class="sim-readout-card" id="card-obs-v">
+        <div class="sim-readout-label">測定される表示速度 v_meas</div>
+        <div class="sim-readout-value" id="disp-meas-v">70.0 cm/s</div>
+        <div style="font-size:0.75rem; font-weight:bold;" id="disp-status">判定：正常計測中</div>
+      </div>
+
+      <div class="sim-readout-card">
+        <div class="sim-readout-label">速度ノイズ指標 σ_v (∝ VENC)</div>
+        <div class="sim-readout-value" id="disp-noise">相対値 1.00</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);" id="disp-sensitivity">感度：適正</div>
+      </div>
+    </div>
+
+    <!-- アニメーション表示用SVGキャンバス -->
+    <div style="margin-top:20px; background:#fff; border:1px solid var(--border); border-radius:var(--radius-md); padding:16px;">
+      <svg id="sim-svg" viewBox="0 0 700 180" style="width:100%; height:auto;">
+        <!-- スピン位相ダイアル（左） -->
+        <g transform="translate(100, 90)">
+          <circle cx="0" cy="0" r="60" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+          <line x1="-60" y1="0" x2="60" y2="0" stroke="#cbd5e1" stroke-dasharray="2"/>
+          <line x1="0" y1="-60" x2="0" y2="60" stroke="#cbd5e1" stroke-dasharray="2"/>
+          <text x="-5" y="-65" font-size="10" fill="#64748b" text-anchor="middle">+90°</text>
+          <text x="65" y="4" font-size="10" fill="#64748b">0°</text>
+          <text x="-5" y="75" font-size="10" fill="#64748b" text-anchor="middle">-90°</text>
+          <text x="-70" y="4" font-size="10" fill="#dc2626" font-weight="bold" text-anchor="end">±180°</text>
+
+          <!-- スピンベクトル針 -->
+          <line id="spin-needle" x1="0" y1="0" x2="45" y2="-30" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="0" cy="0" r="5" fill="#1e40af"/>
+          <text x="0" y="20" font-size="11" text-anchor="middle" font-weight="bold" id="needle-text">位相</text>
+        </g>
+        <text x="100" y="170" font-size="12" fill="#475569" text-anchor="middle" font-weight="bold">【スピン位相角の空間回転】</text>
+
+        <!-- リアルタイム特性直線プロット（右） -->
+        <g transform="translate(300, 20)">
+          <rect width="360" height="130" fill="#fafbfc" stroke="#e2e8f0"/>
+          <line x1="20" y1="65" x2="340" y2="65" stroke="#94a3b8" stroke-width="1"/>
+          <line x1="180" y1="10" x2="180" y2="120" stroke="#94a3b8" stroke-width="1"/>
+          
+          <!-- ガイド線 -->
+          <line x1="20" y1="20" x2="340" y2="20" stroke="#e2e8f0" stroke-dasharray="2"/>
+          <line x1="20" y1="110" x2="340" y2="110" stroke="#e2e8f0" stroke-dasharray="2"/>
+
+          <!-- 直線 -->
+          <line id="sim-line" x1="60" y1="110" x2="300" y2="20" stroke="#3b82f6" stroke-width="2.5"/>
+
+          <!-- 動作点 -->
+          <circle id="sim-point" cx="240" cy="40" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+          <text x="180" y="145" font-size="11" fill="#475569" text-anchor="middle" font-weight="bold">【速度 vs 位相 動作点】</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       12〜16. VENCの感度・折り返し・ノイズの完全物理的トレードオフ
+       ======================================================================== -->
+  <section class="card">
+    <h2>12〜16. VENC設定の数理的トレードオフ（感度・ノイズ・折り返し）</h2>
+    <p>
+      VENCをどのように決定すべきかは、PC-MRAにおける最大の臨床的命題です。これは単なる経験則ではなく、<strong>微積分と統計的ノイズ伝播式</strong> から完全に説明できます。
+    </p>
+
+    <h3>① 感度（傾き）の数学的証明</h3>
+    <p>位相差の速度に対する微係数（感度・傾き）を計算します：</p>
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <mo stretchy="false">(</mo>
+              <mi mathvariant="normal">&#x0394;</mi>
+              <mi>&#x03D5;</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>v</mi>
+            </mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mfrac>
+            <mi>d</mi>
+            <mrow>
+              <mi>d</mi>
+              <mi>v</mi>
+            </mrow>
+          </mfrac>
+          <mrow>
+            <mo>(</mo>
+            <mi>&#x03C0;</mi>
+            <mfrac>
+              <mi>v</mi>
+              <mi mathvariant="normal">VENC</mi>
+            </mfrac>
+            <mo>)</mo>
+          </mrow>
+          <mo>=</mo>
+          <mfrac>
+            <mi>&#x03C0;</mi>
+            <mi mathvariant="normal">VENC</mi>
+          </mfrac>
+        </mrow>
+      </math>
+    </div>
+    <ul style="margin-left: 24px; margin-bottom: 16px;">
+      <li><strong>VENCが小さい（低VENC）</strong>：傾き <math display="inline"><mfrac><mi>&#x03C0;</mi><mi mathvariant="normal">VENC</mi></mfrac></math> が急激になるため、<strong>微小な速度変化でも大きな位相差として鋭敏に検出（超高感度）</strong>されます。</li>
+      <li><strong>VENCが大きい（高VENC）</strong>：傾きが緩やかになり、同じ速度差であっても生じる位相差がわずかしか得られず、感度が鈍化します。</li>
+    </ul>
+
+    <h3>② 速度ノイズ（流速分解能）の統計的証明</h3>
+    <p>
+      画像上の複素信号に含まれる位相ノイズ（標準偏差）を <math display="inline"><msub><mi>&#x03C3;</mi><mi>&#x03D5;</mi></msub></math> とすると、換算される流速ノイズ <math display="inline"><msub><mi>&#x03C3;</mi><mi>v</mi></msub></math> は誤差伝播の法則より：
+    </p>
+
+    <div class="math-block-highlight">
+      <math display="block">
+        <mrow>
+          <msub>
+            <mi>&#x03C3;</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>&#x03C3;</mi>
+            <mi>&#x03D5;</mi>
+          </msub>
+          <mspace width="0.167em"/>
+          <mfrac>
+            <mi mathvariant="normal">VENC</mi>
+            <mi>&#x03C0;</mi>
+          </mfrac>
+          <mspace width="2em"/>
+          <mo>&#x21D2;</mo>
+          <mspace width="2em"/>
+          <msub>
+            <mi>&#x03C3;</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>&#x221D;</mo>
+          <mi mathvariant="normal">VENC</mi>
+        </mrow>
+      </math>
+      <div class="math-caption">【流速ノイズ比例則】速度計測誤差は設定VENCに正比例する</div>
+    </div>
+
+    <!-- 対比テーブル -->
+    <div class="formula-table-wrapper">
+      <table class="formula-table">
+        <thead>
+          <tr>
+            <th>設定パラダイム</th>
+            <th>メリット（利点）</th>
+            <th>デメリット（欠点・リスク）</th>
+            <th>主な臨床適用例</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>低 VENC 設定</strong><br>（例：10〜40 cm/s）</td>
+            <td>
+              ・位相の傾きが急で流速感度が高い<br>
+              ・速度ノイズ <math display="inline"><msub><mi>&#x03C3;</mi><mi>v</mi></msub></math> が小さく、遅い流れを明瞭に描出
+            </td>
+            <td>
+              ・速い流れ（動脈収縮期など）で容易に <math display="inline"><mo>&#x00B1;</mo><mi>&#x03C0;</mi></math> を超え折り返す（wrap）
+            </td>
+            <td>
+              ・頭蓋内静脈洞・静脈網（MRV）<br>
+              ・中脳水道などの脳脊髄液（CSF）動態<br>
+              ・門脈・下肢深部静脈
+            </td>
+          </tr>
+          <tr>
+            <td><strong>高 VENC 設定</strong><br>（例：100〜250 cm/s）</td>
+            <td>
+              ・測定可能流速レンジが広く、高速動脈血流でもエイリアシングが起きない
+            </td>
+            <td>
+              ・傾きが緩やかで感度が低下<br>
+              ・速度ノイズ <math display="inline"><msub><mi>&#x03C3;</mi><mi>v</mi></msub></math> が増大し、微細な低速流が埋もれる
+            </td>
+            <td>
+              ・大動脈弁狭窄部血流<br>
+              ・頸動脈サイフォン部・脳主幹動脈<br>
+              ・動静脈奇形（AVM）シャント流
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. インラインSVG図解4：低VENC vs 高VENCの傾きとノイズ幅 -->
+    <div class="svg-container">
+      <svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="740" height="280" fill="#ffffff"/>
+        
+        <!-- 左：低VENC -->
+        <g transform="translate(50, 30)">
+          <text x="120" y="0" font-size="16" font-weight="bold" fill="#1e40af" text-anchor="middle">【低VENC：高感度・狭レンジ】</text>
+          <line x1="30" y1="180" x2="230" y2="180" stroke="#64748b" stroke-width="2"/>
+          <line x1="30" y1="180" x2="30" y2="20" stroke="#64748b" stroke-width="2"/>
+          <text x="230" y="200" font-size="12" fill="#64748b">流速 v</text>
+          <text x="10" y="25" font-size="12" fill="#64748b">Δφ</text>
+
+          <!-- 急峻な線 -->
+          <line x1="30" y1="180" x2="130" y2="30" stroke="#2563eb" stroke-width="4"/>
+          
+          <!-- アノテーション -->
+          <path d="M 90 90 L 130 90" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="3"/>
+          <text x="140" y="95" font-size="12" font-weight="bold" fill="#1d4ed8">傾き急：微小Δvで大位相差！</text>
+
+          <rect x="30" y="205" width="180" height="35" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+          <text x="40" y="228" font-size="11.5" fill="#1e40af">感度：極大 / ノイズ：最小</text>
+        </g>
+
+        <line x1="370" y1="20" x2="370" y2="260" stroke="#e2e8f0" stroke-width="2"/>
+
+        <!-- 右：高VENC -->
+        <g transform="translate(410, 30)">
+          <text x="120" y="0" font-size="16" font-weight="bold" fill="#065f46" text-anchor="middle">【高VENC：広レンジ・耐Wrap】</text>
+          <line x1="30" y1="180" x2="250" y2="180" stroke="#64748b" stroke-width="2"/>
+          <line x1="30" y1="180" x2="30" y2="20" stroke="#64748b" stroke-width="2"/>
+          <text x="250" y="200" font-size="12" fill="#64748b">流速 v</text>
+          <text x="10" y="25" font-size="12" fill="#64748b">Δφ</text>
+
+          <!-- 緩やかな線 -->
+          <line x1="30" y1="180" x2="230" y2="70" stroke="#059669" stroke-width="4"/>
+
+          <!-- アノテーション -->
+          <path d="M 130 125 L 170 125" stroke="#047857" stroke-width="1.5" stroke-dasharray="3"/>
+          <text x="180" y="130" font-size="12" font-weight="bold" fill="#047857">傾き緩やか：高速流も収容</text>
+
+          <rect x="30" y="205" width="200" height="35" rx="4" fill="#f0fdf4" stroke="#bbf7d0"/>
+          <text x="40" y="228" font-size="11.5" fill="#065f46">耐ラップ性：強 / ノイズ：大</text>
+        </g>
+      </svg>
+      <div class="figure-caption">【図4】低VENC（急勾配・高感度）と高VENC（緩勾配・広ダイナミックレンジ）の特性比較</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       17〜19. 実臨床での画像化（強度像/位相像）とベクトル展開
+       ======================================================================== -->
+  <section class="card">
+    <h2>17. 強度画像と位相画像 &amp; 18. 3次元ベクトル拡張</h2>
+    <p>PC-MRAでは、1回の収集から性質の異なる2系統の画像を再構成して診断を行います。</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0;">
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+        <h3 style="color: var(--primary); margin-top:0;">① 強度画像（Magnitude Image）</h3>
+        <p style="font-size:0.9rem;">
+          複素差分信号の絶対値（振幅）を描出した画像です。<br>
+          静止組織は信号が相殺されて無信号（真っ黒）となり、<strong>流速の大きさ（スピード）に比例して血管内腔が明るく高信号（白）</strong>に浮き上がります（通常のMRA形態診断に直結）。
+        </p>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+        <h3 style="color: var(--purple); margin-top:0;">② 位相画像（Phase Map / 速度画像）</h3>
+        <p style="font-size:0.9rem;">
+          各位素の位相角 <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></math> を白黒の階調に変換した画像です。<br>
+          静止組織はゼロ（灰色）、<strong>順方向の流れは白（高信号）、逆方向の流れは黒（低信号）</strong>として描出され、<strong>流れの向き（右/左、上/下、前/後）と定量的速度</strong>を完全評価できます。
+        </p>
+      </div>
+    </div>
+
+    <h3>18. ベクトル方程式としてのPC-MRA</h3>
+    <p>血流速度および印加傾斜磁場は本来3次元ベクトルです。内積形式で一般化すると：</p>
+    <div class="math-block">
+      <math display="block">
+        <mrow>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <mi>&#x03D5;</mi>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mspace width="0.167em"/>
+          <mi mathvariant="bold">v</mi>
+          <mo>&#x22C5;</mo>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi mathvariant="bold">M</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <mi>&#x03B3;</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>x</mi>
+          </msub>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi>M</mi>
+            <mrow>
+              <mn>1</mn>
+              <mi>x</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>y</mi>
+          </msub>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi>M</mi>
+            <mrow>
+              <mn>1</mn>
+              <mi>y</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>z</mi>
+          </msub>
+          <mi mathvariant="normal">&#x0394;</mi>
+          <msub>
+            <mi>M</mi>
+            <mrow>
+              <mn>1</mn>
+              <mi>z</mi>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </math>
+    </div>
+    <p>
+      したがって、傾斜磁場を印加した軸方向の速度成分のみが選択的にエンコードされます。3軸方向（X, Y, Z）に順次エンコードを行う<strong>3方向PC（4-point法など）</strong>を用いることで、空間内の真の血流ベクトル場（4D Flow MRIなど）を完全にマッピングすることが可能になります。
+    </p>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">【19. 臨床現場におけるVENC決定黄金律】</div>
+      VENC設定の鉄則は：
+      <div style="text-align:center; font-size:1.15rem; font-weight:bold; margin: 8px 0;">
+        「測定対象の予想最大流速の 1.1 〜 1.3倍（10〜30%上）に設定する」
+      </div>
+      ピーク流速を下回るとaliasingを起こし、過度に高すぎると速度ノイズ <math display="inline"><msub><mi>&#x03C3;</mi><mi>v</mi></msub></math> が増大して微小な血管病変や遅い拡張期流が見えなくなるため、この安全マージンが最適となります。
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       20. 全体一気通貫フロー & 21. 総括まとめ
+       ======================================================================== -->
+  <section class="card">
+    <h2>20. 全体を1本につなぐ完全論理チェーン</h2>
+    <p>ここまでの物理・数学的導出の全ステップを、行間ゼロで一気通貫に総括します。</p>
+
+    <div style="background:#f8fafc; border:1px solid var(--border); border-radius:var(--radius-md); padding:16px;">
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #3b82f6; border-radius:4px;">
+          <strong>Step 1［位相積分の基本］：</strong>
+          <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>&#x03B3;</mi><msubsup><mo>&#x222B;</mo><mn>0</mn><mi>t</mi></msubsup><mi>G</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo><mi>x</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo><mspace width="0.167em"/><mi>d</mi><mi>&#x03C4;</mi></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ 等速直線運動 <math display="inline"><mi>x</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo><mo>=</mo><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>v</mi><mi>&#x03C4;</mi></math> を代入</div>
+
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #3b82f6; border-radius:4px;">
+          <strong>Step 2［位置と速度の分離］：</strong>
+          <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>&#x03B3;</mi><msub><mi>x</mi><mn>0</mn></msub><msubsup><mo>&#x222B;</mo><mn>0</mn><mi>t</mi></msubsup><mi>G</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo><mi>d</mi><mi>&#x03C4;</mi><mo>+</mo><mi>&#x03B3;</mi><mi>v</mi><msubsup><mo>&#x222B;</mo><mn>0</mn><mi>t</mi></msubsup><mi>&#x03C4;</mi><mi>G</mi><mo stretchy="false">(</mo><mi>&#x03C4;</mi><mo stretchy="false">)</mo><mi>d</mi><mi>&#x03C4;</mi></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ モーメント定義（面積 <math display="inline"><msub><mi>M</mi><mn>0</mn></msub></math>、1次 <math display="inline"><msub><mi>M</mi><mn>1</mn></msub></math>）の適用</div>
+
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #3b82f6; border-radius:4px;">
+          <strong>Step 3［モーメント表現］：</strong>
+          <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>&#x03B3;</mi><msub><mi>x</mi><mn>0</mn></msub><msub><mi>M</mi><mn>0</mn></msub><mo>+</mo><mi>&#x03B3;</mi><mi>v</mi><msub><mi>M</mi><mn>1</mn></msub></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ 双極性傾斜磁場により静止組織を消去（<math display="inline"><msub><mi>M</mi><mn>0</mn></msub><mo>=</mo><mn>0</mn></math>）</div>
+
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #10b981; border-radius:4px;">
+          <strong>Step 4［流速位相の抽出］：</strong>
+          <math display="inline"><mi>&#x03D5;</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>&#x03B3;</mi><mi>v</mi><msub><mi>M</mi><mn>1</mn></msub></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ 2回の異なるエンコード差分による誤差相殺</div>
+
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #8b5cf6; border-radius:4px;">
+          <strong>Step 5［PC-MRA中心方程式］：</strong>
+          <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03B3;</mi><mi>v</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ 限界条件：<math display="inline"><mi>v</mi><mo>=</mo><mi mathvariant="normal">VENC</mi></math> のとき <math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03C0;</mi></math></div>
+
+        <div style="padding:8px 12px; background:#fff; border-left:4px solid #f59e0b; border-radius:4px;">
+          <strong>Step 6［VENC公式］：</strong>
+          <math display="inline"><mi mathvariant="normal">VENC</mi><mo>=</mo><mfrac><mi>&#x03C0;</mi><mrow><mi>&#x03B3;</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></mrow></mfrac></math>
+        </div>
+        <div style="text-align:center; color:#94a3b8;">▼ 臨床速度換算式の完成</div>
+
+        <div style="padding:8px 12px; background:#fef3c7; border-left:4px solid #d97706; border-radius:4px; font-weight:bold;">
+          <strong>Step 7［定量血流解析式］：</strong>
+          <math display="inline"><mi>v</mi><mo>=</mo><mfrac><mrow><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></mrow><mi>&#x03C0;</mi></mfrac><mspace width="0.167em"/><mi mathvariant="normal">VENC</mi></math>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:30px;">21. 総括まとめ</h2>
+    <div class="callout callout-success">
+      <div class="callout-title">【学習の最終チェックポイント】</div>
+      <ul style="margin-left: 20px;">
+        <li><strong>本質：</strong>双極性傾斜磁場の1次モーメント <math display="inline"><msub><mi>M</mi><mn>1</mn></msub></math> により、動いているスピンだけに速度比例の位相差を与える。</li>
+        <li><strong>中心式：</strong><math display="inline"><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi><mo>=</mo><mi>&#x03B3;</mi><mi>v</mi><mi mathvariant="normal">&#x0394;</mi><msub><mi>M</mi><mn>1</mn></msub></math></li>
+        <li><strong>VENCの役割：</strong>位相差が折り返し限界 <math display="inline"><mo>&#x00B1;</mo><mi>&#x03C0;</mi></math> に達する最高速度尺度。</li>
+        <li><strong>速度換算：</strong><math display="inline"><mi>v</mi><mo>=</mo><mfrac><mrow><mi mathvariant="normal">&#x0394;</mi><mi>&#x03D5;</mi></mrow><mi>&#x03C0;</mi></mfrac><mi mathvariant="normal">VENC</mi></math></li>
+        <li><strong>臨床設定方針：</strong>予想最大速度の 1.1〜1.3倍に設定。低すぎれば Aliasing、高すぎれば ノイズ増加（<math display="inline"><msub><mi>&#x03C3;</mi><mi>v</mi></msub><mo>&#x221D;</mo><mi mathvariant="normal">VENC</mi></math>）。</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<!-- ========================================================================
+     完全オフライン動作用 JavaScript（シミュレータ＆スイープアニメーション）
+     ======================================================================== -->
+<script>
+  let isSweeping = false;
+  let sweepTimer = null;
+  let sweepDir = 1;
+
+  function updateSim() {
+    const venc = parseFloat(document.getElementById('input-venc').value);
+    const v = parseFloat(document.getElementById('input-v').value);
+
+    // 数値表示の更新
+    document.getElementById('disp-venc').textContent = venc + ' cm/s';
+    document.getElementById('disp-v').textContent = (v > 0 ? '+' : '') + v + ' cm/s';
+
+    // 理論位相差（真値：アンラップ）
+    const truePhaseRad = (v / venc) * Math.PI;
+    const truePhasePi = truePhaseRad / Math.PI;
+    const truePhaseDeg = (truePhaseRad * 180 / Math.PI);
+
+    document.getElementById('disp-true-phase').textContent = (truePhasePi >= 0 ? '+' : '') + truePhasePi.toFixed(2) + ' π';
+    document.getElementById('disp-true-deg').textContent = (truePhaseDeg >= 0 ? '+' : '') + truePhaseDeg.toFixed(1) + '°';
+
+    // 観測位相差（[-π, +π] 主値区間へのラッピング）
+    let obsPhaseRad = ((truePhaseRad + Math.PI) % (2 * Math.PI));
+    if (obsPhaseRad < 0) obsPhaseRad += 2 * Math.PI;
+    obsPhaseRad -= Math.PI;
+
+    const obsPhasePi = obsPhaseRad / Math.PI;
+    const obsPhaseDeg = obsPhaseRad * 180 / Math.PI;
+
+    document.getElementById('disp-obs-phase').textContent = (obsPhasePi >= 0 ? '+' : '') + obsPhasePi.toFixed(2) + ' π';
+    document.getElementById('disp-obs-deg').textContent = (obsPhaseDeg >= 0 ? '+' : '') + obsPhaseDeg.toFixed(1) + '°';
+
+    // 測定表示速度
+    const measV = (obsPhaseRad / Math.PI) * venc;
+    document.getElementById('disp-meas-v').textContent = (measV >= 0 ? '+' : '') + measV.toFixed(1) + ' cm/s';
+
+    // 折り返し判定・アラート
+    const isAliased = Math.abs(v) > venc;
+    const cardPhase = document.getElementById('card-obs-phase');
+    const cardV = document.getElementById('card-obs-v');
+    const statusText = document.getElementById('disp-status');
+
+    if (isAliased) {
+      cardPhase.classList.add('alert');
+      cardV.classList.add('alert');
+      statusText.textContent = '⚠️ 警告：Aliasing（折り返し発生中！）';
+      statusText.style.color = '#dc2626';
+    } else {
+      cardPhase.classList.remove('alert');
+      cardV.classList.remove('alert');
+      if (Math.abs(v) === 0) {
+        statusText.textContent = '判定：静止 (位相差ゼロ)';
+        statusText.style.color = '#64748b';
+      } else {
+        statusText.textContent = '判定：正常計測中 (歪みなし)';
+        statusText.style.color = '#059669';
+      }
+    }
+
+    // ノイズ指標
+    const noiseRelative = (venc / 100).toFixed(2);
+    document.getElementById('disp-noise').textContent = '相対値 ' + noiseRelative;
+    const sensElem = document.getElementById('disp-sensitivity');
+    if (venc <= 40) {
+      sensElem.textContent = '感度：超高感度（静脈・CSF用）';
+    } else if (venc <= 120) {
+      sensElem.textContent = '感度：適正（動脈標準）';
+    } else {
+      sensElem.textContent = '感度：低感度（ノイズ影響に注意）';
+    }
+
+    // SVG針の更新（時計回りを正とする）
+    const needle = document.getElementById('spin-needle');
+    const angleRad = obsPhaseRad; // ラジアン
+    // 0radは3時方向(dx=50, dy=0)、時計回りに回転
+    const nx = 48 * Math.cos(angleRad);
+    const ny = -48 * Math.sin(angleRad); // SVG座標系はy下向き
+    needle.setAttribute('x2', nx);
+    needle.setAttribute('y2', ny);
+
+    // グラフ上の動作点の更新
+    const pt = document.getElementById('sim-point');
+    // x軸: 180がv=0、レンジは -250〜+250 を 幅 320 にマッピング
+    const px = 180 + (v / 250) * 140;
+    // y軸: 65が位相0、±π が ±45px
+    const py = 65 - (obsPhasePi * 45);
+    pt.setAttribute('cx', px);
+    pt.setAttribute('cy', py);
+
+    // グラフの直線自体の傾きの更新
+    const line = document.getElementById('sim-line');
+    // ±VENCで±πになる直線の端点
+    const vx1 = Math.max(-250, -venc);
+    const vx2 = Math.min(250, venc);
+    const lx1 = 180 + (vx1 / 250) * 140;
+    const ly1 = 65 - ((vx1 / venc) * 45);
+    const lx2 = 180 + (vx2 / 250) * 140;
+    const ly2 = 65 - ((vx2 / venc) * 45);
+    line.setAttribute('x1', lx1);
+    line.setAttribute('y1', ly1);
+    line.setAttribute('x2', lx2);
+    line.setAttribute('y2', ly2);
+  }
+
+  function setSimPreset(venc, v) {
+    if (isSweeping) toggleAutoSweep();
+    document.getElementById('input-venc').value = venc;
+    document.getElementById('input-v').value = v;
+    updateSim();
+  }
+
+  function resetSim() {
+    if (isSweeping) toggleAutoSweep();
+    document.getElementById('input-venc').value = 100;
+    document.getElementById('input-v').value = 70;
+    updateSim();
+  }
+
+  function toggleAutoSweep() {
+    isSweeping = !isSweeping;
+    const btn = document.getElementById('btn-anim');
+    if (isSweeping) {
+      btn.textContent = '一時停止';
+      btn.style.background = '#fed7aa';
+      sweepTimer = setInterval(() => {
+        let vSlider = document.getElementById('input-v');
+        let curV = parseFloat(vSlider.value);
+        let venc = parseFloat(document.getElementById('input-venc').value);
+        let limit = venc * 1.5;
+        curV += sweepDir * 2.5;
+        if (curV > limit) {
+          curV = limit;
+          sweepDir = -1;
+        } else if (curV < -limit) {
+          curV = -limit;
+          sweepDir = 1;
+        }
+        vSlider.value = curV;
+        updateSim();
+      }, 40);
+    } else {
+      btn.textContent = '流速スイープ再生';
+      btn.style.background = '';
+      clearInterval(sweepTimer);
+    }
+  }
+
+  // 初期化実行
+  window.addEventListener('DOMContentLoaded', () => {
+    updateSim();
+  });
+</script>
+
+</body>
+</html>
