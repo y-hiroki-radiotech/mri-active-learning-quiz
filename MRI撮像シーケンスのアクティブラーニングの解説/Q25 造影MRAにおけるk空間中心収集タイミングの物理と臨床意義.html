@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>造影MRAにおけるk空間中心収集タイミングの物理と臨床意義</title>
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --accent-blue: #0284c7;
+    --accent-blue-light: #e0f2fe;
+    --accent-blue-dark: #0369a1;
+    --accent-red: #dc2626;
+    --accent-red-light: #fee2e2;
+    --accent-green: #16a34a;
+    --accent-green-light: #dcfce7;
+    --accent-amber: #d97706;
+    --accent-amber-light: #fef3c7;
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+    line-height: 1.65;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* カードレイアウト */
+  .card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 28px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--bg-primary);
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+  }
+  .badge-score { background: #e0e7ff; color: #3730a3; }
+  .badge-danger { background: var(--accent-red-light); color: var(--accent-red); }
+  .badge-success { background: var(--accent-green-light); color: var(--accent-green); }
+  .badge-primary { background: var(--accent-blue-light); color: var(--accent-blue-dark); }
+  .badge-amber { background: var(--accent-amber-light); color: var(--accent-amber); }
+
+  /* 採点サマリーグリッド */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid var(--border-color);
+  }
+  .stat-box.highlight {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+  .stat-sub {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    margin-top: 4px;
+  }
+
+  /* 比較テーブル */
+  .comparison-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+    font-size: 0.92rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .comparison-table th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 22%;
+  }
+  .comparison-table tr:last-child th,
+  .comparison-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* コールアウト */
+  .callout {
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border-left: 5px solid;
+    margin: 14px 0;
+    font-size: 0.92rem;
+  }
+  .callout-success {
+    background-color: var(--accent-green-light);
+    border-left-color: var(--accent-green);
+    color: #14532d;
+  }
+  .callout-warning {
+    background-color: var(--accent-amber-light);
+    border-left-color: var(--accent-amber);
+    color: #78350f;
+  }
+  .callout-danger {
+    background-color: var(--accent-red-light);
+    border-left-color: var(--accent-red);
+    color: #7f1d1d;
+  }
+
+  /* 数式カードとMathML */
+  .math-card {
+    background: #fafafa;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin: 16px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .math-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    overflow-x: auto;
+    font-size: 1.15rem;
+  }
+  math {
+    font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", serif;
+  }
+  math[display="inline"] {
+    font-size: 1.05em;
+    vertical-align: -0.15ex;
+  }
+  .variable-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 0.88rem;
+  }
+  .variable-table th, .variable-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+  }
+  .variable-table th {
+    background: #f1f5f9;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  /* SVG図解 */
+  .diagram-container {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 16px 0;
+    text-align: center;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .diagram-container svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .diagram-caption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-weight: 500;
+  }
+
+  /* インタラクティブ・シミュレータ */
+  .interactive-panel {
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    margin: 16px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .interactive-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    background: #1e293b;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+  }
+  .btn {
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover {
+    background: var(--accent-blue-dark);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+  }
+  .btn-outline:hover {
+    background: #334155;
+    color: #ffffff;
+  }
+  .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+    min-width: 240px;
+  }
+  .slider-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+  .slider {
+    flex-grow: 1;
+    accent-color: #38bdf8;
+    cursor: pointer;
+  }
+  .sim-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+  @media (max-width: 720px) {
+    .sim-view {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .step-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.92rem;
+  }
+  .step-index {
+    background: var(--accent-blue);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* 印刷・PDF出力最適化 */
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+      color: #000000;
+    }
+    .card {
+      border: 1px solid #ccc;
+      box-shadow: none;
+      margin-bottom: 20px;
+      padding: 16px;
+    }
+    .interactive-panel {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ccc;
+    }
+    .controls-bar {
+      display: none;
+    }
+    .interactive-title {
+      color: #000000;
+    }
+    #simResultDesc {
+      color: #000000 !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn {
+      transition: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 1. 採点サマリーカード -->
+  <section class="card" style="border-top: 5px solid var(--accent-blue);">
+    <div class="card-header">
+      <h1 class="card-title">Q025 採点サマリー &amp; 診断レポート</h1>
+      <span class="badge badge-primary">問題番号: Q025 (応用 / MRA)</span>
+    </div>
+
+    <div class="score-grid">
+      <div class="stat-box highlight">
+        <div class="stat-label">獲得得点</div>
+        <div class="stat-value" style="color: var(--accent-green);">78 <span style="font-size: 1rem; font-weight: 500;">/ 100点</span></div>
+        <div class="stat-sub">判定: 合格基準到達 (A-)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">理解度レベル</div>
+        <div class="stat-value" style="font-size: 1.35rem;">概ね良好</div>
+        <div class="stat-sub" style="color: var(--accent-blue);">常磁性効果の基本は理解済</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">学習優先度</div>
+        <div class="stat-value" style="font-size: 1.35rem; color: var(--accent-amber);">中 (補強推奨)</div>
+        <div class="stat-sub" style="color: var(--text-muted); font-size: 0.78rem;">空間周波数物理 &amp; 静脈汚染</div>
+      </div>
+    </div>
+
+    <table class="comparison-table">
+      <tr>
+        <th>出題内容</th>
+        <td><strong>造影MRAで「k空間中心部を動脈相の最適時刻に取る」ことが重要なのはなぜですか。</strong></td>
+      </tr>
+      <tr>
+        <th>ユーザー解答</th>
+        <td>造影MRAではT1緩和時間が相対的に短くなることで、T1短縮により血管部分のコントラストを得ている。この造影剤による効果は時間とともにT1短縮効果も異なる。そのため、動脈相の最適時刻にk空間中心部分を撮像することで、最も組織コントラストが得られる画像が取得できるため。</td>
+      </tr>
+      <tr>
+        <th>模範解答の骨子</th>
+        <td>
+          <ol style="margin-left: 18px; line-height: 1.55;">
+            <li><strong>k空間の物理的役割：</strong>k空間中心部（低空間周波数成分）が画像の巨視的な「組織コントラスト（明暗差・ダイナミックレンジ）」を決定する。</li>
+            <li><strong>時間濃度動態（First Pass）：</strong>Gd造影剤による縦緩和時間の急峻な短縮効果は、動脈通過時のごく短い時間窓（数秒〜十数秒）にピークを迎える。</li>
+            <li><strong>静脈汚染（Venous Contamination）の防止：</strong>k空間中心部を動脈相ピークと一致させることで動脈の信号を最大化し、直後に流入する静脈血や実質の増強による動脈描出の阻害（重なり）を排除するため。</li>
+          </ol>
+        </td>
+      </tr>
+    </table>
+
+    <div class="callout callout-success">
+      <strong>正しく理解できた点</strong>
+      <ul style="margin: 6px 0 0 18px;">
+        <li>Gd系造影剤の本質が「T1短縮効果（T1緩和時間の短縮）」による血管の高信号化（陽性コントラスト）であると明確に捉えられている。</li>
+        <li>造影剤の血中動態（時間経過によるT1短縮効果の変化・ピークの存在）に着目できている。</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-danger">
+      <strong>最大の修正点 &amp; 不足している論理</strong>
+      <ul style="margin: 6px 0 0 18px;">
+        <li><strong>「なぜk空間中心部なのか」の物理的根拠の欠落：</strong>メモ書きにある「低周波・コントラスト」という物理的理由（k空間中心部が画像の全体的な明暗・組織コントラストを決定しているフーリエ変換の性質）が本番解答に結びついていません。</li>
+        <li><strong>「静脈汚染の排除」への言及がない点：</strong>動脈相の最適時刻に合わせる最大の臨床的意義は、動脈を高輝度にするだけでなく「静脈血流が還流してきて動脈と重なるのを防ぐ（動脈選択的描出）」ことにあります。この対比が抜けています。</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-warning">
+      <strong>根本的誤概念の芽（注意点）</strong>
+      <p>「k空間中心部＝コントラスト」というフレーズを単なる語句の暗記にとどめず、「k空間中心部を走査した瞬間の造影剤濃度差が、最終画像の動脈と周囲組織のコントラスト比として不可逆的に決定される」という動的サンプリングの物理現象として定着させましょう。</p>
+    </div>
+  </section>
+
+  <!-- 2. 重要原理と数式解説 -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">数理・物理メカニズムの完全解説</h2>
+      <span class="badge badge-score">物理原理 &amp; 数式導出</span>
+    </div>
+
+    <!-- 数式1: 緩和速度と造影剤濃度 -->
+    <div class="math-card">
+      <div style="font-weight: 700; color: var(--accent-blue-dark); font-size: 0.95rem; margin-bottom: 8px;">
+        【式1】常磁性造影剤による縦緩和速度の線形増強式
+      </div>
+      <div class="math-display">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <msub><mi>R</mi><mn>1</mn></msub>
+            <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <mfrac><mn>1</mn><mrow><msub><mi>T</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mfrac>
+            <mo>=</mo>
+            <mfrac><mn>1</mn><msub><mi>T</mi><mrow><mn>1</mn><mo>,</mo><mn>0</mn></mrow></msub></mfrac>
+            <mo>+</mo>
+            <msub><mi>r</mi><mn>1</mn></msub>
+            <mo>&#x22C5;</mo>
+            <mrow><mo>[</mo><mi>C</mi><mo>]</mo></mrow>
+            <mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <table class="variable-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理量・名称</th>
+            <th>単位</th>
+            <th>現象・比例関係・臨床的意味</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>R</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math></td>
+            <td>縦緩和速度</td>
+            <td>s⁻¹</td>
+            <td>縦磁化の回復速度。値が大きいほど縦磁化が瞬時に立ち上がる。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>T</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math></td>
+            <td>見かけの縦緩和時間</td>
+            <td>s</td>
+            <td>造影後の縦緩和時間。造影剤濃度 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mo stretchy="false">[</mo><mi>C</mi><mo stretchy="false">]</mo><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> に<strong>反比例して短縮</strong>する。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>T</mi><mrow><mn>1</mn><mo>,</mo><mn>0</mn></mrow></msub></math></td>
+            <td>未造影時の固有T1値</td>
+            <td>s</td>
+            <td>血液未造影時（約1200〜1400 ms @ 1.5T）の基底値。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>r</mi><mn>1</mn></msub></math></td>
+            <td>縦緩和能 (relaxivity)</td>
+            <td>s⁻¹·mM⁻¹</td>
+            <td>Gdキレート化合物固有の定数。プロトン緩和を加速する強さの指標。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>[</mo><mi>C</mi><mo>]</mo></mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math></td>
+            <td>血中造影剤局所濃度</td>
+            <td>mM</td>
+            <td><strong>時間変化する関数</strong>。動脈ボーラス通過時（First pass）に極大値を取る。</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 0.88rem; margin-top: 10px; color: var(--text-secondary);">
+        <strong>問題との直結：</strong>造影剤濃度 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mo stretchy="false">[</mo><mi>C</mi><mo stretchy="false">]</mo><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> が最大となる動脈相ピーク時に、<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>T</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></math> は数百msから数十msへと劇的に短縮されます。この一過性の短縮ピークを逃すと、血液の縦磁化回復速度は低下してしまいます。
+      </p>
+    </div>
+
+    <!-- 数式2: スポイルドGRE信号強度 -->
+    <div class="math-card">
+      <div style="font-weight: 700; color: var(--accent-blue-dark); font-size: 0.95rem; margin-bottom: 8px;">
+        【式2】3D T1強調スポイルドGRE (SPGR/FLASH) の定常状態信号強度
+      </div>
+      <div class="math-display">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <msub><mi>S</mi><mtext>GRE</mtext></msub>
+            <mo>=</mo>
+            <msub><mi>M</mi><mn>0</mn></msub>
+            <mo>&#x22C5;</mo>
+            <mfrac>
+              <mrow>
+                <mi>sin</mi><mi>&#x03B1;</mi>
+                <mo>&#x22C5;</mo>
+                <mrow><mo>(</mo><mrow><mn>1</mn><mo>&#x2212;</mo><msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>T</mi><mi>R</mi><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></mrow></msup></mrow><mo>)</mo></mrow>
+              </mrow>
+              <mrow>
+                <mn>1</mn><mo>&#x2212;</mo><mi>cos</mi><mi>&#x03B1;</mi>
+                <mo>&#x22C5;</mo>
+                <msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>T</mi><mi>R</mi><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></mrow></msup>
+              </mrow>
+            </mfrac>
+            <mo>&#x22C5;</mo>
+            <msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>T</mi><mi>E</mi><mo>/</mo><msubsup><mi>T</mi><mn>2</mn><mo>*</mo></msubsup></mrow></msup>
+          </mrow>
+        </math>
+      </div>
+      <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);">
+        造影MRAでは極めて短い <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>T</mi><mi>R</mi></math>（2〜5 ms程度）と比較的大きなフリップ角 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>&#x03B1;</mi></math>（15°〜30°）を使用します。未造影組織（長い <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>T</mi><mn>1</mn></msub></math>）では <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mn>1</mn><mo>&#x2212;</mo><msup><mi>e</mi><mrow><mo>&#x2212;</mo><mi>T</mi><mi>R</mi><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></mrow></msup><mo>&#x2248;</mo><mn>0</mn></math> となり信号が徹底的に抑制（飽和）されますが、動脈相ピークで <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>T</mi><mn>1</mn></msub></math> が極短縮した血液のみが爆発的な縦磁化回復を遂げ、背景組織との圧倒的な信号差（ハイコントラスト）を生み出します。
+      </p>
+    </div>
+
+    <!-- 数式3: 2次元フーリエ変換とk空間の役割 -->
+    <div class="math-card">
+      <div style="font-weight: 700; color: var(--accent-blue-dark); font-size: 0.95rem; margin-bottom: 8px;">
+        【式3】2次元空間周波数展開（k空間）と画像再構成
+      </div>
+      <div class="math-display">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mi>I</mi><mo stretchy="false">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <mo>&#x222C;</mo>
+            <mi>S</mi><mo stretchy="false">(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>,</mo><msub><mi>k</mi><mi>y</mi></msub><mo stretchy="false">)</mo>
+            <mo>&#x22C5;</mo>
+            <msup><mi>e</mi><mrow><mi>i</mi><mn>2</mn><mi>&#x03C0;</mi><mo stretchy="false">(</mo><msub><mi>k</mi><mi>x</mi></msub><mi>x</mi><mo>+</mo><msub><mi>k</mi><mi>y</mi></msub><mi>y</mi><mo stretchy="false">)</mo></mrow></msup>
+            <mi>d</mi><msub><mi>k</mi><mi>x</mi></msub>
+            <mi>d</mi><msub><mi>k</mi><mi>y</mi></msub>
+          </mrow>
+        </math>
+      </div>
+      <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);">
+        画像の直流（DC）および超低周波成分は <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>k</mi><mi>x</mi></msub><mo>&#x2248;</mo><mn>0</mn><mo>,</mo><mspace width="0.278em"/><msub><mi>k</mi><mi>y</mi></msub><mo>&#x2248;</mo><mn>0</mn></math> に集中しています：
+      </p>
+      <div class="math-display" style="padding: 6px 0;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mi>S</mi><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <mo>&#x222C;</mo>
+            <mi>I</mi><mo stretchy="false">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false">)</mo><mspace width="0.167em"/><mi>d</mi><mi>x</mi><mspace width="0.167em"/><mi>d</mi><mi>y</mi>
+            <mspace width="1em"></mspace>
+            <mtext>(画像全体の全信号エネルギー総和・平均輝度)</mtext>
+          </mrow>
+        </math>
+      </div>
+      <ul style="margin: 8px 0 0 20px; font-size: 0.88rem; color: var(--text-secondary);">
+        <li><strong>k空間中心部（<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>|</mo><mi mathvariant="bold">k</mi><mo>|</mo></mrow><mo>&#x2192;</mo><mn>0</mn></math>）：</strong>画像の全エネルギーの大半を占め、血管と実質・背景との<strong>「組織コントラスト（明暗比）」</strong>を決定する。</li>
+        <li><strong>k空間周辺部（<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>|</mo><mi mathvariant="bold">k</mi><mo>|</mo></mrow><mo>&#x226B;</mo><mn>0</mn></math>）：</strong>エッジや微小血管の輪郭といった<strong>「空間分解能（シャープネス）」</strong>を決定する。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. インラインSVG図解：時間濃度曲線とk空間充填順序 -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">造影動態（TDC）とk空間充填シーケンスの時空間整合性</h2>
+      <span class="badge badge-success">視覚的理解図解</span>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 850 420" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, sans-serif">
+        <defs>
+          <linearGradient id="artGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.35"/>
+            <stop offset="1%" stop-color="#ef4444" stop-opacity="0.0"/>
+          </linearGradient>
+          <linearGradient id="veinGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+            <stop offset="1%" stop-color="#3b82f6" stop-opacity="0.0"/>
+          </linearGradient>
+          <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#f1f5f9" stroke-width="1.5"/>
+          </pattern>
+        </defs>
+
+        <!-- 背景グリッド -->
+        <rect x="50" y="30" width="750" height="270" fill="url(#gridPattern)"/>
+
+        <!-- 軸 -->
+        <line x1="70" y1="300" x2="800" y2="300" stroke="#475569" stroke-width="2"/>
+        <line x1="70" y1="300" x2="70" y2="40" stroke="#475569" stroke-width="2"/>
+        <text x="800" y="335" font-size="13" font-weight="700" fill="#475569" text-anchor="end">時間 t (s)</text>
+        <text x="35" y="45" font-size="13" font-weight="700" fill="#475569" transform="rotate(-90 35,45)">造影剤濃度 [C] / 信号強度</text>
+
+        <!-- 最適動脈時間窓 -->
+        <rect x="220" y="40" width="130" height="260" fill="#dcfce7" opacity="0.6"/>
+        <line x1="220" y1="40" x2="220" y2="300" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <line x1="350" y1="40" x2="350" y2="300" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <text x="285" y="60" font-size="12" font-weight="800" fill="#15803d" text-anchor="middle">純粋な動脈相ウィンドウ</text>
+        <text x="285" y="78" font-size="10" font-weight="600" fill="#166534" text-anchor="middle">(Arterial Window)</text>
+
+        <!-- 静脈汚染領域 -->
+        <rect x="350" y="40" width="450" height="260" fill="#fee2e2" opacity="0.25"/>
+        <text x="560" y="60" font-size="12" font-weight="700" fill="#991b1b" text-anchor="middle">静脈汚染ゾーン (Venous Contamination)</text>
+
+        <!-- 動脈濃度カーブ -->
+        <path d="M 70 300 Q 180 300 210 260 Q 250 80 285 80 Q 320 80 360 210 Q 420 250 550 265 Q 680 275 800 280"
+              fill="none" stroke="#dc2626" stroke-width="3.5"/>
+        <path d="M 70 300 Q 180 300 210 260 Q 250 80 285 80 Q 320 80 360 210 Q 420 250 550 265 Q 680 275 800 280 L 800 300 L 70 300 Z"
+              fill="url(#artGrad)"/>
+
+        <!-- 静脈濃度カーブ -->
+        <path d="M 70 300 Q 250 300 310 290 Q 370 270 420 160 Q 470 145 540 170 Q 640 210 800 250"
+              fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="6,3"/>
+        <path d="M 70 300 Q 250 300 310 290 Q 370 270 420 160 Q 470 145 540 170 Q 640 210 800 250 L 800 300 L 70 300 Z"
+              fill="url(#veinGrad)"/>
+
+        <!-- カーブラベル -->
+        <text x="290" y="110" font-size="13" font-weight="800" fill="#b91c1c">動脈相ピーク (Artery Peak)</text>
+        <text x="470" y="140" font-size="13" font-weight="800" fill="#1d4ed8">静脈相ピーク (Vein Peak)</text>
+
+        <!-- Centric法 vs Linear法のタイムラインバー -->
+        <g transform="translate(0, 320)">
+          <!-- Centric Ordering -->
+          <text x="70" y="32" font-size="12" font-weight="700" fill="#0f172a">セントリック充填 (Centric):</text>
+          <rect x="220" y="18" width="50" height="20" fill="#60a5fa" rx="3"/>
+          <text x="245" y="32" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">低周波</text>
+          <rect x="270" y="14" width="35" height="28" fill="#e11d48" rx="4" stroke="#881337" stroke-width="2"/>
+          <text x="287" y="32" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">k=0</text>
+          <rect x="305" y="18" width="220" height="20" fill="#94a3b8" rx="3"/>
+          <text x="415" y="32" font-size="10" font-weight="600" fill="#fff" text-anchor="middle">高空間周波数 (空間分解能データ収集)</text>
+          <path d="M 287 14 L 287 -230" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <circle cx="287" cy="80" r="6" fill="#e11d48"/>
+          <text x="287" y="-2" font-size="11" font-weight="800" fill="#e11d48" text-anchor="middle">動脈ピークと完全合致！</text>
+
+          <!-- Linear Ordering -->
+          <text x="70" y="68" font-size="12" font-weight="700" fill="#64748b">通常リニア充填 (Linear):</text>
+          <rect x="220" y="55" width="180" height="18" fill="#cbd5e1" rx="3"/>
+          <text x="310" y="68" font-size="10" font-weight="600" fill="#475569" text-anchor="middle">-ky (高周波)</text>
+          <rect x="400" y="52" width="35" height="24" fill="#9333ea" rx="3"/>
+          <text x="417" y="68" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">k=0</text>
+          <rect x="435" y="55" width="180" height="18" fill="#cbd5e1" rx="3"/>
+          <text x="525" y="68" font-size="10" font-weight="600" fill="#475569" text-anchor="middle">+ky (高周波)</text>
+          <path d="M 417 52 L 417 -155" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <circle cx="417" cy="165" r="5" fill="#9333ea"/>
+          <text x="425" y="92" font-size="10" font-weight="700" fill="#9333ea">静脈相で中心を通ると静脈優位画像に！</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">
+        図1: 造影剤の血中通過曲線（TDC）とk空間サンプリング軌道の関係。<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>k</mi><mo>=</mo><mn>0</mn></math>（中心部）通過時点の組織濃度差が最終画像のコントラストとして固定される。
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. インタラクティブ・シミュレーションUI -->
+  <section class="card" style="padding: 0; overflow: hidden;">
+    <div class="interactive-panel">
+      <div class="interactive-title">
+        <span>k空間充填タイミング動態シミュレータ</span>
+        <span class="badge" style="background: #0369a1; color: #e0f2fe;">リアルタイム物理演算</span>
+      </div>
+
+      <div class="controls-bar">
+        <button class="btn" id="playBtn" onclick="toggleSim()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          再生 / 停止
+        </button>
+        <button class="btn btn-outline" onclick="resetSim()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          リセット
+        </button>
+        <button class="btn btn-outline" onclick="stepSim(1)">+1秒送り</button>
+
+        <div class="slider-group">
+          <span class="slider-label">k空間中心 (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>k</mi><mo>=</mo><mn>0</mn></math>) 収集時刻: <strong id="kZeroTimeLabel" style="color: #38bdf8;">14</strong> 秒</span>
+          <input type="range" class="slider" id="kZeroSlider" min="2" max="30" step="1" value="14" oninput="updateKZeroTime(this.value)">
+        </div>
+      </div>
+
+      <div class="sim-view">
+        <!-- SVGグラフ表示 -->
+        <div style="background: #1e293b; border-radius: var(--radius-md); padding: 14px;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">動脈・静脈TDC &amp; サンプリング位置</div>
+          <svg id="simGraphSvg" viewBox="0 0 380 200" style="width: 100%; height: auto; display: block;">
+            <line x1="30" y1="170" x2="360" y2="170" stroke="#475569" stroke-width="1.5"/>
+            <line x1="30" y1="170" x2="30" y2="20" stroke="#475569" stroke-width="1.5"/>
+            <path id="artPathSim" d="" fill="none" stroke="#f87171" stroke-width="3"/>
+            <path id="veinPathSim" d="" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-dasharray="4,2"/>
+            <line id="kZeroLine" x1="160" y1="20" x2="160" y2="170" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3,3"/>
+            <polygon id="kZeroMarker" points="160,20 155,10 165,10" fill="#38bdf8"/>
+            <text id="kZeroMarkerText" x="160" y="8" font-size="10" font-weight="700" fill="#38bdf8" text-anchor="middle">k=0</text>
+          </svg>
+        </div>
+
+        <!-- 再構成画像シミュレーション -->
+        <div style="background: #1e293b; border-radius: var(--radius-md); padding: 14px; text-align: center;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">取得MRA画像の再構成プレビュー (Simulated MIP)</div>
+          <svg id="mraPreviewSvg" viewBox="0 0 300 160" style="width: 100%; height: auto; max-width: 260px; margin: 0 auto; display: block; background: #000000; border-radius: 8px;">
+            <rect x="0" y="0" width="300" height="160" fill="#080808"/>
+            <path id="arteryImg" d="M 150 150 L 150 90 Q 150 60 110 30 M 150 90 Q 150 60 190 30"
+                  fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round"/>
+            <path id="arteryImgCore" d="M 150 150 L 150 90 Q 150 60 110 30 M 150 90 Q 150 60 190 30"
+                  fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+            <path id="veinImg" d="M 130 150 L 130 90 Q 130 70 90 40 M 170 150 L 170 90 Q 170 70 210 40"
+                  fill="none" stroke="#334155" stroke-width="14" stroke-linecap="round" opacity="0.1"/>
+          </svg>
+          <div id="simResultDesc" style="font-size: 0.85rem; margin-top: 10px; font-weight: 600; color: #4ade80;">
+            [判定] 動脈優位相：動脈が最高輝度で明瞭。静脈重なりなし。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 臨床的・実践的アプローチ -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">臨床実践：タイミング一致のための撮像技術</h2>
+      <span class="badge badge-amber">臨床プロトコル</span>
+    </div>
+
+    <ul class="step-list">
+      <li class="step-item">
+        <div class="step-index">1</div>
+        <div>
+          <strong>テストボーラス法 (Test Bolus):</strong>
+          少量（1〜2 mL）のGd造影剤を先行注入し、目的動脈の関心領域（ROI）における時間濃度曲線から正確な到達ピーク時間（遅延時間：Delay time）を直接実測する手法。心拍出量が低下した高齢者や心不全患者でも確実に動脈相を捉えられる。
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-index">2</div>
+        <div>
+          <strong>リアルタイムモニタリング法 (MR SmartPrep / Care Bolus):</strong>
+          低分解能2D透視画像をリアルタイムで連続モニタリングし、造影剤が目的部位（胸部大動脈や頸動脈など）に到達した瞬間に、操作者または自動閾値判定でメインの3D MRA本撮像へ切り替える手法。
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-index">3</div>
+        <div>
+          <strong>セントリック (Centric) &amp; 楕円セントリック (Elliptical Centric) 軌道:</strong>
+          シーケンス開始と同時にk空間の中心軸（<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>k</mi><mi>y</mi></msub><mo>=</mo><mn>0</mn><mo>,</mo><mspace width="0.278em"/><msub><mi>k</mi><mi>z</mi></msub><mo>=</mo><mn>0</mn></math>）から外側へとらせん状・同心円状にデータを充填する。動脈到達直後にトリガーすることで、最も濃度の高いFirst Passの瞬間を中心部に充填し、静脈が還流し始める後半には空間分解能を決める最外周周辺部（高空間周波数）を収集するため、静脈像が実質的にマスクされる。
+        </div>
+      </li>
+    </ul>
+
+    <table class="comparison-table" style="margin-top: 20px;">
+      <thead>
+        <tr>
+          <th>k空間充填方式</th>
+          <th><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>k</mi><mo>=</mo><mn>0</mn></math> 収集タイミング</th>
+          <th>動脈コントラスト</th>
+          <th>静脈汚染リスク</th>
+          <th>主な適応領域</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>セントリック充填</strong></td>
+          <td>撮像開始直後 (0〜3秒)</td>
+          <td>極めて高い (最良)</td>
+          <td>極小</td>
+          <td>胸腹部大動脈、腎動脈、頸動脈</td>
+        </tr>
+        <tr>
+          <td><strong>通常リニア充填</strong></td>
+          <td>撮像時間の中央 (50%)</td>
+          <td>低下しやすい</td>
+          <td>高（中心通過時に静脈相突入の危険）</td>
+          <td>一般的な静態造影T1強調像</td>
+        </tr>
+        <tr>
+          <td><strong>逆セントリック充填</strong></td>
+          <td>撮像終了直前</td>
+          <td>動脈コントラスト喪失</td>
+          <td>極大 (静脈優位)</td>
+          <td>MR静脈叢描出 (MRV: Venography)</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. 復習チェックリスト -->
+  <section class="card" style="background: #f8fafc;">
+    <div class="card-header">
+      <h2 class="card-title">知識定着セルフチェックリスト</h2>
+      <span class="badge badge-score">Checklist</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.9rem;">
+      <label style="display: flex; align-items: center; gap: 8px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <input type="checkbox" checked disabled>
+        k空間中心部（低周波）＝巨視的組織コントラスト
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <input type="checkbox" checked disabled>
+        k空間周辺部（高周波）＝微細エッジ・空間分解能
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <input type="checkbox" checked disabled>
+        Gd濃度 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mo stretchy="false">[</mo><mi>C</mi><mo stretchy="false">]</mo></math> と緩和速度 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mn>1</mn><mo>/</mo><msub><mi>T</mi><mn>1</mn></msub></math> の線形関係
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <input type="checkbox" checked disabled>
+        静脈還流による動静脈重なり（静脈汚染）の物理的遮断
+      </label>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  let simTime = 14;
+  let isRunning = false;
+  let animTimer = null;
+
+  function getArteryConc(t) {
+    if (t < 6) return 0;
+    const dt = t - 6;
+    return Math.max(0, 100 * Math.pow(dt / 8, 3.5) * Math.exp(- (dt - 8) * 0.45));
+  }
+
+  function getVeinConc(t) {
+    if (t < 13) return 0;
+    const dt = t - 13;
+    return Math.max(0, 70 * Math.pow(dt / 9, 3.0) * Math.exp(- (dt - 9) * 0.35));
+  }
+
+  function initGraphPaths() {
+    const artPath = document.getElementById("artPathSim");
+    const veinPath = document.getElementById("veinPathSim");
+
+    let artD = "M 30 170";
+    let veinD = "M 30 170";
+
+    for (let t = 0; t <= 32; t += 0.5) {
+      const x = 30 + (t / 32) * 330;
+      const ya = 170 - (getArteryConc(t) / 100) * 140;
+      const yv = 170 - (getVeinConc(t) / 100) * 140;
+      artD += ` L ${x.toFixed(1)} ${ya.toFixed(1)}`;
+      veinD += ` L ${x.toFixed(1)} ${yv.toFixed(1)}`;
+    }
+
+    artPath.setAttribute("d", artD);
+    veinPath.setAttribute("d", veinD);
+  }
+
+  function updateKZeroTime(val) {
+    simTime = parseFloat(val);
+    document.getElementById("kZeroSlider").value = simTime;
+    document.getElementById("kZeroTimeLabel").innerText = simTime;
+
+    const x = 30 + (simTime / 32) * 330;
+    const kLine = document.getElementById("kZeroLine");
+    const kMarker = document.getElementById("kZeroMarker");
+    const kText = document.getElementById("kZeroMarkerText");
+
+    kLine.setAttribute("x1", x);
+    kLine.setAttribute("x2", x);
+    kMarker.setAttribute("points", `${x},20 ${x - 5},10 ${x + 5},10`);
+    kText.setAttribute("x", x);
+
+    const cArt = getArteryConc(simTime);
+    const cVein = getVeinConc(simTime);
+
+    const artElem = document.getElementById("arteryImg");
+    const artCore = document.getElementById("arteryImgCore");
+    const veinElem = document.getElementById("veinImg");
+    const desc = document.getElementById("simResultDesc");
+
+    const artBrightness = Math.min(1, Math.max(0.1, cArt / 90));
+    artElem.setAttribute("stroke", `rgba(255, 255, 255, ${artBrightness.toFixed(2)})`);
+    artCore.setAttribute("stroke", `rgba(255, 255, 255, ${Math.min(1, artBrightness * 1.2).toFixed(2)})`);
+
+    const veinBrightness = Math.min(1, Math.max(0.05, cVein / 90));
+    veinElem.setAttribute("stroke", `rgba(148, 163, 184, ${veinBrightness.toFixed(2)})`);
+    veinElem.setAttribute("opacity", Math.max(0.05, veinBrightness * 0.9).toFixed(2));
+
+    if (simTime < 10) {
+      desc.innerText = "[早すぎ] 到達前：動脈への造影剤充填不足。全体が低信号・低S/N。";
+      desc.style.color = "#fbbf24";
+    } else if (simTime >= 10 && simTime <= 17) {
+      desc.innerText = "[理想的] 動脈優位相：動脈が最高輝度で描出され、静脈汚染なし！";
+      desc.style.color = "#4ade80";
+    } else if (simTime > 17 && simTime <= 23) {
+      desc.innerText = "[遅延・静脈汚染] 門脈・静脈が強く造影され、動脈の輪郭が判別不能。";
+      desc.style.color = "#f87171";
+    } else {
+      desc.innerText = "[過度な遅延] 実質・静脈造影相：血管選択性が完全に消失。";
+      desc.style.color = "#ef4444";
+    }
+  }
+
+  function toggleSim() {
+    if (isRunning) {
+      clearInterval(animTimer);
+      isRunning = false;
+      document.getElementById("playBtn").innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> 再生';
+    } else {
+      isRunning = true;
+      document.getElementById("playBtn").innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 停止';
+      animTimer = setInterval(() => {
+        let next = simTime + 0.5;
+        if (next > 30) next = 2;
+        updateKZeroTime(next);
+      }, 100);
+    }
+  }
+
+  function resetSim() {
+    if (isRunning) toggleSim();
+    updateKZeroTime(14);
+  }
+
+  function stepSim(val) {
+    if (isRunning) toggleSim();
+    let next = simTime + val;
+    if (next > 30) next = 2;
+    if (next < 2) next = 30;
+    updateKZeroTime(next);
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    initGraphPaths();
+    updateKZeroTime(14);
+  });
+</script>
+
+</body>
+</html>

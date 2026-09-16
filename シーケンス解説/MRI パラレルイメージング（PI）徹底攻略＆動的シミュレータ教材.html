@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI パラレルイメージング（PI）徹底攻略＆動的シミュレータ教材</title>
+<style>
+  :root {
+    --primary: #1565c0;
+    --primary-light: #e3f2fd;
+    --primary-dark: #0d47a1;
+    --accent: #00897b;
+    --accent-light: #e0f2f1;
+    --warning: #e65100;
+    --warning-light: #fff3e0;
+    --danger: #c62828;
+    --danger-light: #ffebee;
+    --text: #263238;
+    --text-muted: #546e7a;
+    --bg: #f4f6f9;
+    --card-bg: #ffffff;
+    --border: #cfd8dc;
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
+    --radius: 10px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    line-height: 1.65;
+    color: var(--text);
+    background-color: var(--bg);
+    padding: 20px 12px;
+  }
+
+  .container {
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: #ffffff;
+    padding: 28px 24px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-light);
+  }
+
+  .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .card-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  .lead-text {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .bullet-list {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .bullet-list li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+
+  .bullet-list li::before {
+    content: "■";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-size: 0.75rem;
+    top: 3px;
+  }
+
+  .highlight-box {
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    border-left: 4px solid var(--primary);
+    background: #f8fafc;
+  }
+
+  .highlight-box.alert {
+    border-left-color: var(--warning);
+    background: var(--warning-light);
+  }
+
+  .highlight-box.success {
+    border-left-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .highlight-box-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .formula-display {
+    text-align: center;
+    padding: 14px;
+    margin: 14px 0;
+    background: #f1f5f9;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 1.15rem;
+    overflow-x: auto;
+  }
+
+  math {
+    font-family: "Cambria Math", "Times New Roman", serif;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  th {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  .svg-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .svg-wrap svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .svg-caption {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* ---------------- 動的シミュレータ専用スタイル ---------------- */
+  .sim-container {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sim-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-group {
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  .btn {
+    appearance: none;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+
+  .btn-outline:hover {
+    background: var(--primary-light);
+  }
+
+  .btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .slider-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+    max-width: 420px;
+  }
+
+  .slider-control label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .slider-control input[type="range"] {
+    flex-grow: 1;
+    cursor: pointer;
+  }
+
+  .sim-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 860px) {
+    .sim-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .sim-subpanel {
+    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .subpanel-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+  }
+
+  .sim-status-box {
+    background: #f8fafc;
+    border-left: 4px solid var(--primary);
+    padding: 12px 14px;
+    border-radius: 6px;
+  }
+
+  .sim-status-box.next {
+    border-left-color: var(--accent);
+    background: #f0fdf4;
+  }
+
+  .status-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .status-content {
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .indicator-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .indicator-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .indicator-val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  @media print {
+    body {
+      background: #ffffff;
+      color: #000;
+      padding: 0;
+    }
+    .card {
+      border: 1px solid #999;
+      box-shadow: none;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
+    .sim-toolbar {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="badge">MRI Advanced Physics & Sequence Simulator</div>
+    <h1>パラレルイメージング（Parallel Imaging）徹底攻略</h1>
+    <p>多チャンネル受信コイルの局所空間感度差を利用したk空間間引き・シーケンス時間短縮・SNRトレードオフの物理的統合理解</p>
+  </header>
+
+  <!-- Section 1: 概念の要約 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      </div>
+      <div class="card-title">パラレルイメージング（PI）とは何か？</div>
+    </div>
+    <p class="lead-text">
+      パラレルイメージング（PI）とは、複数の小型受信コイルエレメントを並列配置した<strong>位相アレイコイル（Phased Array Coil）</strong>を用い、<strong>各コイルがもつ固有の「空間感度差（感度プロファイル）」を空間位置の識別に利用することで、k空間の位相エンコード行を間引いて撮像時間を短縮する技術</strong>です。
+    </p>
+
+    <ul class="bullet-list">
+      <li><strong>「パラレル」の由来：</strong>複数のコイルエレメントが被写体からのMR信号を<strong>同時かつ並列（Parallel）に受信</strong>することから命名されました。</li>
+      <li><strong>基本動作：</strong>位相エンコードステップを1行おき（加速因子 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>2</mn></math>）や2行おき（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>3</mn></math>）にスキップして収集します。</li>
+      <li><strong>エイリアシングの必然性：</strong>サンプリング間隔 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&Delta;</mi><msub><mi>k</mi><mi>y</mi></msub></math> が広がるため、ナイキスト基準を満たさなくなり、そのままフーリエ変換すると<strong>位相エンコード方向に画像が重なり合う「折り返し（エイリアシング）」</strong>が発生します。</li>
+      <li><strong>復元の鍵：</strong>各コイルに近い部位は信号が強く、遠い部位は弱いという空間感度差を行列計算（SENSE）または周波数補間（GRAPPA）で解き、重なり合ったピクセルを分離します。</li>
+    </ul>
+
+    <div class="highlight-box success">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        本質的な臨床メリット
+      </div>
+      傾斜磁場アンプの物理限界（最大磁場強度やスルーレートによる末梢神経刺激制限）に抵触することなく、<strong>「純粋に収集するTR回数またはEPIエコートレイン長を1/Rに減らす」</strong>ことで撮像時間を半減〜1/4に短縮できます。
+    </div>
+  </section>
+
+  <!-- Section 2: 動的シミュレータ＆シーケンス波形 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M3.27 1L2 2.27l4.22 4.22L4 8l1.41 1.41L7 7.83l3 3V19h2V9.83l4.59-4.59L17.27 4l-4.59 4.59L11 6.83V3h-2v4.83L6.83 5.66 8 4.49 6.73 3.22 3.27 1zM21 16v-2h-6v2h6zm0 4v-2h-4v2h4z"/></svg>
+      </div>
+      <div class="card-title">動的シミュレータ：パルスシーケンスとk空間間引き・復元の同期</div>
+    </div>
+    <p class="lead-text">
+      加速因子 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> を切り替えて再生すると、<strong>「シーケンス波形上でどのステップがスキップされるか」「k空間の充填」「折り返し画像」「コイル感度による正規復元」</strong>が時間軸で完全同期してアニメーションします。
+    </p>
+
+    <div class="sim-container">
+      <!-- Toolbar -->
+      <div class="sim-toolbar">
+        <div class="btn-group">
+          <button class="btn btn-outline active" id="btn-seq-gre" onclick="selectSeqMode('gre')">GRE/SE シーケンス</button>
+          <button class="btn btn-outline" id="btn-seq-epi" onclick="selectSeqMode('epi')">EPI (DWI) シーケンス</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-outline active" id="btn-r-1" onclick="setAccelR(1)">R = 1 (通常)</button>
+          <button class="btn btn-outline" id="btn-r-2" onclick="setAccelR(2)">R = 2 (高速)</button>
+          <button class="btn btn-outline" id="btn-r-3" onclick="setAccelR(3)">R = 3 (超高速)</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" id="btn-play" onclick="togglePlay()">▶ 再生</button>
+          <button class="btn btn-outline" onclick="resetSim()">⏮ リセット</button>
+          <button class="btn btn-outline" onclick="stepEvent(1)">⏭ 次へ</button>
+        </div>
+
+        <div class="slider-control">
+          <label for="timeSlider">時間軸 (t):</label>
+          <input type="range" id="timeSlider" min="0" max="100" value="0" oninput="onSliderMove(this.value)">
+        </div>
+      </div>
+
+      <!-- Simulator Visual Grid -->
+      <div class="sim-grid">
+        <!-- Sequence Timeline (SVG) -->
+        <div class="sim-subpanel">
+          <div class="subpanel-title">
+            <span>タイムライン（RF / 傾斜磁場 / ADC）</span>
+            <span style="font-size:0.75rem;color:var(--text-muted);" id="timeline-info">1 TR 表示</span>
+          </div>
+          <svg id="svg-sequence" viewBox="0 0 540 280" style="width:100%;height:auto;background:#ffffff;border-radius:6px;border:1px solid #e2e8f0;">
+            <!-- Rendered by JS -->
+          </svg>
+        </div>
+
+        <!-- k-space & Reconstruction Domain -->
+        <div class="sim-subpanel">
+          <div class="subpanel-title">
+            <span>k空間サンプリング軌跡 & 画像展開</span>
+            <span style="font-size:0.75rem;color:var(--accent);font-weight:700;" id="kspace-badge">ky 間隔: &Delta;k</span>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
+            <!-- k-space visual -->
+            <svg id="svg-kspace" viewBox="0 0 160 160" style="width:140px;height:140px;background:#0f172a;border-radius:6px;">
+              <!-- Rendered by JS -->
+            </svg>
+            <!-- Resulting Image preview (Folded vs Unfolded) -->
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <svg id="svg-result-img" viewBox="0 0 140 140" style="width:130px;height:130px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;">
+                <!-- Rendered by JS -->
+              </svg>
+              <span id="img-state-label" style="font-size:0.75rem;color:var(--primary);margin-top:4px;font-weight:600;">正規画像</span>
+            </div>
+          </div>
+
+          <!-- Parameter Readout Grid -->
+          <div class="indicator-grid" style="margin-top:8px;">
+            <div class="indicator-box">
+              <div class="indicator-label">実効撮像時間</div>
+              <div class="indicator-val" id="disp-acq-time">100%</div>
+            </div>
+            <div class="indicator-box">
+              <div class="indicator-label">理論SNR比 (<math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><msqrt><mi>R</mi></msqrt></math>)</div>
+              <div class="indicator-val" id="disp-theory-snr">100%</div>
+            </div>
+            <div class="indicator-box">
+              <div class="indicator-label">収集エンコード行</div>
+              <div class="indicator-val" id="disp-lines">16 / 16</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Realtime Physical Explanation Box -->
+      <div class="sim-status-box">
+        <div class="status-label">今、MRIの中で何が起きている？（物理メカニズム）</div>
+        <div class="status-content" id="sim-current-text">
+          シミュレーションを開始してください。スライダーまたは再生ボタンで時間変化を追跡できます。
+        </div>
+      </div>
+
+      <div class="sim-status-box next">
+        <div class="status-label">次に起こること（因果関係）</div>
+        <div class="status-content" id="sim-next-text">
+          励起パルス照射後、スライスの再収束と位相エンコード傾斜磁場の印加へ移行します。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: 2大手法 SENSE vs GRAPPA -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M10 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h5v-2H5V5h5V3zm9 0h-5v2h5v14h-5v2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+      </div>
+      <div class="card-title">臨床を二分する2大方式：SENSE と GRAPPA</div>
+    </div>
+    <p class="lead-text">
+      パラレルイメージングは、「どこで折り返しを展開するか」によって大きく2系統に分かれます。実空間（画像領域）で連立方程式を解く<strong>SENSE</strong>と、周波数空間（k空間領域）で抜けたラインを補間する<strong>GRAPPA</strong>です。
+    </p>
+
+    <!-- Comparison Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>SENSE（画像領域方式）</th>
+            <th>GRAPPA（k空間方式）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>復元処理を行う領域</strong></td>
+            <td><strong>実空間（Image Domain）</strong></td>
+            <td><strong>k空間（Frequency Domain）</strong></td>
+          </tr>
+          <tr>
+            <td><strong>感度情報の取得方法</strong></td>
+            <td><strong>事前低分解能プレスキャン</strong></td>
+            <td><strong>ACSライン（本スキャン中心部の自己キャリブレーション）</strong></td>
+          </tr>
+          <tr>
+            <td><strong>アルゴリズムの概要</strong></td>
+            <td>折り重なったピクセルに対し、コイル感度行列の逆行列を掛けて真の信号を分離する</td>
+            <td>取得済み隣接k空間データと重みカーネルの線形結合で、欠落したk空間行を埋める</td>
+          </tr>
+          <tr>
+            <td><strong>実効的な高速化率</strong></td>
+            <td>設定 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> がそのまま撮像時間短縮に直結</td>
+            <td>中心部のACS収集時間があるため、実効 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> は若干低下（例: 2.0 → 約1.85）</td>
+          </tr>
+          <tr>
+            <td><strong>体動・呼吸への耐性</strong></td>
+            <td>事前計測後に被写体が動くと感度不一致でアーチファクトが発生</td>
+            <td>本スキャンと同時にキャリブレーション行を収集するため<strong>動きに強い</strong></td>
+          </tr>
+          <tr>
+            <td><strong>FOV設定の制約</strong></td>
+            <td>被写体より小さいFOVでは感度行列が特異化し破綻しやすい</td>
+            <td>小FOV（局所撮像）でも比較的安定して破綻しにくい</td>
+          </tr>
+          <tr>
+            <td><strong>主要メーカー名称</strong></td>
+            <td>SENSE (Philips), ASSET (GE), mSENSE (Siemens), RAPID (富士フイルム/日立)</td>
+            <td>GRAPPA (Siemens), ARC (GE), Speeder (キヤノン)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SENSE Math Mechanism -->
+    <div class="highlight-box">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h19c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        SENSEの数学的メカニズム（コイル2個・R=2の場合）
+      </div>
+      <p style="font-size:0.9rem;margin-bottom:8px;">
+        加速因子 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>2</mn></math> のとき、折り返されたピクセル信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>A</mi><mn>1</mn></msub><mo>,</mo><msub><mi>A</mi><mn>2</mn></msub></math> は、真の組織信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>O</mi><mn>1</mn></msub><mo>,</mo><msub><mi>O</mi><mn>2</mn></msub></math> が各コイル感度 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>S</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> で重み付けされて合算された値です。
+      </p>
+
+      <div class="formula-display">
+        <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow>
+            <mo>[</mo>
+            <mtable>
+              <mtr><mtd><msub><mi>A</mi><mn>1</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mi>A</mi><mn>2</mn></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mo>=</mo>
+          <mrow>
+            <mo>[</mo>
+            <mtable>
+              <mtr>
+                <mtd><msub><mi>S</mi><mn>11</mn></msub></mtd>
+                <mtd><msub><mi>S</mi><mn>12</mn></msub></mtd>
+              </mtr>
+              <mtr>
+                <mtd><msub><mi>S</mi><mn>21</mn></msub></mtd>
+                <mtd><msub><mi>S</mi><mn>22</mn></msub></mtd>
+              </mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mrow>
+            <mo>[</mo>
+            <mtable>
+              <mtr><mtd><msub><mi>O</mi><mn>1</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mi>O</mi><mn>2</mn></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mspace width="1.5em"/>
+          <mo>&rArr;</mo>
+          <mspace width="1.5em"/>
+          <mrow>
+            <mo>[</mo>
+            <mtable>
+              <mtr><mtd><msub><mi>O</mi><mn>1</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mi>O</mi><mn>2</mn></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+          <mo>=</mo>
+          <msup>
+            <mrow>
+              <mo>[</mo>
+              <mtable>
+                <mtr>
+                  <mtd><msub><mi>S</mi><mn>11</mn></msub></mtd>
+                  <mtd><msub><mi>S</mi><mn>12</mn></msub></mtd>
+                </mtr>
+                <mtr>
+                  <mtd><msub><mi>S</mi><mn>21</mn></msub></mtd>
+                  <mtd><msub><mi>S</mi><mn>22</mn></msub></mtd>
+                </mtr>
+              </mtable>
+              <mo>]</mo>
+            </mrow>
+            <mrow><mo>-</mo><mn>1</mn></mrow>
+          </msup>
+          <mrow>
+            <mo>[</mo>
+            <mtable>
+              <mtr><mtd><msub><mi>A</mi><mn>1</mn></msub></mtd></mtr>
+              <mtr><mtd><msub><mi>A</mi><mn>2</mn></msub></mtd></mtr>
+            </mtable>
+            <mo>]</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <div class="highlight-box-title" style="margin-top:10px;color:var(--primary-dark);">数式のお気持ち</div>
+      <p style="font-size:0.86rem;color:var(--text-muted);">
+        「未知数2つ（真のピクセル2箇所）に対して、空間的に異なる場所から見た2つの目（コイル感度）があるから、連立方程式を逆算して元の一対一の像を取り戻せる」という原理です。
+      </p>
+    </div>
+  </section>
+
+  <!-- Section 4: 数理モデルとSNRトレードオフ -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M7 2v2h1v14H7v2h10v-2h-1V4h1V2H7zm6 16h-2V4h2v14z"/></svg>
+      </div>
+      <div class="card-title">物理・数学的原理：PIにおけるSNR低下の法則</div>
+    </div>
+
+    <p class="lead-text">
+      パラレルイメージングを適用すると、撮像時間が短縮される代償として<strong>必ず信号雑音比（SNR）が低下</strong>します。この関係は以下の厳密な数式で定義されます。
+    </p>
+
+    <div class="formula-display">
+      <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+        <msub><mi>SNR</mi><mi>PI</mi></msub>
+        <mo>=</mo>
+        <mfrac>
+          <msub><mi>SNR</mi><mn>0</mn></msub>
+          <mrow>
+            <mi>g</mi>
+            <mo>&times;</mo>
+            <msqrt><mi>R</mi></msqrt>
+          </mrow>
+        </mfrac>
+      </math>
+    </div>
+
+    <ul class="bullet-list">
+      <li><strong>各記号の意味と物理量：</strong>
+        <ul style="margin-left:20px;font-size:0.9rem;color:var(--text-muted);list-style:disc;">
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>SNR</mi><mi>PI</mi></msub></math>：パラレルイメージング適用後の画像SNR</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>SNR</mi><mn>0</mn></msub></math>：間引きを行わない通常収集時の画像SNR</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math>：加速因子（Reduction / Acceleration factor, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>&ge;</mo><mn>1</mn></math>）</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math>：幾何学的配置因子（Geometry factor / g-factor, 局所空間変数, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>&ge;</mo><mn>1</mn></math>）</li>
+        </ul>
+      </li>
+      <li><strong>2つのSNR低下要因の分離：</strong>
+        <ul style="margin-left:20px;font-size:0.9rem;color:var(--text-muted);list-style:disc;">
+          <li><strong>サンプリング数減少損（<math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><msqrt><mi>R</mi></msqrt></math>）：</strong>収集データ点数が <math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><mi>R</mi></math> に減ることで生じる統計ノイズ増大。<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>2</mn></math> で基準の約 71% に低下します。</li>
+          <li><strong>コイル直交性損（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math> 因子）：</strong>コイル感度差が小さく連立方程式が解きにくい領域（深部・中心部）でノイズが増幅される現象です（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>&gt;</mo><mn>1</mn></math>）。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="highlight-box alert">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        加速因子R設定の臨床ルール
+      </div>
+      加速因子 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> を過大に設定すると、感度行列の条件数が悪化して <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math> 因子が跳ね上がり、画像中央部に激しい砂嵐状ノイズ（ノイズバンド）が発生します。日常臨床では <strong><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>2</mn></math>（多くても3程度）</strong> が実用限界です。
+    </div>
+  </section>
+
+  <!-- Section 5: 臨床現場での具体的活用場面 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
+      </div>
+      <div class="card-title">臨床現場でパラレルイメージングが不可欠な場面</div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>臨床シーン・シーケンス</th>
+            <th>PIを使用する技術的理由・臨床的メリット</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>腹部造影ダイナミックMRI<br>(肝細胞癌・膵臓など)</strong></td>
+            <td>
+              動脈相の灌流ピークは十数秒です。PI（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi><mo>=</mo><mn>2</mn><mo>〜</mo><mn>3</mn></math>）により息止め時間を20秒以下に短縮し、呼吸停止限界内で血流ピークを捉え体動アーチファクトを排除します。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>頭部・体幹部 拡散強調画像<br>(DWI: Single-shot EPI)</strong></td>
+            <td>
+              EPIは位相エンコード方向の帯域幅が極めて狭く磁化率歪みが多発します。PIによって<strong>エコートレイン長（ETL）とエコースペースを短縮</strong>し、位相誤差の蓄積を防いで頭蓋底や頸部の歪みを劇的に抑えます。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3D 造影・非造影 MRA<br>(頸部・下肢・腎動脈)</strong></td>
+            <td>
+              3次元収集の膨大な位相・スライスエンコードステップを2軸方向（2D-PI）で圧縮し、高精細な等方性ボクセルを数分の現実的時間で描出可能にします。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>心臓シネ・遅延造影（LGE）<br>(bSSFP / TrueFISP)</strong></td>
+            <td>
+              心拍同期下において、1心拍あたりに収集できるビュー数を圧縮。1回の息止めで左室駆出率（EF）や心筋壁運動を高時間分解能で評価できます。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3T超高磁場MRIでの撮像<br>(全身領域)</strong></td>
+            <td>
+              3Tで急増するRF照射エネルギー（SAR制限）に対し、PIでRFパルス数を削減してTR短縮を維持。3Tの高い元SNRがPIのSNR低下を相殺します。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  /* ==========================================================
+     動的シミュレータ コア制御スクリプト
+     完全オフライン・バニラJS実装
+  ========================================================== */
+  let seqMode = 'gre'; // 'gre' or 'epi'
+  let accelR = 1;      // 1, 2, 3
+  let currentT = 0;    // 0 ~ 100
+  let isPlaying = false;
+  let animTimer = null;
+
+  const totalKyLines = 16;
+
+  // UI要素
+  const slider = document.getElementById('timeSlider');
+  const btnPlay = document.getElementById('btn-play');
+  const svgSeq = document.getElementById('svg-sequence');
+  const svgK = document.getElementById('svg-kspace');
+  const svgRes = document.getElementById('svg-result-img');
+  const dispAcqTime = document.getElementById('disp-acq-time');
+  const dispTheorySnr = document.getElementById('disp-theory-snr');
+  const dispLines = document.getElementById('disp-lines');
+  const simCurrentText = document.getElementById('sim-current-text');
+  const simNextText = document.getElementById('sim-next-text');
+  const kspaceBadge = document.getElementById('kspace-badge');
+  const imgStateLabel = document.getElementById('img-state-label');
+  const timelineInfo = document.getElementById('timeline-info');
+
+  function setAccelR(r) {
+    accelR = r;
+    [1, 2, 3].forEach(val => {
+      const btn = document.getElementById('btn-r-' + val);
+      if (btn) {
+        if (val === r) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+    });
+    updateSimStaticData();
+    render();
+  }
+
+  function selectSeqMode(mode) {
+    seqMode = mode;
+    document.getElementById('btn-seq-gre').classList.toggle('active', mode === 'gre');
+    document.getElementById('btn-seq-epi').classList.toggle('active', mode === 'epi');
+    timelineInfo.textContent = (mode === 'gre') ? '1 TR / 代表位相エンコードステップ' : 'Single-shot EPI トレイン';
+    resetSim();
+  }
+
+  function updateSimStaticData() {
+    // 取得時間
+    const timePct = Math.round(100 / accelR);
+    dispAcqTime.textContent = timePct + "% (" + (accelR === 1 ? "基準" : "1/" + accelR) + ")";
+
+    // 理論SNR
+    const snrPct = Math.round(100 / Math.sqrt(accelR));
+    dispTheorySnr.textContent = snrPct + "% (1/√" + accelR + ")";
+
+    // 収集ライン数
+    const collected = Math.ceil(totalKyLines / accelR);
+    dispLines.textContent = collected + " / " + totalKyLines + " 行";
+
+    kspaceBadge.textContent = "ky サンプリング間隔: " + accelR + " × Δky";
+  }
+
+  function togglePlay() {
+    if (isPlaying) {
+      pauseSim();
+    } else {
+      playSim();
+    }
+  }
+
+  function playSim() {
+    isPlaying = true;
+    btnPlay.textContent = "⏸ 一時停止";
+    btnPlay.classList.add('active');
+    if (animTimer) clearInterval(animTimer);
+    animTimer = setInterval(() => {
+      currentT += 1;
+      if (currentT > 100) currentT = 0;
+      slider.value = currentT;
+      render();
+    }, 60);
+  }
+
+  function pauseSim() {
+    isPlaying = false;
+    btnPlay.textContent = "▶ 再生";
+    btnPlay.classList.remove('active');
+    if (animTimer) clearInterval(animTimer);
+  }
+
+  function resetSim() {
+    pauseSim();
+    currentT = 0;
+    slider.value = 0;
+    render();
+  }
+
+  function stepEvent(direction) {
+    pauseSim();
+    currentT += direction * 15;
+    if (currentT > 100) currentT = 100;
+    if (currentT < 0) currentT = 0;
+    slider.value = currentT;
+    render();
+  }
+
+  function onSliderMove(val) {
+    currentT = parseInt(val, 10);
+    render();
+  }
+
+  /* 描画メインルーチン */
+  function render() {
+    drawSequenceDiagram();
+    drawKSpace();
+    drawResultImage();
+    updateNarrative();
+  }
+
+  /* タイムラインSVG描画 */
+  function drawSequenceDiagram() {
+    const W = 540;
+    const H = 280;
+    const cursorX = 50 + (currentT / 100) * 470;
+
+    let html = `
+      <defs>
+        <pattern id="seqGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="${W}" height="${H}" fill="#ffffff"/>
+      <rect width="${W}" height="${H}" fill="url(#seqGrid)"/>
+    `;
+
+    // 4レーンの基準線 (RF, Gslice, Gphase, Gread, ADC)
+    const lanes = [
+      { name: "RF", y: 40 },
+      { name: "Gz (Slice)", y: 90 },
+      { name: "Gy (Phase)", y: 145 },
+      { name: "Gx (Read)", y: 200 },
+      { name: "ADC", y: 245 }
+    ];
+
+    lanes.forEach(l => {
+      html += `<line x1="50" y1="${l.y}" x2="520" y2="${l.y}" stroke="#cbd5e1" stroke-width="1.2"/>`;
+      html += `<text x="10" y="${l.y + 4}" font-size="10" font-weight="bold" fill="#475569">${l.name}</text>`;
+    });
+
+    if (seqMode === 'gre') {
+      // --- GRE シーケンス波形 ---
+      // RF 90° (x: 70 ~ 110)
+      html += `<path d="M 70 40 Q 90 10 110 40" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>`;
+      html += `<text x="90" y="24" font-size="9" fill="#0284c7" text-anchor="middle" font-weight="bold">α Pulse</text>`;
+
+      // Gz (Slice Select + Rephase)
+      html += `<rect x="70" y="70" width="40" height="20" fill="#bae6fd" stroke="#0284c7" stroke-width="1.5"/>`;
+      html += `<rect x="115" y="90" width="20" height="15" fill="#fecdd3" stroke="#e11d48" stroke-width="1.5"/>`;
+      html += `<text x="125" y="118" font-size="8" fill="#e11d48" text-anchor="middle">Rephase</text>`;
+
+      // Gy (Phase Encode) -> 加速因子 R に応じてステップ刻みを表示
+      const gyScale = (accelR === 1) ? 1.0 : (accelR === 2 ? 1.5 : 2.0);
+      html += `<path d="M 145 145 L 165 ${145 - 28 * gyScale} L 195 ${145 - 28 * gyScale} L 215 145" fill="none" stroke="#ea580c" stroke-width="2"/>`;
+      html += `<path d="M 145 145 L 165 ${145 + 28 * gyScale} L 195 ${145 + 28 * gyScale} L 215 145" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+      html += `<text x="180" y="138" font-size="8.5" fill="#ea580c" font-weight="bold" text-anchor="middle">Step × ${accelR}</text>`;
+
+      // Gx (Readout Prephaser + Read)
+      html += `<rect x="150" y="200" width="25" height="18" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>`;
+      html += `<text x="162" y="228" font-size="8" fill="#64748b" text-anchor="middle">Dephase</text>`;
+      html += `<rect x="250" y="180" width="120" height="20" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.8"/>`;
+      html += `<text x="310" y="194" font-size="9" fill="#0f766e" font-weight="bold" text-anchor="middle">Readout (Gx+)</text>`;
+
+      // ADC
+      html += `<rect x="260" y="240" width="100" height="10" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>`;
+      html += `<text x="310" y="260" font-size="9" fill="#16a34a" font-weight="bold" text-anchor="middle">Echo Acquisition</text>`;
+
+      // Rewinder / Spoiler
+      if (accelR > 1) {
+        html += `<rect x="400" y="135" width="25" height="10" fill="#fed7aa" stroke="#ea580c" stroke-width="1"/>`;
+        html += `<text x="412" y="155" font-size="8" fill="#ea580c" text-anchor="middle">Rewind</text>`;
+      }
+      html += `<rect x="440" y="190" width="30" height="10" fill="#cbd5e1" stroke="#475569" stroke-width="1"/>`;
+      html += `<text x="455" y="212" font-size="8" fill="#475569" text-anchor="middle">Spoiler</text>`;
+
+    } else {
+      // --- EPI シーケンス波形 ---
+      // RF 90°
+      html += `<path d="M 60 40 Q 75 12 90 40" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>`;
+      html += `<text x="75" y="25" font-size="8.5" fill="#0284c7" text-anchor="middle">90°</text>`;
+
+      // Gy Initial Prephaser
+      html += `<rect x="100" y="125" width="20" height="20" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>`;
+
+      // EPI Oscillating Readout + Blips (ETL is compressed by R)
+      const numEpiCycles = Math.ceil(8 / accelR);
+      const startX = 130;
+      const cycleW = 320 / numEpiCycles;
+
+      for (let i = 0; i < numEpiCycles; i++) {
+        const cx = startX + i * cycleW;
+        const sign = (i % 2 === 0) ? 1 : -1;
+        const gyY = 145 - (sign * 18);
+        const gxY = (sign === 1) ? 183 : 200;
+
+        // Readout lobe
+        html += `<rect x="${cx}" y="${gxY}" width="${cycleW - 4}" height="17" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>`;
+        // Phase blip (blip height scales with R)
+        html += `<rect x="${cx + cycleW - 4}" y="${145 - 12 * accelR}" width="4" height="${12 * accelR}" fill="#ea580c"/>`;
+        // ADC active
+        html += `<rect x="${cx + 2}" y="242" width="${cycleW - 8}" height="7" fill="#86efac"/>`;
+      }
+
+      const totalEpiEnd = startX + numEpiCycles * cycleW;
+      html += `<line x1="130" y1="270" x2="${totalEpiEnd}" y2="270" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>`;
+      html += `<text x="${(130 + totalEpiEnd)/2}" y="267" font-size="8.5" fill="#dc2626" font-weight="bold" text-anchor="middle">ETL (エコートレイン長): 1/${accelR} に圧縮</text>`;
+    }
+
+    // 時間縦カーソル
+    html += `<line x1="${cursorX}" y1="10" x2="${cursorX}" y2="${H - 10}" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4 2"/>`;
+    html += `<circle cx="${cursorX}" cy="15" r="4" fill="#dc2626"/>`;
+    html += `<text x="${cursorX + 6}" y="20" font-size="9.5" fill="#dc2626" font-weight="bold">t</text>`;
+
+    svgSeq.innerHTML = html;
+  }
+
+  /* k空間SVG描画 */
+  function drawKSpace() {
+    const W = 160;
+    const H = 160;
+    const cy = H / 2;
+    const stepLines = totalKyLines;
+    const spacing = (H - 24) / stepLines;
+
+    let html = `
+      <rect width="${W}" height="${H}" fill="#0f172a"/>
+      <line x1="12" y1="${cy}" x2="${W-12}" y2="${cy}" stroke="#334155" stroke-width="1.2"/>
+      <line x1="${W/2}" y1="12" x2="${W/2}" y2="${H-12}" stroke="#334155" stroke-width="1.2"/>
+      <text x="${W-10}" y="${cy - 4}" fill="#64748b" font-size="8" text-anchor="end">kx</text>
+      <text x="${W/2 + 4}" y="18" fill="#64748b" font-size="8">ky</text>
+    `;
+
+    // 収集進行率
+    const progress = currentT / 100;
+    const maxLineCollected = Math.floor(progress * stepLines);
+
+    for (let i = 0; i < stepLines; i++) {
+      const lineY = 14 + i * spacing;
+      const isSampledLine = (i % accelR === 0);
+
+      if (isSampledLine) {
+        if (i <= maxLineCollected && currentT > 25) {
+          // 取得済みライン
+          html += `<line x1="20" y1="${lineY}" x2="${W-20}" y2="${lineY}" stroke="#38bdf8" stroke-width="2"/>`;
+        } else {
+          // 取得予定ライン
+          html += `<line x1="20" y1="${lineY}" x2="${W-20}" y2="${lineY}" stroke="#1e293b" stroke-width="1.5"/>`;
+        }
+      } else {
+        // スキップされた間引きライン (破線)
+        html += `<line x1="20" y1="${lineY}" x2="${W-20}" y2="${lineY}" stroke="#ef4444" stroke-width="1" stroke-dasharray="2 3" opacity="0.45"/>`;
+      }
+    }
+
+    // 現在の走査点
+    if (currentT >= 25 && currentT <= 85) {
+      const currentKyIndex = Math.min(stepLines - 1, maxLineCollected);
+      const currentKyY = 14 + (Math.floor(currentKyIndex / accelR) * accelR) * spacing;
+      const currentKxX = 20 + ((currentT - 25) / 60) * (W - 40);
+      html += `<circle cx="${currentKxX}" cy="${currentKyY}" r="4.5" fill="#f59e0b"/>`;
+    }
+
+    svgK.innerHTML = html;
+  }
+
+  /* 復元画像シミュレーションSVG描画 */
+  function drawResultImage() {
+    let html = `<rect width="140" height="140" fill="#f8fafc"/>`;
+
+    // R に応じた折り返し / 復元表現
+    if (currentT < 60) {
+      // 収集途上または未展開
+      if (accelR === 1) {
+        imgStateLabel.textContent = "通常サンプリング (R=1)";
+        imgStateLabel.style.color = "#059669";
+        // 単一の被写体
+        html += `<ellipse cx="70" cy="70" rx="35" ry="48" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>`;
+        html += `<circle cx="58" cy="70" r="5" fill="#38bdf8"/>`;
+        html += `<circle cx="82" cy="70" r="5" fill="#f43f5e"/>`;
+      } else {
+        imgStateLabel.textContent = `折り返し発生 (FOV 1/${accelR})`;
+        imgStateLabel.style.color = "#dc2626";
+        // 折り返し像の重なり
+        const shift = (accelR === 2) ? 35 : 24;
+        html += `<ellipse cx="${70 - shift}" cy="70" rx="28" ry="42" fill="rgba(203,213,225,0.6)" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="2 2"/>`;
+        html += `<ellipse cx="${70 + shift}" cy="70" rx="28" ry="42" fill="rgba(203,213,225,0.6)" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="2 2"/>`;
+        html += `<circle cx="70" cy="70" r="8" fill="#9333ea" opacity="0.6"/>`;
+        html += `<text x="70" y="118" font-size="9" fill="#dc2626" text-anchor="middle" font-weight="bold">エイリアシング重畳中</text>`;
+      }
+    } else {
+      // コイル感度展開完了フェーズ
+      imgStateLabel.textContent = (accelR === 1) ? "フルFOV画像 (高SNR)" : `SENSE展開完了 (R=${accelR})`;
+      imgStateLabel.style.color = (accelR === 1) ? "#059669" : "#0284c7";
+
+      // 復元された正常位置
+      html += `<ellipse cx="70" cy="70" rx="35" ry="48" fill="#f1f5f9" stroke="#0284c7" stroke-width="2"/>`;
+      html += `<circle cx="58" cy="70" r="5" fill="#38bdf8"/>`;
+      html += `<circle cx="82" cy="70" r="5" fill="#f43f5e"/>`;
+
+      // R>1 のときのg-factorノイズ表現
+      if (accelR > 1) {
+        const noiseCount = (accelR === 2) ? 14 : 32;
+        for (let n = 0; n < noiseCount; n++) {
+          const nx = 62 + (Math.sin(n * 3.7) * 16);
+          const ny = 55 + (Math.cos(n * 2.1) * 30);
+          html += `<circle cx="${nx}" cy="${ny}" r="1.2" fill="#e11d48" opacity="0.75"/>`;
+        }
+        html += `<text x="70" y="132" font-size="8" fill="#e11d48" text-anchor="middle">中心部 g-factor ノイズ</text>`;
+      }
+    }
+
+    svgRes.innerHTML = html;
+  }
+
+  /* 解説テキスト同期更新 */
+  function updateNarrative() {
+    let cur = "";
+    let nxt = "";
+
+    if (currentT < 20) {
+      cur = "【励起フェーズ】スライス選択傾斜磁場 Gz を印加しながら選択励起RFパルスを照射しています。対象スライス内の巨視的磁化を倒し横磁化を生成しています。";
+      nxt = "【空間エンコード】横磁化の位相を揃えるリフェーズと、加速設定に応じた位相エンコード Gy が印加されます。";
+    } else if (currentT < 50) {
+      if (accelR === 1) {
+        cur = "【位相エンコード印加 (R=1)】Gy を1行ずつ標準の微小面積ステップ Δky で印加。k空間全ラインを順次充填します。";
+        nxt = "【周波数ディフェーズ】周波数エンコード傾斜磁場の前処理（ディフェーズ）へ移行します。";
+      } else {
+        cur = `【間引き位相エンコード印加 (R=${accelR})】Gy を通常の ${accelR} 倍のステップ幅 (${accelR}×Δky) で大きく飛ばして印加中。中間のk空間行はサンプリングを完全にスキップします。`;
+        nxt = "【高速サンプリング】ライン数が大幅に省略された状態で周波数読み出しへ移行します。";
+      }
+    } else if (currentT < 80) {
+      if (seqMode === 'gre') {
+        cur = "【信号読み出し・ADC】Gx 読み出し傾斜磁場をONにし、エコー信号をADCでサンプリング。k空間の水平方向（kx）を走査しています。";
+        nxt = (accelR > 1) ? "【マルチコイル感度復元】各コイルの局所感度プロファイルから連立方程式を解き、折り返しを展開します。" : "【次TRへ】残留横磁化をスポイルし、次の位相エンコードTRへ進みます。";
+      } else {
+        cur = `【EPI高速トレイン】連続極性反転するGxとGyブリップにより、1励起で連続エコーを取得。PIによってエコートレイン長が 1/${accelR} に圧縮されているため、T2*減衰や磁化率位相エラーの蓄積が極小化されます。`;
+        nxt = "【幾何学的歪みの大幅低減】位相誤差の蓄積が抑えられ、頭蓋底などの歪みが改善した画像が得られます。";
+      }
+    } else {
+      if (accelR === 1) {
+        cur = "【データ確定 (R=1)】すべてのk空間ラインが密に取得されたため、エイリアシングのない高SNR画像が完成しました。";
+        nxt = "撮像シーケンス全体の終了、または次スライスの取得へ進みます。";
+      } else {
+        cur = `【感度逆行列によるアンラップ展開完了 (R=${accelR})】間引きにより発生した ${accelR} 重の折り返し画像を、複数コイルの感度方程式（SENSE）により正規の空間位置へ分離復元しました。`;
+        nxt = `【SNRの物理限界】撮像時間は 1/${accelR} に短縮されましたが、統計サンプリング数低下と中心部g因子の影響によりSNRは低下します。`;
+      }
+    }
+
+    simCurrentText.textContent = cur;
+    simNextText.textContent = nxt;
+  }
+
+  // 初期化実行
+  updateSimStaticData();
+  render();
+</script>
+
+</body>
+</html>

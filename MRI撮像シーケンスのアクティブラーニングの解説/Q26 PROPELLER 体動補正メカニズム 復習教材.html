@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROPELLER/BLADE 体動補正メカニズム 復習教材</title>
+<style>
+  :root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --primary-light: #e0f2fe;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-50: #f8fafc;
+    --math-bg: #f0f9ff;
+    --math-border: #bae6fd;
+    --step1-color: #0284c7;
+    --step2-color: #8b5cf6;
+    --step3-color: #ea580c;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--slate-50);
+    color: var(--slate-800);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    line-height: 1.75;
+    padding: 24px 16px 80px;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  /* 採点サマリーカード */
+  .score-card {
+    background: #ffffff;
+    border: 2px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+  }
+
+  .score-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--slate-100);
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .score-badge-group {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .score-val {
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: var(--warning);
+    line-height: 1;
+  }
+
+  .score-max {
+    font-size: 1.2rem;
+    color: var(--slate-600);
+    font-weight: 600;
+  }
+
+  .verdict-tag {
+    background: var(--warning-light);
+    color: var(--warning);
+    font-size: 1.1rem;
+    font-weight: 800;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    border: 1px solid #fde68a;
+  }
+
+  .priority-tag {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .summary-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .summary-item {
+    background: var(--slate-50);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--slate-200);
+  }
+
+  .summary-item.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .summary-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .summary-label.blue { color: var(--primary); }
+  .summary-label.green { color: var(--success); }
+  .summary-label.red { color: var(--danger); }
+  .summary-label.amber { color: var(--warning); }
+
+  .summary-text {
+    font-size: 0.95rem;
+    color: var(--slate-700);
+  }
+
+  .user-answer-box {
+    background: #ffffff;
+    border-left: 4px solid var(--slate-600);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--slate-700);
+    margin-top: 4px;
+    line-height: 1.6;
+  }
+
+  .model-answer-box {
+    background: #f0fdf4;
+    border-left: 4px solid var(--success);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    color: #166534;
+    margin-top: 4px;
+    line-height: 1.6;
+  }
+
+  /* セクションカード */
+  .content-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  }
+
+  .card-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 12px;
+  }
+
+  .question-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 0.85rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .question-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--slate-900);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  /* ステップ別カード */
+  .step-card {
+    background: #ffffff;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 14px;
+    padding: 22px;
+    margin: 24px 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  }
+
+  .step-card.step1 { border-left: 6px solid var(--step1-color); }
+  .step-card.step2 { border-left: 6px solid var(--step2-color); }
+  .step-card.step3 { border-left: 6px solid var(--step3-color); }
+
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+
+  .step-badge.step1 { background: #e0f2fe; color: #0369a1; }
+  .step-badge.step2 { background: #ede9fe; color: #6d28d9; }
+  .step-badge.step3 { background: #ffedd5; color: #c2410c; }
+
+  /* 数式ボックス (完全オフライン対応 MathML) */
+  .math-block {
+    background: var(--math-bg);
+    border: 1px solid var(--math-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  math {
+    font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "DejaVu Math TeX Gyre", serif;
+    font-size: 1.18rem;
+    color: var(--slate-900);
+  }
+
+  .math-caption {
+    font-size: 0.88rem;
+    color: var(--primary-dark);
+    font-weight: 700;
+  }
+
+  /* 数式の気持ち（直感解説ボックス） */
+  .math-feeling-box {
+    background: #faf5ff;
+    border-left: 4px solid #a855f7;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin: 16px 0 20px;
+  }
+
+  .math-feeling-title {
+    color: #7e22ce;
+    font-weight: 800;
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .math-feeling-text {
+    font-size: 0.93rem;
+    color: #3b0764;
+    line-height: 1.75;
+  }
+
+  /* パラメータ分解テーブル */
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px;
+    font-size: 0.88rem;
+  }
+
+  .param-table th, .param-table td {
+    padding: 10px 12px;
+    border: 1px solid var(--slate-200);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .param-table th {
+    background: var(--slate-100);
+    color: var(--slate-700);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .param-table tr:nth-child(even) {
+    background: #fbfcfe;
+  }
+
+  /* SVG 図解コンテナ */
+  .diagram-wrapper {
+    background: #0b1329;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #1e293b;
+  }
+
+  .diagram-caption {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* シミュレーター制御部 */
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    justify-content: center;
+  }
+
+  .sim-btn {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #475569;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sim-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .sim-state-text {
+    color: #38bdf8;
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-top: 10px;
+    min-height: 28px;
+    text-align: center;
+  }
+
+  /* コールアウト */
+  .callout {
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin: 18px 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .callout.warning {
+    background: var(--warning-light);
+    border-left: 4px solid var(--warning);
+    color: #92400e;
+  }
+
+  .callout.info {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    color: #075985;
+  }
+
+  /* 印刷用スタイル */
+  @media print {
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      padding: 0;
+    }
+    .container {
+      max-width: 100%;
+    }
+    .score-card, .content-card, .step-card {
+      box-shadow: none !important;
+      border: 1px solid #94a3b8 !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 24px;
+      padding: 16px;
+    }
+    .sim-controls, .priority-tag {
+      display: none !important;
+    }
+    .diagram-wrapper {
+      background: #ffffff !important;
+      border: 1px solid #94a3b8 !important;
+    }
+    .diagram-wrapper svg text {
+      fill: #000000 !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ==================== 採点サマリー ==================== -->
+  <section class="score-card">
+    <div class="score-header">
+      <div class="score-badge-group">
+        <span class="score-val">68</span>
+        <span class="score-max">/ 100 点</span>
+        <span class="verdict-tag">条件付き合格 / 要復習</span>
+      </div>
+      <div class="priority-tag">
+        <span>⚠️ 学習優先度：高（剛体変位と位相補正の数理的整理）</span>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-item full-width">
+        <div class="summary-label blue">📝 問題文</div>
+        <p class="question-text">PROPELLER/BLADEが体動補正に強い理由を、「すべてのブレードがk空間中心を通る」という性質から説明してください。</p>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-label amber">👤 ユーザー解答</div>
+        <div class="user-answer-box">
+          PROPELLERはブレードというk空間を埋める際に矩形として撮影する。その矩形をk空間の原点中心に回転させるように撮像する。その結果、画像の明暗や組織コントラストを決める中心部分を重複して取得する。重複して取得しているので、体動による変化を複素数空間の角度として回転補正ができる。
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-label green">🎯 模範解答</div>
+        <div class="model-answer-box">
+          各ブレードがk空間原点を通過することで、中心部の低周波円盤領域が全ブレードで多重に重複サンプリングされる。この重複領域からブレードごとに低解像度画像を再構成し、基準ブレードと比較することで、ブレード間の<strong>「面内回転」</strong>および<strong>「面内並進（フーリエ位相勾配）」</strong>の剛体変位を検出・逆変換してk空間上で補正できる。さらに、体動の激しい不良ブレードの<strong>「棄却・重み付け」</strong>や、中心部の多重加算による<strong>「SNR向上と位相乱れの相殺」</strong>が働くため体動に強い。
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-label green">✅ 正しく理解できた点</div>
+        <p class="summary-text">
+          ・k空間を矩形ストリップ（ブレード）として原点中心に回転させて充填する幾何学的配置を正しく理解している。<br>
+          ・k空間中心部が「画像の明暗や組織コントラストを決定する領域」であり、そこが多重に重複取得（オーバーサンプリング）される点を正確に記述できている。
+        </p>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-label red">🛠️ 最大の修正点</div>
+        <p class="summary-text">
+          体動補正の対象は「回転」だけではありません。臨床上極めて大きな偽像源となる<strong>「並進移動（シフト）」の補正</strong>、面外体動を起こしたブレードの<strong>「棄却（Rejection）と重み付け」</strong>、および中心部多重加算による<strong>「SNR向上とゴースト分散」</strong>という重要機序が欠落しています。
+        </p>
+      </div>
+
+      <div class="summary-item full-width">
+        <div class="summary-label red">🧠 根本的誤概念の解消</div>
+        <p class="summary-text">
+          <strong>「体動による変化を複素数空間の角度として回転補正ができる」という記述の物理的誤認：</strong><br>
+          実空間での患者の「幾何学的回転角（
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi></math>
+          ）」は、複素数の位相角（Arg）から直接求めるものではありません。実空間の剛体回転は<strong>k空間データそのものの幾何学的回転</strong>として現れます（フーリエ回転定理）。一方、複素数の位相角に勾配（リニアな傾き）として現れるのは<strong>「並進移動（空間的シフト）」</strong>です（フーリエ移動定理）。実空間の回転と位相勾配（並進）の数学的役割が混同されています。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PROPELLERにおける体動補正の3大ステップ（徹底詳解） ==================== -->
+  <section class="content-card">
+    <div class="card-title">
+      <span class="question-badge">核心解説</span>
+      PROPELLERにおける体動補正の3大ステップ：数理と直感（数式の気持ち）
+    </div>
+    <p>
+      PROPELLER（Periodically Rotated Overlapping ParallEL Lines with Enhanced Reconstruction）において、すべてのブレードが原点中心を通る最大の意義は、<strong>「中心部の重複円盤（低周波領域）が各ブレード単独で独立した自己ナビゲーター（低解像度参照画像）になる」</strong>点にあります。この自己ナビゲーターを用いて実行される補正の3大ステップを、数理背景と物理的直感（数式の気持ち）、およびベクター図解とともに完全網羅します。
+    </p>
+
+    <!-- STEP 1: 面内回転補正 -->
+    <div class="step-card step1">
+      <div class="step-badge step1">🔄 STEP 1：面内回転の検出と逆回転補正（In-plane Rotation Correction）</div>
+      <p style="font-size:0.95rem; margin-bottom:12px;">
+        患者が頭部を左右に傾けた（ロール運動）場合、被写体の実空間画像は角度
+        <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi>θ</mi></math>
+        だけ回転します。このときk空間データには<strong>フーリエ回転定理</strong>が適用されます。
+      </p>
+
+      <!-- 数式ブロック：回転定理 -->
+      <div class="math-block">
+        <div class="math-caption">【数式1-1：2次元フーリエ回転定理】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mi>f</mi>
+            <mo stretchy="false">(</mo>
+            <msub><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><mi>θ</mi></mrow></msub><mi mathvariant="bold">r</mi>
+            <mo stretchy="false">)</mo>
+            <mspace width="1.5em"/>
+            <mover>
+              <mo stretchy="true">⟷</mo>
+              <mi mathvariant="script">F</mi>
+            </mover>
+            <mspace width="1.5em"/>
+            <mi>F</mi>
+            <mo stretchy="false">(</mo>
+            <msub><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><mi>θ</mi></mrow></msub><mi mathvariant="bold">k</mi>
+            <mo stretchy="false">)</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <div class="math-block">
+        <div class="math-caption">【数式1-2：回転角同定のための振幅相関（並進不変性）】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mo stretchy="false">|</mo>
+            <msub><mi>F</mi><mi>j</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo stretchy="false">|</mo>
+            <mo>=</mo>
+            <mo stretchy="false">|</mo>
+            <msub><mi>F</mi><mtext>ref</mtext></msub>
+            <mo stretchy="false">(</mo><msub><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><msub><mi>θ</mi><mi>j</mi></msub></mrow></msub><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo>⋅</mo>
+            <msup><mi>e</mi><mrow><mo>−</mo><mi>i</mi><mn>2</mn><mi>π</mi><mi mathvariant="bold">k</mi><mo>⋅</mo><mi>Δ</mi><msub><mi mathvariant="bold">r</mi><mi>j</mi></msub></mrow></msup>
+            <mo stretchy="false">|</mo>
+            <mo>=</mo>
+            <mo stretchy="false">|</mo>
+            <msub><mi>F</mi><mtext>ref</mtext></msub>
+            <mo stretchy="false">(</mo><msub><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><msub><mi>θ</mi><mi>j</mi></msub></mrow></msub><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo stretchy="false">|</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <!-- 数式の気持ち -->
+      <div class="math-feeling-box">
+        <div class="math-feeling-title">💡 数式の気持ち：なぜ「絶対値（振幅）」をとれば回転だけを単離できるのか？</div>
+        <div class="math-feeling-text">
+          患者が動くとき、通常は「回転」と「並進（位置ズレ）」が同時に起こります。しかし、k空間データの<strong>絶対値（マグニチュード
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">|</mo><mi>F</mi><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo><mo stretchy="false">|</mo></math>
+          ）</strong>をとると、並進による複素位相シフト項
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <mo stretchy="false">|</mo>
+            <mo form="prefix">exp</mo>
+            <mo stretchy="false">(</mo>
+            <mo>−</mo><mi>i</mi><mn>2</mn><mi>π</mi><mi mathvariant="bold">k</mi><mo>⋅</mo><mi>Δ</mi><mi mathvariant="bold">r</mi>
+            <mo stretchy="false">)</mo>
+            <mo stretchy="false">|</mo>
+            <mo>=</mo><mn>1</mn>
+          </math>
+          となって<strong>完全に雲散霧消</strong>します！<br>
+          その結果、複素位相の中に潜む並進の邪魔を受けることなく、<strong>「純粋なk空間の幾何学的回転角
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi>θ</mi></math>
+          だけ」</strong>を、中心重複円盤内の振幅プロファイルの相互相関ピークから100%独立して正確に探り当てることができます。
+        </div>
+      </div>
+
+      <!-- パラメータテーブル -->
+      <table class="param-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理的意味</th>
+            <th>単位</th>
+            <th>比例・反比例 / 変数増減の影響</th>
+            <th>問題（体動補正）との関係</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><mi>θ</mi></mrow></msub></math></td>
+            <td>2次元回転行列</td>
+            <td>無次元（角度: deg, rad）</td>
+            <td>回転角 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi>θ</mi></math> が増えるとk空間のブレード交差角の歪みが比例して増大。</td>
+            <td>第 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>j</mi></math> ブレードの傾き。逆回転行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mi mathvariant="bold">R</mi><mrow><mi>Δ</mi><mi>θ</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msubsup></math> を掛けて元の位置へ配置し直す。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">|</mo><msub><mi>F</mi><mi>j</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo><mo stretchy="false">|</mo></math></td>
+            <td>第 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>j</mi></math> ブレード中心円盤の振幅スペクトル</td>
+            <td>a.u.（信号強度）</td>
+            <td>位相に依存しないため、並進変位 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi mathvariant="bold">r</mi></math> がいくら大きくても不変。</td>
+            <td>基準ブレードの振幅と角度相関（Circular correlation）を計算し、ピーク位置から回転角を特定。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SVG図解1：面内回転補正のメカニズム -->
+      <div class="diagram-wrapper">
+        <svg viewBox="0 0 760 260" width="100%" height="220">
+          <defs>
+            <marker id="arrow1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+            </marker>
+          </defs>
+          <rect width="760" height="260" fill="#0b1329" rx="8"/>
+          <!-- パネル1: 実空間回転 -->
+          <g transform="translate(40, 20)">
+            <rect width="180" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="90" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">① 実空間（頭部）の回転</text>
+            <ellipse cx="90" cy="105" rx="45" ry="60" fill="none" stroke="#475569" stroke-dasharray="4"/>
+            <g transform="rotate(22 90 105)">
+              <ellipse cx="90" cy="105" rx="45" ry="60" fill="#0284c7" fill-opacity="0.2" stroke="#38bdf8" stroke-width="2"/>
+              <line x1="90" y1="45" x2="90" y2="165" stroke="#38bdf8" stroke-width="2"/>
+            </g>
+            <path d="M 90 50 A 55 55 0 0 1 110 54" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="125" y="55" fill="#fbbf24" font-size="12" font-weight="bold">+Δθ</text>
+            <text x="90" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">被写体が Δθ 傾く</text>
+          </g>
+
+          <!-- 矢印 -->
+          <g transform="translate(235, 105)">
+            <path d="M 0 0 L 25 0" stroke="#64748b" stroke-width="2"/>
+            <polygon points="25,-4 33,0 25,4" fill="#64748b"/>
+            <text x="16" y="-8" fill="#94a3b8" font-size="10" text-anchor="middle">FT</text>
+          </g>
+
+          <!-- パネル2: k空間での幾何学的回転 -->
+          <g transform="translate(280, 20)">
+            <rect width="190" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="95" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">② k空間データの幾何学的回転</text>
+            <rect x="25" y="85" width="140" height="30" rx="3" fill="none" stroke="#475569" stroke-dasharray="4"/>
+            <g transform="rotate(22 95 100)">
+              <rect x="25" y="85" width="140" height="30" rx="3" fill="#0284c7" fill-opacity="0.3" stroke="#38bdf8" stroke-width="1.5"/>
+              <circle cx="95" cy="100" r="35" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3"/>
+            </g>
+            <text x="95" y="150" fill="#fbbf24" font-size="11" font-weight="bold" text-anchor="middle">中心円盤の振幅 |F(k)|</text>
+            <text x="95" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">並進位相が消滅し回転角が露出</text>
+          </g>
+
+          <!-- 矢印 -->
+          <g transform="translate(485, 105)">
+            <path d="M 0 0 L 25 0" stroke="#64748b" stroke-width="2"/>
+            <polygon points="25,-4 33,0 25,4" fill="#64748b"/>
+          </g>
+
+          <!-- パネル3: 相関探索と逆回転補正 -->
+          <g transform="translate(525, 20)">
+            <rect width="195" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="97" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">③ 相互相関ピーク &amp; 逆回転</text>
+            <path d="M 25 130 Q 70 125 97 50 Q 125 125 170 130" fill="none" stroke="#34d399" stroke-width="2.5"/>
+            <line x1="25" y1="130" x2="170" y2="130" stroke="#475569" stroke-width="1"/>
+            <line x1="97" y1="130" x2="97" y2="50" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3"/>
+            <circle cx="97" cy="50" r="4" fill="#fbbf24"/>
+            <text x="97" y="42" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">Max 相関角 = Δθ</text>
+            <text x="97" y="155" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">R^(-1) で元の格子へ逆回転！</text>
+            <text x="97" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">ブレードの向きを完全同期</text>
+          </g>
+        </svg>
+        <div class="diagram-caption">図解1-1：ステップ1［面内回転補正］のフロー。実空間の傾きがk空間の幾何学的傾きに等しく、振幅相関により並進から独立して検出される。</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: 面内並進補正 -->
+    <div class="step-card step2">
+      <div class="step-badge step2">↔️ STEP 2：面内並進の検出と位相補正（In-plane Translation Correction）</div>
+      <p style="font-size:0.95rem; margin-bottom:12px;">
+        ステップ1でブレードの回転角度を揃えた後、次に被写体の空間的な位置ズレ（X・Y方向の平行移動ベクトル
+        <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi mathvariant="bold">r</mi><mo>=</mo><mo stretchy="false">(</mo><mi>Δ</mi><mi>x</mi><mo>,</mo><mi>Δ</mi><mi>y</mi><mo stretchy="false">)</mo></math>
+        ）を補正します。ここでは<strong>フーリエ移動定理（シフト定理）</strong>が支配します。
+      </p>
+
+      <!-- 数式ブロック：並進移動定理 -->
+      <div class="math-block">
+        <div class="math-caption">【数式2-1：フーリエ移動定理（並進と線形位相勾配）】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <mi>f</mi>
+            <mo stretchy="false">(</mo>
+            <mi mathvariant="bold">r</mi>
+            <mo>−</mo>
+            <mi>Δ</mi><mi mathvariant="bold">r</mi>
+            <mo stretchy="false">)</mo>
+            <mspace width="1.5em"/>
+            <mover>
+              <mo stretchy="true">⟷</mo>
+              <mi mathvariant="script">F</mi>
+            </mover>
+            <mspace width="1.5em"/>
+            <msub><mi>F</mi><mtext>shift</mtext></msub>
+            <mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <mi>F</mi><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo>⋅</mo>
+            <mo form="prefix">exp</mo>
+            <mrow>
+              <mo maxsize="1.6em" minsize="1.6em">(</mo>
+              <mo>−</mo><mi>i</mi><mn>2</mn><mi>π</mi>
+              <mo stretchy="false">(</mo><msub><mi>k</mi><mi>x</mi></msub><mi>Δ</mi><mi>x</mi><mo>+</mo><msub><mi>k</mi><mi>y</mi></msub><mi>Δ</mi><mi>y</mi><mo stretchy="false">)</mo>
+              <mo maxsize="1.6em" minsize="1.6em">)</mo>
+            </mrow>
+          </mrow>
+        </math>
+      </div>
+
+      <div class="math-block">
+        <div class="math-caption">【数式2-2：k空間リフェーズ（逆位相乗算による並進相殺）】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <msub><mi>F</mi><mtext>corrected</mtext></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo>=</mo>
+            <msub><mi>F</mi><mtext>shift</mtext></msub>
+            <mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+            <mo>⋅</mo>
+            <mo form="prefix">exp</mo>
+            <mrow>
+              <mo maxsize="1.6em" minsize="1.6em">(</mo>
+              <mo>+</mo><mi>i</mi><mn>2</mn><mi>π</mi>
+              <mo stretchy="false">(</mo><msub><mi>k</mi><mi>x</mi></msub><mi>Δ</mi><mi>x</mi><mo>+</mo><msub><mi>k</mi><mi>y</mi></msub><mi>Δ</mi><mi>y</mi><mo stretchy="false">)</mo>
+              <mo maxsize="1.6em" minsize="1.6em">)</mo>
+            </mrow>
+            <mo>=</mo>
+            <mi>F</mi><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+          </mrow>
+        </math>
+      </div>
+
+      <!-- 数式の気持ち -->
+      <div class="math-feeling-box">
+        <div class="math-feeling-title">💡 数式の気持ち：なぜ実空間の「横滑り」がk空間の「坂道（位相スロープ）」になるのか？</div>
+        <div class="math-feeling-text">
+          実空間で患者が横にスライドしても、組織の形やコントラスト（波の高さ・振幅）は全く変わりません。変わるのは「波の山が通過するタイミング（位相）」だけです。<br>
+          周波数が高い（波長が短い）高周波領域ほど、同じ距離
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi>x</mi></math>
+          だけズレたときにより多くの波の周期数をまたぐため、<strong>「空間周波数
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">k</mi></math>
+          に正比例して位相角がリニアに傾斜する（坂道ができる）」</strong>という現象になります。<br>
+          したがって、中心円盤から作った低解像度画像の位相差からその「坂道の傾き（
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi>x</mi><mo>,</mo><mi>Δ</mi><mi>y</mi></math>
+          ）」を読み取り、<strong>逆方向の位相坂道
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <mo form="prefix">exp</mo><mo stretchy="false">(</mo><mo>+</mo><mi>i</mi><mn>2</mn><mi>π</mi><mi mathvariant="bold">k</mi><mo>⋅</mo><mi>Δ</mi><mi mathvariant="bold">r</mi><mo stretchy="false">)</mo>
+          </math>
+          を掛け算して真っ平らに均す（リフェーズする）</strong>ことで、位置ズレを完全になかったことにできるのです！
+        </div>
+      </div>
+
+      <!-- パラメータテーブル -->
+      <table class="param-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理的意味</th>
+            <th>単位</th>
+            <th>比例・反比例 / 変数増減の影響</th>
+            <th>問題（体動補正）との関係</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Δ</mi><mi mathvariant="bold">r</mi><mo>=</mo><mo stretchy="false">(</mo><mi>Δ</mi><mi>x</mi><mo>,</mo><mi>Δ</mi><mi>y</mi><mo stretchy="false">)</mo></math></td>
+            <td>実空間での面内並進変位ベクトル</td>
+            <td>mm</td>
+            <td>ズレが大きくなるほど、k空間での位相傾斜（Phase ramp）の急峻さが増加。</td>
+            <td>中心円盤低解像度画像の位相限定相関（POC）のピーク座標からサブピクセル精度で決定。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>k</mi><mi>x</mi></msub><mo>,</mo><msub><mi>k</mi><mi>y</mi></msub></math></td>
+            <td>空間周波数座標</td>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mtext>cm</mtext><mrow><mo>−</mo><mn>1</mn></mrow></msup></math> または <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mtext>mm</mtext><mrow><mo>−</mo><mn>1</mn></mrow></msup></math></td>
+            <td>原点（中心部）では <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">k</mi><mo>=</mo><mn mathvariant="bold">0</mn></math> のため並進位相シフトはゼロ。中心から離れるほど位相回転角が拡大。</td>
+            <td>この周波数比例の傾きを逆位相乗算によって完全にキャンセルし、k空間データを再合成。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SVG図解2：面内並進補正のメカニズム -->
+      <div class="diagram-wrapper">
+        <svg viewBox="0 0 760 260" width="100%" height="220">
+          <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+            </marker>
+          </defs>
+          <rect width="760" height="260" fill="#0b1329" rx="8"/>
+
+          <!-- パネル1: 実空間並進 -->
+          <g transform="translate(40, 20)">
+            <rect width="180" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="90" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">① 実空間での平行移動</text>
+            <circle cx="80" cy="105" r="45" fill="none" stroke="#475569" stroke-dasharray="4"/>
+            <circle cx="105" cy="95" r="45" fill="#8b5cf6" fill-opacity="0.25" stroke="#a78bfa" stroke-width="2"/>
+            <line x1="80" y1="105" x2="105" y2="95" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrow2)"/>
+            <text x="115" y="80" fill="#fbbf24" font-size="11" font-weight="bold">Δr=(Δx, Δy)</text>
+            <text x="90" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">被写体が直線移動</text>
+          </g>
+
+          <!-- 矢印 -->
+          <g transform="translate(235, 105)">
+            <path d="M 0 0 L 25 0" stroke="#64748b" stroke-width="2"/>
+            <polygon points="25,-4 33,0 25,4" fill="#64748b"/>
+            <text x="16" y="-8" fill="#94a3b8" font-size="10" text-anchor="middle">FT</text>
+          </g>
+
+          <!-- パネル2: k空間位相ランプ -->
+          <g transform="translate(280, 20)">
+            <rect width="190" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="95" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">② k空間の線形位相勾配</text>
+            <defs>
+              <linearGradient id="phaseGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="50%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#ef4444"/>
+              </linearGradient>
+            </defs>
+            <rect x="25" y="65" width="140" height="70" rx="4" fill="url(#phaseGrad)" opacity="0.8"/>
+            <line x1="25" y1="100" x2="165" y2="100" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2"/>
+            <text x="95" y="105" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">φ = -2π k · Δr</text>
+            <text x="95" y="155" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">周波数に比例した傾斜発生</text>
+            <text x="95" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">（振幅 |F| は完全不変）</text>
+          </g>
+
+          <!-- 矢印 -->
+          <g transform="translate(485, 105)">
+            <path d="M 0 0 L 25 0" stroke="#64748b" stroke-width="2"/>
+            <polygon points="25,-4 33,0 25,4" fill="#64748b"/>
+          </g>
+
+          <!-- パネル3: 位相巻き戻し補正 -->
+          <g transform="translate(525, 20)">
+            <rect width="195" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="97" y="24" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">③ 逆位相乗算（リフェーズ）</text>
+            <rect x="25" y="65" width="145" height="70" rx="4" fill="#10b981" opacity="0.6"/>
+            <text x="97" y="105" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">× exp(+i 2π k · Δr)</text>
+            <text x="97" y="155" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">位相坂道が完全に平坦化！</text>
+            <text x="97" y="180" fill="#e2e8f0" font-size="11" text-anchor="middle">位置ズレによるボケを完全消去</text>
+          </g>
+        </svg>
+        <div class="diagram-caption">図解1-2：ステップ2［面内並進補正］のフロー。実空間のズレはk空間の線形位相坂道となり、逆位相乗算により完全に相殺される。</div>
+      </div>
+    </div>
+
+    <!-- STEP 3: 面外体動と相関重み付け・データ棄却 -->
+    <div class="step-card step3">
+      <div class="step-badge step3">🗑️ STEP 3：相関評価と不良ブレードの棄却・重み付け加算（Rejection &amp; Correlation Weighting）</div>
+      <p style="font-size:0.95rem; margin-bottom:12px;">
+        患者の大きな咳、嚥下、あくびなどによって<strong>撮像スライス面から外れる方向（スループレーン / Z軸方向）の体動</strong>が起きると、2次元の回転・並進補正の前提（剛体変換）が完全に崩綻します。PROPELLERは中心重複円盤の相互相関を評価し、破損データを自動で排除します。
+      </p>
+
+      <!-- 数式ブロック：相関係数と重み付け -->
+      <div class="math-block">
+        <div class="math-caption">【数式3-1：中心低周波円盤におけるブレード相互相関係数】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <msub><mi>C</mi><mi>j</mi></msub>
+            <mo>=</mo>
+            <mfrac>
+              <mrow>
+                <mo stretchy="false">|</mo>
+                <msub><mo>∬</mo><mtext>Disk</mtext></msub>
+                <msub><mi>S</mi><mi>j</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+                <mo>⋅</mo>
+                <msubsup><mi>S</mi><mtext>ref</mtext><mo>*</mo></msubsup><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo>
+                <mspace width="0.167em"/><mi>d</mi><msub><mi>k</mi><mi>x</mi></msub><mi>d</mi><msub><mi>k</mi><mi>y</mi></msub>
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mrow>
+                <msqrt>
+                  <mrow>
+                    <msub><mo>∬</mo><mtext>Disk</mtext></msub>
+                    <mo stretchy="false">|</mo><msub><mi>S</mi><mi>j</mi></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo><msup><mo stretchy="false">|</mo><mn>2</mn></msup><mi>d</mi><mi mathvariant="bold">k</mi>
+                  </mrow>
+                </msqrt>
+                <mo>⋅</mo>
+                <msqrt>
+                  <mrow>
+                    <msub><mo>∬</mo><mtext>Disk</mtext></msub>
+                    <mo stretchy="false">|</mo><msub><mi>S</mi><mtext>ref</mtext></msub><mo stretchy="false">(</mo><mi mathvariant="bold">k</mi><mo stretchy="false">)</mo><msup><mo stretchy="false">|</mo><mn>2</mn></msup><mi>d</mi><mi mathvariant="bold">k</mi>
+                  </mrow>
+                </msqrt>
+              </mrow>
+            </mfrac>
+          </mrow>
+        </math>
+      </div>
+
+      <div class="math-block">
+        <div class="math-caption">【数式3-2：適応型ブレード重み付け関数とリジェクション閾値処理】</div>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+          <mrow>
+            <msub><mi>w</mi><mi>j</mi></msub>
+            <mo>=</mo>
+            <mrow>
+              <mo>{</mo>
+              <mtable columnalign="left left" rowspacing="0.5em">
+                <mtr>
+                  <mtd>
+                    <msup><mrow><mo stretchy="false">(</mo><msub><mi>C</mi><mi>j</mi></msub><mo stretchy="false">)</mo></mrow><mi>p</mi></msup>
+                  </mtd>
+                  <mtd>
+                    <mo stretchy="false">(</mo><msub><mi>C</mi><mi>j</mi></msub><mo>≥</mo><msub><mi>C</mi><mtext>thresh</mtext></msub><mo stretchy="false">)</mo>
+                    <mspace width="1em"/><mtext>［健全ブレード：信頼度に応じた重み付け加算］</mtext>
+                  </mtd>
+                </mtr>
+                <mtr>
+                  <mtd>
+                    <mn>0</mn>
+                  </mtd>
+                  <mtd>
+                    <mo stretchy="false">(</mo><msub><mi>C</mi><mi>j</mi></msub><mo>&lt;</mo><msub><mi>C</mi><mtext>thresh</mtext></msub><mo stretchy="false">)</mo>
+                    <mspace width="1em"/><mtext>［破損ブレード：完全破棄（Rejection）］</mtext>
+                  </mtd>
+                </mtr>
+              </mtable>
+            </mrow>
+          </mrow>
+        </math>
+      </div>
+
+      <!-- 数式の気持ち -->
+      <div class="math-feeling-box">
+        <div class="math-feeling-title">💡 数式の気持ち：なぜ「直せないブレードはゴミ箱に捨てる」のが最善なのか？</div>
+        <div class="math-feeling-text">
+          スライスの外（Z軸）へ頭が逃げてしまった場合、そのブレードに写っているのは「全く別の高さの解剖学的スライス」です。2次元の幾何学変換ではどんなに頑張っても復元不可能です。<br>
+          破損したデータを無理やり平均化に混ぜると、<strong>正常な画像全体に泥水を注ぎ込むようなもの</strong>であり、解像度とコントラストが壊滅的に低下します。<br>
+          PROPELLERは中心部で全ブレードの「健康診断（相関度チェック）」ができるため、<strong>「重症（低相関）のブレードは重みゼロ（Rejection）でバッサリ捨て、軽微な変動のブレードは相関に応じた重み付け（Weighting）で合成する」</strong>という極めて賢明なトリアージを行っているのです。
+        </div>
+      </div>
+
+      <!-- パラメータテーブル -->
+      <table class="param-table">
+        <thead>
+          <tr>
+            <th>記号</th>
+            <th>物理的意味</th>
+            <th>単位</th>
+            <th>比例・反比例 / 変数増減の影響</th>
+            <th>問題（体動補正）との関係</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mi>j</mi></msub></math></td>
+            <td>第 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>j</mi></math> ブレードと全ブレード平均基準との複素相互相関係数</td>
+            <td>無次元（0.0 〜 1.0）</td>
+            <td>体動がなく整合するほど 1.0 に近づき、面外体動や激しい歪みがあるほど 0.0 へ急落。</td>
+            <td>ブレードの信頼性スコア。閾値 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mtext>thresh</mtext></msub></math> を下回ったブレードは再構成から除外。</td>
+          </tr>
+          <tr>
+            <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>w</mi><mi>j</mi></msub></math></td>
+            <td>グリッディング再構成時のブレード合成重み係数</td>
+            <td>無次元（重み）</td>
+            <td>相関が高い優良ブレードほど大きな重み（コントリビューション）が与えられる。</td>
+            <td>k空間中心部の多重加算時に適用され、モーションゴーストを放射状に徹底抑制する。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SVG図解3：相関評価とデータリジェクション -->
+      <div class="diagram-wrapper">
+        <svg viewBox="0 0 760 260" width="100%" height="220">
+          <defs>
+            <marker id="arrow3" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+            </marker>
+          </defs>
+          <rect width="760" height="260" fill="#0b1329" rx="8"/>
+
+          <!-- パネル1: 正常ブレード群 -->
+          <g transform="translate(40, 20)">
+            <rect width="200" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="100" y="24" fill="#34d399" font-size="12" font-weight="bold" text-anchor="middle">優良ブレード（スライス内）</text>
+            <rect x="30" y="45" width="140" height="40" fill="#0284c7" fill-opacity="0.3" stroke="#38bdf8" stroke-width="1.5" rx="4"/>
+            <text x="100" y="68" fill="#e2e8f0" font-size="11" text-anchor="middle">設定撮像スライス内</text>
+            <rect x="30" y="105" width="140" height="14" fill="#334155" rx="4"/>
+            <rect x="30" y="105" width="130" height="14" fill="#10b981" rx="4"/>
+            <text x="100" y="135" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">相関 Cj = 0.94 (合格)</text>
+            <text x="100" y="165" fill="#e2e8f0" font-size="11" text-anchor="middle">重み wj = (0.94)^p で採用</text>
+            <text x="100" y="182" fill="#38bdf8" font-size="10" text-anchor="middle">高い寄与率でk空間に合成</text>
+          </g>
+
+          <!-- 対比文字 -->
+          <g transform="translate(255, 105)">
+            <text x="12" y="5" fill="#94a3b8" font-size="14" font-weight="bold" text-anchor="middle">VS</text>
+          </g>
+
+          <!-- パネル2: 面外体動発生ブレード -->
+          <g transform="translate(290, 20)">
+            <rect width="200" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="100" y="24" fill="#f87171" font-size="12" font-weight="bold" text-anchor="middle">面外体動（Z軸ズレ・咳）</text>
+            <rect x="30" y="40" width="140" height="30" fill="none" stroke="#475569" stroke-dasharray="3" rx="3"/>
+            <rect x="30" y="60" width="140" height="30" fill="#ef4444" fill-opacity="0.4" stroke="#f87171" stroke-width="1.5" rx="3"/>
+            <line x1="100" y1="55" x2="100" y2="75" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow3)"/>
+            <text x="100" y="80" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">Z軸スライス逸脱！</text>
+            <rect x="30" y="105" width="140" height="14" fill="#334155" rx="4"/>
+            <rect x="30" y="105" width="45" height="14" fill="#ef4444" rx="4"/>
+            <text x="100" y="135" fill="#f87171" font-size="11" font-weight="bold" text-anchor="middle">相関 Cj = 0.32 (不合格)</text>
+            <text x="100" y="165" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">閾値未満 ➔ 完全破棄！</text>
+            <text x="100" y="182" fill="#94a3b8" font-size="10" text-anchor="middle">（Rejection：重み wj = 0）</text>
+          </g>
+
+          <!-- 矢印 -->
+          <g transform="translate(505, 105)">
+            <path d="M 0 0 L 25 0" stroke="#64748b" stroke-width="2"/>
+            <polygon points="25,-4 33,0 25,4" fill="#64748b"/>
+          </g>
+
+          <!-- パネル3: 最終合成結果 -->
+          <g transform="translate(540, 20)">
+            <rect width="180" height="190" fill="#1e293b" rx="8" stroke="#334155"/>
+            <text x="90" y="24" fill="#38bdf8" font-size="12" font-weight="bold" text-anchor="middle">最終グリッディング合成</text>
+            <circle cx="90" cy="85" r="40" fill="#0284c7" fill-opacity="0.25" stroke="#38bdf8" stroke-width="2"/>
+            <circle cx="90" cy="85" r="8" fill="#fbbf24"/>
+            <text x="90" y="90" fill="#0f172a" font-size="10" font-weight="bold" text-anchor="middle">中心</text>
+            <text x="90" y="145" fill="#38bdf8" font-size="11" font-weight="bold" text-anchor="middle">SNR向上: √N 倍</text>
+            <text x="90" y="165" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">ボケ・ゴースト完全遮断</text>
+            <text x="90" y="182" fill="#e2e8f0" font-size="10" text-anchor="middle">高精細画像を出力</text>
+          </g>
+        </svg>
+        <div class="diagram-caption">図解1-3：ステップ3［データ棄却と重み付け加算］のフロー。面外体動による破損ブレードを排他的に除外し、正常ブレードのみを加算。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== インタラクティブ・シミュレーター ==================== -->
+  <section class="content-card">
+    <div class="card-title">
+      <span class="question-badge">リアルタイム体験</span>
+      PROPELLER k空間軌道 &amp; 3大ステップ体動補正シミュレーター
+    </div>
+    <p>
+      下のシミュレーターでは、PROPELLERのk空間ブレード収集と体動補正アルゴリズムの挙動をステップごとに順を追って確認できます。
+    </p>
+
+    <div class="diagram-wrapper">
+      <svg id="propeller-svg" viewBox="0 0 620 360" width="100%" height="280">
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <rect width="620" height="360" fill="#0b1329"/>
+        <rect width="620" height="360" fill="url(#grid)"/>
+
+        <!-- k空間座標軸 -->
+        <line x1="310" y1="20" x2="310" y2="340" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="20" y1="180" x2="600" y2="180" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+        <text x="580" y="172" fill="#64748b" font-size="12">kx</text>
+        <text x="318" y="36" fill="#64748b" font-size="12">ky</text>
+
+        <!-- ブレード群 -->
+        <g id="blades-group">
+          <!-- ブレード0 (0度) -->
+          <rect class="blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.35" stroke="#38bdf8" stroke-width="1"/>
+          <!-- ブレード1 (30度) -->
+          <rect class="blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.35" stroke="#38bdf8" stroke-width="1" transform="rotate(30 310 180)"/>
+          <!-- ブレード2 (60度) -->
+          <rect class="blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.35" stroke="#38bdf8" stroke-width="1" transform="rotate(60 310 180)"/>
+          <!-- ブレード3 (90度) -->
+          <rect class="blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.35" stroke="#38bdf8" stroke-width="1" transform="rotate(90 310 180)"/>
+          <!-- ブレード4 (120度) -->
+          <rect class="blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.35" stroke="#38bdf8" stroke-width="1" transform="rotate(120 310 180)"/>
+
+          <!-- ブレード5 (150度) - 体動発生対象 -->
+          <g id="motion-blade-wrap" transform="rotate(150 310 180)">
+            <rect id="motion-blade" x="130" y="165" width="360" height="30" rx="4" fill="#0284c7" opacity="0.4" stroke="#38bdf8" stroke-width="1.5"/>
+          </g>
+        </g>
+
+        <!-- 中心重複円盤領域 -->
+        <circle cx="310" cy="180" r="48" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="5"/>
+        <circle cx="310" cy="180" r="4" fill="#fbbf24"/>
+        <text x="310" y="242" fill="#fbbf24" font-size="12" font-weight="bold" text-anchor="middle">中心重複円盤 (低周波自己ナビゲーター)</text>
+        <text x="310" y="258" fill="#fde68a" font-size="10" text-anchor="middle">全ブレードがここを通過＝低解像度照合データが手に入る</text>
+
+        <!-- ステータス表示 -->
+        <text id="sim-status-svg" x="30" y="45" fill="#38bdf8" font-size="13" font-weight="bold">状態: 正常サンプリング（体動なし）</text>
+      </svg>
+
+      <div class="sim-state-text" id="sim-explanation">
+        通常状態：すべてのブレードが中心を通り、低周波データ（コントラスト情報）を多重取得しています。
+      </div>
+
+      <div class="sim-controls">
+        <button class="sim-btn" onclick="stepMotion()">⚡ ① 体動発生（回転＋並進ズレ）</button>
+        <button class="sim-btn" onclick="stepRotateCorrect()">🔄 ② ステップ1実行：回転補正（逆回転）</button>
+        <button class="sim-btn" onclick="stepTranslateCorrect()">↔️ ③ ステップ2実行：並進補正（リフェーズ）</button>
+        <button class="sim-btn" onclick="stepRejectSim()">🗑️ ④ ステップ3体験：面外体動とリジェクション</button>
+        <button class="sim-btn" onclick="resetSim()">🔄 リセット</button>
+      </div>
+
+      <div class="diagram-caption">図2：PROPELLER k空間補正シミュレーター（中心通過性を利用した3段階補正の動作検証）</div>
+    </div>
+  </section>
+
+  <!-- ==================== 臨床現場でのトレードオフ ==================== -->
+  <section class="content-card">
+    <div class="card-title">
+      <span class="question-badge">臨床応用</span>
+      診療放射線技師が押さえるべきトレードオフと運用指針
+    </div>
+
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>PROPELLER / BLADE の利点</th>
+          <th>トレードオフ（代償・留意点）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>体動耐性</strong></td>
+          <td>小児、認知症、急性期脳梗塞など静止困難な患者でも鎮静なしで診断可能な画像が得られる。</td>
+          <td>補正限界を超える巨大な連続体動や、激しい面外（Z軸）体動ではブレード棄却が多発し、有効データ不足でボケる。</td>
+        </tr>
+        <tr>
+          <td><strong>撮像時間</strong></td>
+          <td>中心部の重複走査を行うため、通常の直交デカルトFSEに比べて<strong>約 1.5 〜 2.0 倍</strong>の時間を要する。</td>
+          <td>単位時間あたりのサンプリング効率（走査面積）が下がるため、ブレード幅（ETL）の設定が重要となる。</td>
+        </tr>
+        <tr>
+          <td><strong>磁化率アーチファクト</strong></td>
+          <td>FSE（TSE）系をベースとし、k空間充填が回転放射状になるため、局所磁場不均一による歪みやゴーストが放射状に分散して目立ちにくい。</td>
+          <td>ブレード結合部（タイリング）における不整合により、高分解能画像で微細なストライプ状のアーチファクト（Streak artifact）が生じることがある。</td>
+        </tr>
+        <tr>
+          <td><strong>組織コントラスト</strong></td>
+          <td>中心部が常に安定して収集されるため、安定したT2強調・FLAIRコントラストが得られる。</td>
+          <td>各ブレード内のエコートレイン後半で取得される高周波成分と、前半成分の組み合わせによるT2フィルタリング（ブラーリング）に注意を要する。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<script>
+  // 完全オフライン対応 シミュレーター制御スクリプト
+  const motionWrap = document.getElementById('motion-blade-wrap');
+  const motionBlade = document.getElementById('motion-blade');
+  const simText = document.getElementById('sim-explanation');
+  const simStatus = document.getElementById('sim-status-svg');
+
+  function stepMotion() {
+    motionWrap.setAttribute('transform', 'rotate(170 310 180) translate(18, 12)');
+    motionBlade.setAttribute('fill', '#ef4444');
+    motionBlade.setAttribute('stroke', '#f87171');
+    motionBlade.setAttribute('opacity', '0.6');
+    simStatus.textContent = '状態: ⚠️ 体動発生中（回転エラー +20° / 並進ズレ発生）';
+    simStatus.setAttribute('fill', '#f87171');
+    simText.innerHTML = '<span style="color: #ef4444; font-weight: bold;">⚠️ 体動発生：</span>第5ブレード収集中に患者の頭部が傾き、かつ平行移動しました。ブレードの幾何学的傾きと線形位相坂道が発生しています！';
+  }
+
+  function stepRotateCorrect() {
+    motionWrap.setAttribute('transform', 'rotate(150 310 180) translate(18, 12)');
+    motionBlade.setAttribute('fill', '#8b5cf6');
+    motionBlade.setAttribute('stroke', '#a78bfa');
+    simStatus.textContent = '状態: 🔄 ステップ1完了（面内回転補正済み / 並進ズレ残存）';
+    simStatus.setAttribute('fill', '#a78bfa');
+    simText.innerHTML = '<span style="color: #a78bfa; font-weight: bold;">🔄 ステップ1実行：</span>中心円盤の振幅相関（並進不変性）を用いて回転角（+20°）を独立同定し、k空間データを逆回転させました！向きは揃いましたが、まだ並進による位相坂道（位置ズレ）が残っています。';
+  }
+
+  function stepTranslateCorrect() {
+    motionWrap.setAttribute('transform', 'rotate(150 310 180) translate(0, 0)');
+    motionBlade.setAttribute('fill', '#10b981');
+    motionBlade.setAttribute('stroke', '#34d399');
+    simStatus.textContent = '状態: ✨ ステップ2完了（回転・並進の剛体補正完了）';
+    simStatus.setAttribute('fill', '#34d399');
+    simText.innerHTML = '<span style="color: #34d399; font-weight: bold;">↔️ ステップ2実行：</span>中心円盤低解像度画像の位相差から変位ベクトルを同定し、逆位相を乗算（リフェーズ）。並進ズレが完全に相殺され、k空間の正しい位置に収まりました！';
+  }
+
+  function stepRejectSim() {
+    motionWrap.setAttribute('transform', 'rotate(195 310 180) translate(30, 25)');
+    motionBlade.setAttribute('fill', '#64748b');
+    motionBlade.setAttribute('stroke', '#475569');
+    motionBlade.setAttribute('opacity', '0.15');
+    simStatus.textContent = '状態: 🗑️ ステップ3実行（面外体動ブレードを破棄 / Rejection）';
+    simStatus.setAttribute('fill', '#fb923c');
+    simText.innerHTML = '<span style="color: #fb923c; font-weight: bold;">🗑️ ステップ3実行：</span>患者が咳き込みスライス外（Z軸）へ逸脱。中心円盤の相関値が閾値（0.40）を大きく下回ったため、画像を濁らせないようこのブレードを完全に破棄（Rejection）しました！';
+  }
+
+  function resetSim() {
+    motionWrap.setAttribute('transform', 'rotate(150 310 180)');
+    motionBlade.setAttribute('fill', '#0284c7');
+    motionBlade.setAttribute('stroke', '#38bdf8');
+    motionBlade.setAttribute('opacity', '0.4');
+    simStatus.textContent = '状態: 正常サンプリング（体動なし）';
+    simStatus.setAttribute('fill', '#38bdf8');
+    simText.innerText = '通常状態：すべてのブレードが中心を通り、低周波データ（コントラスト情報）を多重取得しています。';
+  }
+</script>
+
+</body>
+</html>

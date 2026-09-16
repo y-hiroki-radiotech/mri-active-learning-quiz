@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI パラレルイメージング（PI）徹底攻略教材</title>
+<style>
+  :root {
+    --primary: #1565c0;
+    --primary-light: #e3f2fd;
+    --primary-dark: #0d47a1;
+    --accent: #00897b;
+    --accent-light: #e0f2f1;
+    --warning: #e65100;
+    --warning-light: #fff3e0;
+    --danger: #c62828;
+    --danger-light: #ffebee;
+    --text: #263238;
+    --text-muted: #546e7a;
+    --bg: #f4f6f9;
+    --card-bg: #ffffff;
+    --border: #cfd8dc;
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
+    --radius: 10px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    line-height: 1.65;
+    color: var(--text);
+    background-color: var(--bg);
+    padding: 20px 12px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: #ffffff;
+    padding: 28px 24px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-light);
+  }
+
+  .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .card-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  .lead-text {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .bullet-list {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .bullet-list li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+
+  .bullet-list li::before {
+    content: "■";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-size: 0.75rem;
+    top: 3px;
+  }
+
+  .highlight-box {
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    border-left: 4px solid var(--primary);
+    background: #f8fafc;
+  }
+
+  .highlight-box.alert {
+    border-left-color: var(--warning);
+    background: var(--warning-light);
+  }
+
+  .highlight-box.success {
+    border-left-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .highlight-box-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* MathML Styling */
+  .formula-display {
+    text-align: center;
+    padding: 16px;
+    margin: 16px 0;
+    background: #f1f5f9;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 1.2rem;
+    overflow-x: auto;
+  }
+
+  math {
+    font-family: "Cambria Math", "Times New Roman", serif;
+  }
+
+  /* Table styling */
+  .table-responsive {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  th {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  /* SVG illustration wrappers */
+  .svg-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .svg-wrap svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .svg-caption {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Interactive Simulator */
+  .interactive-panel {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .btn {
+    appearance: none;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+
+  .btn-outline:hover {
+    background: var(--primary-light);
+  }
+
+  .btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .indicator-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .indicator-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .indicator-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  /* Print optimization */
+  @media print {
+    body {
+      background: #ffffff;
+      color: #000;
+      padding: 0;
+    }
+    .card {
+      border: 1px solid #999;
+      box-shadow: none;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .interactive-panel .controls-row {
+      display: none;
+    }
+    header {
+      background: #eee;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+    .badge {
+      border: 1px solid #666;
+      color: #000;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="badge">MRI Advanced Imaging Principles</div>
+    <h1>パラレルイメージング（Parallel Imaging）徹底マスター</h1>
+    <p>位相アレイコイルの局所空間感度差を利用してk空間を間引き、画質トレードオフを制御しながら撮像時間を劇的に短縮する中核技術</p>
+  </header>
+
+  <!-- Section 1: 概念の要約 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      </div>
+      <div class="card-title">パラレルイメージング（PI）とは何か？</div>
+    </div>
+    <p class="lead-text">
+      パラレルイメージング（PI）とは、複数の小型受信コイルエレメントを並列配置した<strong>位相アレイコイル（Phased Array Coil）</strong>を用い、<strong>各コイルが持つ独自の「空間感度差（感度プロファイル）」を空間位置の識別に利用することで、k空間の位相エンコード行を間引いて撮像時間を短縮する技術</strong>です。
+    </p>
+
+    <ul class="bullet-list">
+      <li><strong>「パラレル」の由来：</strong>複数のコイルエレメントが被写体からのMR信号を<strong>同時かつ並列（Parallel）に受信</strong>することから命名されました。</li>
+      <li><strong>基本動作：</strong>位相エンコードステップを1行おき（加速因子 R=2）や2行おき（R=3）にスキップして収集します。</li>
+      <li><strong>エイリアシングの必然性：</strong>サンプリング間隔が広がるため、ナイキスト基準を下回り、そのままフーリエ変換すると<strong>位相エンコード方向に画像が重なり合う「折り返し（エイリアシング）」</strong>が発生します。</li>
+      <li><strong>復元の鍵：</strong>各コイルに近い部位は信号が強く、遠い部位は弱いという「感度差」を連立方程式または畳み込み演算で解き、折り重なったピクセルを正規の位置へと分離（アンラップ）します。</li>
+    </ul>
+
+    <div class="highlight-box success">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        本質的な臨床メリット
+      </div>
+      傾斜磁場システムのハードウェア限界（最大磁場勾配やスルーレート）に依存せず、<strong>「純粋に収集する位相エンコードステップ数を減らす」</strong>ことで撮像時間を1/2〜1/4に短縮できる点にあります。
+    </div>
+  </section>
+
+  <!-- Section 2: 原理と図解 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3C2 3 1 4 1 5v14c0 1 1 2 2 2h18c1 0 2-1 2-2V5c0-1-1-2-2-2zm0 16H3V5h18v14zM5 15h14v3H5z"/></svg>
+      </div>
+      <div class="card-title">原理図解：間引きサンプリングと折り返しの展開</div>
+    </div>
+
+    <!-- Inline SVG Diagram: k-space to Image domain -->
+    <div class="svg-wrap">
+      <svg viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background grid -->
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="800" height="320" fill="#ffffff"/>
+
+        <!-- Normal k-space -->
+        <g transform="translate(40, 40)">
+          <rect x="0" y="0" width="160" height="160" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" rx="4"/>
+          <text x="80" y="-12" font-size="13" font-weight="bold" fill="#334155" text-anchor="middle">通常撮像のk空間 (R=1)</text>
+          <!-- lines -->
+          <line x1="10" y1="20" x2="150" y2="20" stroke="#0284c7" stroke-width="2"/>
+          <line x1="10" y1="40" x2="150" y2="40" stroke="#0284c7" stroke-width="2"/>
+          <line x1="10" y1="60" x2="150" y2="60" stroke="#0284c7" stroke-width="2"/>
+          <line x1="10" y1="80" x2="150" y2="80" stroke="#0284c7" stroke-width="3"/>
+          <line x1="10" y1="100" x2="150" y2="100" stroke="#0284c7" stroke-width="2"/>
+          <line x1="10" y1="120" x2="150" y2="120" stroke="#0284c7" stroke-width="2"/>
+          <line x1="10" y1="140" x2="150" y2="140" stroke="#0284c7" stroke-width="2"/>
+          <text x="80" y="210" font-size="12" fill="#64748b" text-anchor="middle">全ステップ収集 (100% 時間)</text>
+        </g>
+
+        <!-- Arrow 1 -->
+        <g transform="translate(215, 110)">
+          <path d="M0 10 L30 10 M20 0 L30 10 L20 20" fill="none" stroke="#64748b" stroke-width="2"/>
+          <text x="15" y="-6" font-size="11" fill="#64748b" text-anchor="middle">FT</text>
+        </g>
+
+        <!-- Normal Full Image -->
+        <g transform="translate(260, 40)">
+          <rect x="0" y="0" width="160" height="160" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" rx="4"/>
+          <text x="80" y="-12" font-size="13" font-weight="bold" fill="#334155" text-anchor="middle">正規画像 (フルFOV)</text>
+          <!-- Head profile -->
+          <circle cx="80" cy="80" r="50" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+          <ellipse cx="80" cy="55" rx="15" ry="8" fill="#cbd5e1"/>
+          <circle cx="65" cy="85" r="6" fill="#38bdf8"/>
+          <circle cx="95" cy="85" r="6" fill="#f43f5e"/>
+          <text x="80" y="210" font-size="12" fill="#059669" text-anchor="middle">エイリアシングなし</text>
+        </g>
+
+        <!-- PI Under-sampled k-space -->
+        <g transform="translate(470, 40)">
+          <rect x="0" y="0" width="160" height="160" fill="#f8fafc" stroke="#ea580c" stroke-width="2" rx="4"/>
+          <text x="80" y="-12" font-size="13" font-weight="bold" fill="#ea580c" text-anchor="middle">PIのk空間 (R=2 間引き)</text>
+          <!-- skipped lines -->
+          <line x1="10" y1="20" x2="150" y2="20" stroke="#ea580c" stroke-width="2"/>
+          <line x1="10" y1="40" x2="150" y2="40" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="10" y1="60" x2="150" y2="60" stroke="#ea580c" stroke-width="2"/>
+          <line x1="10" y1="80" x2="150" y2="80" stroke="#ea580c" stroke-width="3"/>
+          <line x1="10" y1="100" x2="150" y2="100" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="10" y1="120" x2="150" y2="120" stroke="#ea580c" stroke-width="2"/>
+          <line x1="10" y1="140" x2="150" y2="140" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+          <text x="80" y="210" font-size="12" fill="#ea580c" text-anchor="middle">1行おき収集 (時間 1/2)</text>
+        </g>
+
+        <!-- Arrow 2 -->
+        <g transform="translate(645, 110)">
+          <path d="M0 10 L30 10 M20 0 L30 10 L20 20" fill="none" stroke="#64748b" stroke-width="2"/>
+          <text x="15" y="-6" font-size="11" fill="#64748b" text-anchor="middle">FT</text>
+        </g>
+
+        <!-- Folded Image -->
+        <g transform="translate(690, 40)">
+          <rect x="0" y="0" width="80" height="160" fill="#fef2f2" stroke="#dc2626" stroke-width="2" rx="4"/>
+          <text x="40" y="-12" font-size="13" font-weight="bold" fill="#dc2626" text-anchor="middle">FOV 1/2 折り返し</text>
+          <!-- Folded ellipse -->
+          <path d="M 10 40 A 30 40 0 0 1 70 40 A 30 40 0 0 1 10 40" fill="rgba(203,213,225,0.7)" stroke="#dc2626" stroke-width="1.5"/>
+          <circle cx="40" cy="80" r="10" fill="purple" opacity="0.6"/>
+          <text x="40" y="105" font-size="10" fill="#b91c1c" text-anchor="middle">信号が重畳</text>
+          <text x="40" y="210" font-size="12" fill="#dc2626" text-anchor="middle">コイル感度差で展開！</text>
+        </g>
+      </svg>
+      <div class="svg-caption">図1: 通常サンプリングと間引きサンプリング（R=2）に伴うk空間データ密度と実空間エイリアシングの対応関係</div>
+    </div>
+
+    <!-- Interactive Simulation -->
+    <div class="interactive-panel">
+      <div class="highlight-box-title">
+        <svg style="width:18px;height:18px;fill:var(--primary)" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        加速因子（Acceleration Factor: R）インタラクティブ・シミュレーター
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+        加速因子 R を切り替えて、撮像時間・理論SNR・k空間サンプリング間引き密度の変化を体感してください。
+      </p>
+
+      <div class="controls-row">
+        <button class="btn btn-outline active" id="btn-r1" onclick="setR(1)">加速なし (R=1)</button>
+        <button class="btn btn-outline" id="btn-r2" onclick="setR(2)">加速因子 R=2 (標準)</button>
+        <button class="btn btn-outline" id="btn-r3" onclick="setR(3)">加速因子 R=3 (高加速)</button>
+        <button class="btn" id="btn-anim" onclick="toggleAutoStep()" style="margin-left:auto;">自動ステップ送り</button>
+      </div>
+
+      <div class="indicator-grid">
+        <div class="indicator-box">
+          <div class="indicator-label">撮像時間（相対比）</div>
+          <div class="indicator-val" id="disp-time">100% (基準)</div>
+        </div>
+        <div class="indicator-box">
+          <div class="indicator-label">最大理論 SNR</div>
+          <div class="indicator-val" id="disp-snr">100%</div>
+        </div>
+        <div class="indicator-box">
+          <div class="indicator-label">k空間間引き</div>
+          <div class="indicator-val" id="disp-step">全行収集</div>
+        </div>
+        <div class="indicator-box">
+          <div class="indicator-label">折り返し多重度</div>
+          <div class="indicator-val" id="disp-fold">なし</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: 2大手法 SENSE vs GRAPPA -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M10 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h5v-2H5V5h5V3zm9 0h-5v2h5v14h-5v2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+      </div>
+      <div class="card-title">臨床を二分する2大方式：SENSE と GRAPPA</div>
+    </div>
+    <p class="lead-text">
+      パラレルイメージングは、「どこで折り返しを復元するか」によって大きく2系統に分かれます。実空間（画像領域）で連立方程式を解く<strong>SENSE</strong>と、周波数空間（k空間領域）で抜けたデータを埋める<strong>GRAPPA</strong>です。
+    </p>
+
+    <!-- Comparison Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>SENSE（画像領域方式）</th>
+            <th>GRAPPA（k空間方式）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>復元処理を行う領域</strong></td>
+            <td><strong>実空間（Image Domain）</strong></td>
+            <td><strong>k空間（Frequency Domain）</strong></td>
+          </tr>
+          <tr>
+            <td><strong>感度情報の取得方法</strong></td>
+            <td><strong>プレスキャン（事前低分解能撮像）</strong></td>
+            <td><strong>ACSライン（本スキャンk空間中心部の密収集）</strong></td>
+          </tr>
+          <tr>
+            <td><strong>アルゴリズムの概要</strong></td>
+            <td>各コイルの折り返し画像から、感度マップ行列の逆行列を解いて重なりを展開する</td>
+            <td>取得済みの周囲k空間データから線形結合重み（Kernel）を求め、欠落ラインを補間充填する</td>
+          </tr>
+          <tr>
+            <td><strong>実効的な高速化率</strong></td>
+            <td>設定Rがそのまま撮像時間短縮に直結</td>
+            <td>中心部のACS収集時間があるため、実効Rは若干低下（例: 2.0 → 約1.9）</td>
+          </tr>
+          <tr>
+            <td><strong>体動・呼吸への耐性</strong></td>
+            <td>プレスキャン時から被写体が動くと感度不一致で残存ゴーストが出やすい</td>
+            <td>本スキャンと同時にキャリブレーション行を収集するため、<strong>動きに強い</strong></td>
+          </tr>
+          <tr>
+            <td><strong>FOV設定の制約</strong></td>
+            <td>FOVが被写体より小さいと展開計算が破綻しやすい</td>
+            <td>小FOV（局所撮像）でも比較的安定して破綻しにくい</td>
+          </tr>
+          <tr>
+            <td><strong>主要メーカー名称</strong></td>
+            <td>SENSE (Philips), ASSET (GE), mSENSE (Siemens), RAPID (富士フイルム/日立)</td>
+            <td>GRAPPA (Siemens), ARC (GE), Speeder (キヤノン)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SENSE Math Explanation -->
+    <div class="highlight-box">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h19c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        SENSEの数学的メカニズム（コイル2個・R=2の場合）
+      </div>
+      <p style="font-size:0.9rem;margin-bottom:8px;">
+        加速因子2のとき、折り返されたピクセル信号 $A_1, A_2$ は、FOVの1/2離れた真の組織信号 $O_1, O_2$ が各コイルの局所感度 $S$ で重み付けされて合算されたものです。
+      </p>
+
+      <div class="formula-display">
+        <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow>
+            <mo>{</mo>
+            <mtable columnalign="left">
+              <mtr>
+                <mtd>
+                  <msub><mi>A</mi><mn>1</mn></msub>
+                  <mo>=</mo>
+                  <msub><mi>S</mi><mn>11</mn></msub><msub><mi>O</mi><mn>1</mn></msub>
+                  <mo>+</mo>
+                  <msub><mi>S</mi><mn>12</mn></msub><msub><mi>O</mi><mn>2</mn></msub>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <msub><mi>A</mi><mn>2</mn></msub>
+                  <mo>=</mo>
+                  <msub><mi>S</mi><mn>21</mn></msub><msub><mi>O</mi><mn>1</mn></msub>
+                  <mo>+</mo>
+                  <msub><mi>S</mi><mn>22</mn></msub><msub><mi>O</mi><mn>2</mn></msub>
+                </mtd>
+              </mtr>
+            </mtable>
+          </mrow>
+        </math>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);">
+        ※ 未知数2つ（$O_1, O_2$）に対し、独立したコイル感度をもつ方程式が2つあるため、逆行列計算によって真の信号 $O_1, O_2$ が一意に分離されます。
+      </p>
+    </div>
+  </section>
+
+  <!-- Section 4: 数理モデルとSNRトレードオフ -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M7 2v2h1v14H7v2h10v-2h-1V4h1V2H7zm6 16h-2V4h2v14z"/></svg>
+      </div>
+      <div class="card-title">物理・数学的原理：PIにおけるSNR低下の法則</div>
+    </div>
+
+    <p class="lead-text">
+      パラレルイメージングを適用すると、撮像時間が短縮される代償として<strong>必ず信号雑音比（SNR）が低下</strong>します。この関係は以下の厳密な数式で記述されます。
+    </p>
+
+    <div class="formula-display">
+      <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+        <msub>
+          <mi>SNR</mi>
+          <mi>PI</mi>
+        </msub>
+        <mo>=</mo>
+        <mfrac>
+          <msub><mi>SNR</mi><mn>0</mn></msub>
+          <mrow>
+            <mi>g</mi>
+            <mo>&InvisibleTimes;</mo>
+            <msqrt><mi>R</mi></msqrt>
+          </mrow>
+        </mfrac>
+      </math>
+    </div>
+
+    <!-- Detailed Equation Breakdown -->
+    <ul class="bullet-list">
+      <li><strong>各記号の意味と単位：</strong>
+        <ul style="margin-left:20px;font-size:0.9rem;color:var(--text-muted);list-style:disc;">
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>SNR</mi><mi>PI</mi></msub></math>：パラレルイメージング適用後の画像SNR（無次元比）</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>SNR</mi><mn>0</mn></msub></math>：間引きを行わない通常スキャン時の画像SNR（無次元比）</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math>：加速因子（Reduction factor / Acceleration factor, 1以上の実数）</li>
+          <li><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math>：幾何学的配置因子（Geometry factor / g-factor, 局所空間変数, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>&ge;</mo><mn>1</mn></math>）</li>
+        </ul>
+      </li>
+      <li><strong>比例・反比例関係：</strong>
+        <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>SNR</mi><mi>PI</mi></msub></math> は <strong>加速因子の平方根 <math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><mi>R</mi></msqrt></math> に反比例</strong> し、さらに <strong>g因子に反比例</strong> します。
+      </li>
+      <li><strong>変数の増減と物理的意味：</strong>
+        <ul style="margin-left:20px;font-size:0.9rem;color:var(--text-muted);list-style:disc;">
+          <li><strong><math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><msqrt><mi>R</mi></msqrt></math> 成分：</strong>収集する位相エンコード行数が <math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><mi>R</mi></math> に減少することによる、純粋なサンプリング時間短縮に伴う統計的ノイズの増加です（例: R=2 のとき必然的に約 <math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>&approx;</mo><mn>71</mn><mo>%</mo></math> に低下）。</li>
+          <li><strong><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math> 因子成分：</strong>コイルエレメント同士の空間感度プロファイルの重なり合いの悪さ（数学的直交性の低さ）によるノイズ増幅です。画像の中央部や被写体の深部など、コイル間の感度差が小さくなる領域ほど <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>&gt;</mo><mn>1</mn></math> となり、<strong>局所的にSNRが極端に悪化</strong>します。</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="highlight-box alert">
+      <div class="highlight-box-title">
+        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        加速因子R設定の臨床ルール
+      </div>
+      加速因子Rをコイルチャンネル数に近づけすぎたり無理に高く設定すると、g因子が指数関数的に爆発し、画像中央部に激しい砂嵐状のノイズバンドが出現します。<strong>通常のルーチン臨床では R=2（多くてもR=3程度）が実用上の黄金律</strong>とされます。
+    </div>
+  </section>
+
+  <!-- Section 5: 臨床現場での具体的活用場面 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
+      </div>
+      <div class="card-title">臨床現場でパラレルイメージングが不可欠な場面</div>
+    </div>
+
+    <p class="lead-text">
+      PIは単に「検査を早く終わらせる」だけでなく、<strong>動く臓器の静止画化、歪み抑制、アーチファクト克服など、画質そのものを根底から向上させる目的</strong>で日常臨床に深く組み込まれています。
+    </p>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>臨床シーン・シーケンス</th>
+            <th>PIを使用する技術的理由・臨床的メリット</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>腹部造影ダイナミックMRI<br>(肝細胞癌・膵臓など)</strong></td>
+            <td>
+              動脈相（Early/Late arterial phase）の血流灌流はわずか数秒〜十数秒で推移します。PI（R=2〜3）により<strong>息止め撮像時間を20秒以下に短縮</strong>し、患者の呼吸停止限界内で血流ピークを確実に捉え、呼吸体動ブレを完全に排除します。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>頭部・体幹部 拡散強調画像<br>(DWI: Single-shot EPI)</strong></td>
+            <td>
+              EPIは位相エンコード方向の帯域幅が極めて狭く、磁化率不均一による幾何学的歪みやN/2ゴーストが多発します。PIによって<strong>エコートレイン長（ETL）とエコースペースを短縮</strong>することで、位相誤差の蓄積を防ぎ、<strong>頭蓋底・前立腺・頸部での画像の歪みとボケを劇的に改善</strong>します。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3D 造影・非造影 MRA<br>(頸部・下肢・腎動脈など)</strong></td>
+            <td>
+              3次元収集は膨大な位相エンコードステップを要するため、通常では10分以上かかります。PIを位相軸およびスライスエンコード軸（2D-PI）に適用することで、<strong>高精細な等方性ボクセル（微小動脈瘤・狭窄の描出）を数分の現実的な時間で撮像可能</strong>にします。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>心臓シネ・遅延造影（LGE）<br>(TrueFISP / FIESTA)</strong></td>
+            <td>
+              心拍同期下において、1心拍あたりに収集できるビュー数（Views per segment）をPIで圧縮。<strong>1回の息止めで左室駆出率（EF）や心筋壁運動を極めて高い時間分解能で評価</strong>できます。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3テスラ超高磁場MRIでの撮像<br>(全身領域)</strong></td>
+            <td>
+              3TではRFエネルギーによる<strong>生体内組織発熱（SAR: 比吸収率）</strong>が1.5Tの約4倍に急増します。PIを併用してRF照射パルス総数を減らすことで、SAR制限に引っかからずにTRやスライス枚数を最適化できます。また3Tは元々のSNRが高いため、PIによるSNR低下を相殺しやすい理想的な組み合わせです。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section 6: トラブルシューティング -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      </div>
+      <div class="card-title">臨床トラブルシューティング：PI特有のアーチファクトと回避策</div>
+    </div>
+
+    <ul class="bullet-list">
+      <li>
+        <strong>中央部の帯状ノイズ（g-factor noise）：</strong>
+        コイルの感度重複が大きい深部で局所SNRが急低下する現象。
+        <br><span style="font-size:0.85rem;color:var(--accent);">【対策】</span> 加速因子Rを下げる（例: R=3 → R=2）、チャンネル数の多い最適コイル（32ch以上）を使用する、加算回数（NEX）を補う。
+      </li>
+      <li>
+        <strong>残存エイリアシングゴースト（Residual Aliasing）：</strong>
+        折り返しが消え切らず、薄いゴーストとして画面に残る現象。SENSEではプレスキャン後の患者体動、GRAPPAではACSライン不足が原因となります。
+        <br><span style="font-size:0.85rem;color:var(--accent);">【対策】</span> プレスキャンの直前再取得、体動抑制の徹底、ACS収集行数（Auto-calibration lines）の増大。
+      </li>
+      <li>
+        <strong>小FOV撮像での計算破綻：</strong>
+        関心部位のみを狭いFOVで撮像した際、被写体の外側の信号が巻き込んで感度行列が解けなくなる。
+        <br><span style="font-size:0.85rem;color:var(--accent);">【対策】</span> SENSE系よりもk空間補間を行うGRAPPA系（ARC等）を選択するか、No Phase Wrap（過剰サンプリング）を併用する。
+      </li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+  // Interactive Simulation Logic
+  let currentR = 1;
+  let autoStepInterval = null;
+
+  const dataMap = {
+    1: { time: "100% (基準)", snr: "100%", step: "全行収集 (間引きなし)", fold: "なし (正常展開)" },
+    2: { time: "50% (約 1/2)", snr: "約 71% (1/√2)", step: "1行おき (50%間引き)", fold: "2重折り返しを復元" },
+    3: { time: "33% (約 1/3)", snr: "約 58% (1/√3)", step: "2行おき (67%間引き)", fold: "3重折り返しを復元" }
+  };
+
+  function setR(r) {
+    currentR = r;
+    // Update active button state
+    document.querySelectorAll('.controls-row .btn-outline').forEach(btn => btn.classList.remove('active'));
+    const targetBtn = document.getElementById('btn-r' + r);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    // Update indicators
+    const d = dataMap[r];
+    document.getElementById('disp-time').textContent = d.time;
+    document.getElementById('disp-snr').textContent = d.snr;
+    document.getElementById('disp-step').textContent = d.step;
+    document.getElementById('disp-fold').textContent = d.fold;
+  }
+
+  function toggleAutoStep() {
+    const btn = document.getElementById('btn-anim');
+    if (autoStepInterval) {
+      clearInterval(autoStepInterval);
+      autoStepInterval = null;
+      btn.textContent = "自動ステップ送り";
+      btn.classList.remove('active');
+    } else {
+      btn.textContent = "停止";
+      btn.classList.add('active');
+      autoStepInterval = setInterval(() => {
+        let nextR = currentR + 1;
+        if (nextR > 3) nextR = 1;
+        setR(nextR);
+      }, 1600);
+    }
+  }
+
+  // Accessibility: stop animation if prefers-reduced-motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const animBtn = document.getElementById('btn-anim');
+    if (animBtn) animBtn.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
