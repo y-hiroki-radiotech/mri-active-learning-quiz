@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>椎骨動脈解離フォローにおけるBPAS-MRI｜撮像理由と原理</title>
+<style>
+  :root{
+    --bg:#f4f7fb; --paper:#ffffff; --ink:#172033; --muted:#5f6b7a;
+    --navy:#153a66; --blue:#2463a9; --cyan:#0f849b; --teal:#12806f;
+    --red:#b33a3a; --orange:#aa6417; --line:#dce4ee; --soft:#eef4fa;
+    --csf:#dff6ff; --vessel:#20324a; --wall:#d66c55; --lumen:#72b4e3;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.85;
+  }
+  header{
+    background:linear-gradient(135deg,#102f54,#1f5d93 62%,#167f8f);
+    color:#fff; padding:54px 20px 40px;
+  }
+  .wrap{max-width:1080px;margin:auto}
+  h1{font-size:clamp(28px,4vw,46px);line-height:1.25;margin:0 0 14px}
+  .lead{font-size:18px;max-width:900px;opacity:.95}
+  .badge{display:inline-block;background:#ffffff1f;border:1px solid #ffffff55;border-radius:999px;padding:4px 11px;margin:6px 5px 0 0;font-size:13px}
+  main{padding:28px 18px 70px}
+  section{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:28px;margin:20px auto;box-shadow:0 6px 26px rgba(25,55,90,.05)}
+  h2{font-size:28px;line-height:1.35;color:var(--navy);margin:0 0 18px;border-left:7px solid var(--cyan);padding-left:14px}
+  h3{font-size:21px;color:#254d75;margin:26px 0 10px}
+  h4{font-size:17px;color:#314c68;margin:18px 0 8px}
+  p{margin:9px 0}
+  strong{color:#173e67}
+  .key{
+    background:linear-gradient(135deg,#eef7ff,#effbf8);
+    border:1px solid #c9e2ef;border-radius:16px;padding:18px 20px;margin:16px 0;
+  }
+  .key b{font-size:18px;color:#0b5e73}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfdff}
+  .card h3,.card h4{margin-top:0}
+  .mini{font-size:14px;color:var(--muted)}
+  .note{border-left:5px solid var(--orange);background:#fff7eb;padding:13px 16px;border-radius:8px;margin:14px 0}
+  .warn{border-left:5px solid var(--red);background:#fff1f1;padding:13px 16px;border-radius:8px;margin:14px 0}
+  .ok{border-left:5px solid var(--teal);background:#effaf7;padding:13px 16px;border-radius:8px;margin:14px 0}
+  table{width:100%;border-collapse:collapse;margin:15px 0;font-size:15px}
+  th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top}
+  th{background:#edf4fb;color:#173e67;text-align:left}
+  code,.eq{font-family:"SFMono-Regular",Consolas,monospace}
+  .eq{display:block;background:#f5f8fb;border:1px solid #dce5ef;border-radius:12px;padding:15px;margin:14px 0;font-size:17px;overflow:auto}
+  .caption{font-size:13px;color:var(--muted);margin-top:5px}
+  .svgbox{background:#f8fbfe;border:1px solid var(--line);border-radius:16px;padding:10px;margin:16px 0;overflow:auto}
+  ul,ol{padding-left:1.4em}
+  li{margin:6px 0}
+  .step{display:flex;gap:14px;align-items:flex-start;margin:14px 0}
+  .num{min-width:34px;height:34px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .compare{font-size:14px}
+  .pill{display:inline-block;border-radius:999px;padding:3px 9px;background:#e9f1f9;color:#26557d;font-size:12px;font-weight:700}
+  .toc a{color:#1e5d94;text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  footer{color:#687587;font-size:13px;padding:8px 4px}
+  a{color:#145a91}
+  @media(max-width:760px){
+    .grid,.grid3{grid-template-columns:1fr}
+    section{padding:21px 17px}
+    h2{font-size:24px}
+    table{font-size:13px}
+  }
+  @media print{
+    body{background:#fff}
+    header{padding:25px 15px;background:#fff;color:#000;border-bottom:2px solid #333}
+    section{box-shadow:none;break-inside:avoid}
+    a{color:#000;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="badge">MRI / Neuroradiology</div>
+    <div class="badge">椎骨動脈解離</div>
+    <div class="badge">BPAS-MRI</div>
+    <h1>椎骨動脈解離のフォローで<br>BPASを撮像する理由と撮像原理</h1>
+    <p class="lead">「MRA＝血管の内腔」「BPAS＝血管の外形」という役割分担を出発点に、なぜ解離の経時観察で両者を並べると病態が見えやすくなるのかを、病理・MR信号・撮像断面・臨床所見まで一続きで解説する。</p>
+  </div>
+</header>
+
+<main class="wrap">
+<section class="toc">
+  <h2>まず結論</h2>
+  <div class="key">
+    <b>BPASをフォローで撮る核心</b>
+    <p>椎骨動脈解離では、血管壁内に解離腔・壁内血腫が生じるため、<strong>内腔は狭くなっているのに外径は保たれる／むしろ拡大する</strong>ことがあります。TOF-MRAや血管造影は主として「流れている内腔」を見ます。一方、BPASは脳槽内のCSFを背景にして<strong>椎骨脳底動脈の外側輪郭（outer contour）</strong>を描きます。</p>
+    <p>したがって経時観察では、<strong>MRAの内腔変化 + BPASの外形変化</strong>を組み合わせることで、「再開通したか」だけでなく「紡錘状の外径拡大が縮小しているか、残っているか、増大しているか」を追跡できます。</p>
+  </div>
+  <ol>
+    <li><a href="#path">解離で何が起きるか</a></li>
+    <li><a href="#why">なぜBPASがフォローに有用か</a></li>
+    <li><a href="#principle">BPASのMR原理</a></li>
+    <li><a href="#geometry">撮像断面と厚いスライスの意味</a></li>
+    <li><a href="#compare">MRA・BPAS・VWIの見え方の違い</a></li>
+    <li><a href="#follow">フォローでの読み方</a></li>
+    <li><a href="#protocol">代表的な撮像条件と実務上の考え方</a></li>
+    <li><a href="#limits">限界・落とし穴</a></li>
+  </ol>
+</section>
+
+<section id="path">
+  <h2>1. 椎骨動脈解離では「内腔」と「外径」が別々に変化する</h2>
+  <p>動脈解離では、血管壁の層内に血液が入り込み、壁内血腫や偽腔を形成します。すると病変部では、真腔が圧排されて狭窄・閉塞する一方、壁全体としては外側に膨らみ、紡錘状拡張を示すことがあります。</p>
+
+  <div class="svgbox">
+  <svg viewBox="0 0 940 360" width="100%" role="img" aria-label="正常血管と椎骨動脈解離の模式図">
+    <defs>
+      <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#385b7b"/></marker>
+    </defs>
+    <rect x="10" y="10" width="920" height="340" rx="18" fill="#f6fbff"/>
+    <text x="170" y="48" font-size="24" font-weight="700" fill="#173e67">正常</text>
+    <circle cx="210" cy="190" r="95" fill="#d66c55"/>
+    <circle cx="210" cy="190" r="70" fill="#72b4e3"/>
+    <text x="170" y="195" font-size="18" fill="#102f54">内腔</text>
+    <text x="165" y="315" font-size="16" fill="#7d3d31">血管壁</text>
+
+    <text x="625" y="48" font-size="24" font-weight="700" fill="#173e67">解離</text>
+    <ellipse cx="650" cy="190" rx="140" ry="102" fill="#d66c55"/>
+    <ellipse cx="620" cy="190" rx="61" ry="58" fill="#72b4e3"/>
+    <path d="M676 102 C735 120,768 165,760 223 C753 270,718 286,683 272 C708 237,713 165,676 102Z" fill="#8f3040"/>
+    <path d="M672 108 C684 148,682 236,672 270" stroke="#ffe8de" stroke-width="7" fill="none"/>
+    <text x="585" y="195" font-size="17" fill="#102f54">真腔</text>
+    <text x="716" y="192" font-size="16" fill="#fff">壁内血腫/偽腔</text>
+    <line x1="640" y1="76" x2="640" y2="112" stroke="#385b7b" stroke-width="2" marker-end="url(#arr)"/>
+    <text x="540" y="72" font-size="16" fill="#385b7b">外径は拡大しうる</text>
+    <line x1="559" y1="260" x2="600" y2="230" stroke="#385b7b" stroke-width="2" marker-end="url(#arr)"/>
+    <text x="476" y="288" font-size="16" fill="#385b7b">内腔は狭窄しうる</text>
+  </svg>
+  </div>
+  <p class="caption">模式図。実際の解離形態は多様で、intimal flap・double lumen・壁内血腫・紡錘状拡張・閉塞などの組合せをとります。</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>MRAが主に見ているもの</h3>
+      <p>3D-TOF MRAは流入してくる未飽和血液の<strong>inflow effect</strong>を利用して、主に「血流信号を持つ内腔」を描出します。低流速、乱流、面内流、閉塞・血栓化では信号低下が生じます。</p>
+    </div>
+    <div class="card">
+      <h3>BPASが主に見ているもの</h3>
+      <p>BPASはheavy T2で脳槽内CSFを強い高信号にし、その中にある椎骨脳底動脈を<strong>低信号のシルエット</strong>として抜き出すため、流れが乏しくても外形を観察できます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <h2>2. なぜ「フォロー」でBPASを撮るのか</h2>
+
+  <h3>理由1：MRAの改善 ＝ 血管壁の治癒、とは限らない</h3>
+  <p>解離の経過中には、真腔の再開通や血流改善によってMRA像が改善しても、外側の紡錘状拡張が残存することがあります。逆に、内腔の形がほぼ変化しなくても外径が増大することがあります。</p>
+  <div class="ok"><strong>フォローの問いを2つに分ける</strong><br>
+    ①「血液がどこまで流れているか？」→ MRA<br>
+    ②「解離した血管全体の外形がどう変わったか？」→ BPAS
+  </div>
+
+  <h3>理由2：血栓化・閉塞してMRAで見えない区間でも、外形を追える</h3>
+  <p>TOF-MRAでは閉塞部や高度低流速部は描出されません。しかしBPASは血流信号そのものを必要としないため、脳槽内でCSFに接する病変であれば、閉塞区間の外側輪郭を描出できることがあります。原著では、急性閉塞した解離性椎骨動脈で紡錘状外形を示した例が報告されています。</p>
+
+  <h3>理由3：低形成との鑑別に役立つ</h3>
+  <table>
+    <thead><tr><th>パターン</th><th>TOF-MRA</th><th>BPAS</th><th>考えやすい状態</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td>細い / 描出不良</td><td>外径も細い</td><td>先天的低形成を支持</td></tr>
+      <tr><td>B</td><td>細い / 閉塞様</td><td>外径は保たれる、または拡大</td><td>解離・血栓化など後天性の内腔障害を疑う手掛かり</td></tr>
+      <tr><td>C</td><td>不整狭窄</td><td>外形は比較的平滑</td><td>動脈硬化性病変を考える材料の一つ</td></tr>
+    </tbody>
+  </table>
+  <p class="mini">※これは「組合せの考え方」であり、単独所見で確定診断する表ではありません。解離、低形成、動脈硬化の鑑別には元画像・VWI・CTA/DSA・臨床経過を統合します。</p>
+
+  <h3>理由4：外形の縮小・残存・増大を時系列で比較できる</h3>
+  <p>2006年の連続MRI報告（未破裂急性椎骨動脈解離4例）では、MRAの内腔変化とBPASの外形変化が必ずしも同時に進まないことが示されました。紡錘状拡張の消失は治癒所見として扱われ、外形の持続的拡大は不安定性を示す可能性があると報告されています。ただし、症例数が非常に少ないため、BPAS単独で治療判断を行う根拠ではありません。</p>
+</section>
+
+<section id="principle">
+  <h2>3. BPASの撮像原理：heavy T2で「CSFを白く、血管を影にする」</h2>
+
+  <h3>3-1. 信号式から考える</h3>
+  <p>スピンエコー系を単純化すると、信号強度は概ね次式で考えられます。</p>
+  <div class="eq">S ≈ ρ · (1 − e<sup>−TR/T1</sup>) · e<sup>−TE/T2</sup></div>
+  <p><strong>TRを長く</strong>するとT1差の影響が小さくなり、<strong>TEを非常に長く</strong>するとT2の長い成分だけが残りやすくなります。CSFはT2が非常に長いため、長いTEでも信号を保ち、著明な高信号になります。一方、脳実質・血管壁などは相対的に信号が低下します。</p>
+
+  <div class="grid3">
+    <div class="card"><h4>CSF</h4><p>長いT2 → long TEでも信号が残る → <strong>高信号</strong></p></div>
+    <div class="card"><h4>血管/血管壁</h4><p>CSFよりT2が短い。さらに流れ・位相分散も加わり → <strong>低信号</strong></p></div>
+    <div class="card"><h4>結果</h4><p>明るいCSFの中に、椎骨脳底動脈が<strong>暗いシルエット</strong>として浮かぶ</p></div>
+  </div>
+
+  <h3>3-2. BPASは「血流を白くするMRA」と発想が逆</h3>
+  <div class="svgbox">
+  <svg viewBox="0 0 1000 320" width="100%" role="img" aria-label="TOF MRAとBPASの原理比較">
+    <rect x="15" y="18" width="460" height="280" rx="18" fill="#f6fbff" stroke="#cfddea"/>
+    <rect x="525" y="18" width="460" height="280" rx="18" fill="#f6fbff" stroke="#cfddea"/>
+    <text x="185" y="55" font-size="24" font-weight="700" fill="#173e67">TOF-MRA</text>
+    <text x="690" y="55" font-size="24" font-weight="700" fill="#173e67">BPAS</text>
+
+    <rect x="65" y="100" width="355" height="125" rx="18" fill="#20324a"/>
+    <path d="M85 162 C150 112,190 214,250 160 C310 108,342 208,402 158" fill="none" stroke="#f8fbff" stroke-width="20"/>
+    <text x="120" y="260" font-size="16" fill="#395c79">流れる血液の信号を高くする</text>
+
+    <rect x="575" y="100" width="355" height="125" rx="18" fill="#dff6ff"/>
+    <path d="M595 162 C660 112,700 214,760 160 C820 108,852 208,912 158" fill="none" stroke="#20324a" stroke-width="20"/>
+    <text x="625" y="260" font-size="16" fill="#395c79">CSFを高信号にし血管外形を影として見る</text>
+  </svg>
+  </div>
+
+  <h3>3-3. 白黒反転は「見やすくするだけ」</h3>
+  <p>原法では撮像後にgray-scale reversal（ネガポジ反転）を行います。元画像では「CSF＝白、血管＝黒」ですが、反転すると「血管＝白、背景＝黒」となり、MRAに似た外観になります。</p>
+  <div class="note"><strong>重要：</strong>白黒反転で新しい情報が生まれるわけではありません。診断情報は、撮像時に得られたCSFと血管外形のコントラストそのものです。</div>
+
+  <h3>3-4. BPASは厳密には「血管壁MRI」ではない</h3>
+  <p>BPASが直接描くのは、血管壁内部の層構造ではなく、<strong>脳槽内CSFとの境界として見える血管全体の外側輪郭</strong>です。壁内血腫、intimal flap、double lumenそのものを詳細に描く目的なら、T1強調black-blood系や高分解能VWI（vessel wall imaging）の方が適しています。</p>
+</section>
+
+<section id="geometry">
+  <h2>4. なぜ「斜台に平行な厚い冠状断」なのか</h2>
+  <p>椎骨動脈V4～脳底動脈は、橋前槽・延髄前外側のCSF腔を走行し、正中矢状断で見ると概ね斜台後面に沿う方向に配置されます。そこで、<strong>斜台に平行なoblique coronalの厚い1スライス</strong>を置くと、左右VAからBAまでを一枚に収めやすくなります。</p>
+
+  <div class="svgbox">
+  <svg viewBox="0 0 980 410" width="100%" role="img" aria-label="BPASのスライス位置">
+    <rect x="10" y="10" width="960" height="390" rx="18" fill="#f7fbff"/>
+    <text x="52" y="52" font-size="20" font-weight="700" fill="#173e67">正中矢状断での位置決めイメージ</text>
+    <path d="M135 330 C180 245,190 165,230 95" stroke="#b9a582" stroke-width="28" fill="none" stroke-linecap="round"/>
+    <text x="80" y="360" font-size="16" fill="#786742">斜台</text>
+    <path d="M310 320 C330 270,345 215,360 155 C372 115,390 100,430 92" stroke="#284e74" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <text x="338" y="350" font-size="16" fill="#284e74">VA → BA</text>
+    <polygon points="238,340 285,350 455,88 410,75" fill="#36a4b6" opacity=".24" stroke="#168294" stroke-width="3"/>
+    <text x="500" y="125" font-size="18" fill="#146b7a">20 mm前後の厚いスライス/スラブ</text>
+    <line x1="485" y1="132" x2="418" y2="145" stroke="#146b7a" stroke-width="2"/>
+    <text x="500" y="170" font-size="17" fill="#425e79">斜台にほぼ平行</text>
+    <text x="500" y="205" font-size="17" fill="#425e79">脳槽内のVA〜BAを1枚に収める</text>
+    <text x="500" y="240" font-size="17" fill="#425e79">周囲CSFが「天然の背景」になる</text>
+  </svg>
+  </div>
+
+  <h3>厚ければ厚いほど良いわけではない</h3>
+  <p>厚いスライスは血管全体を一枚に入れやすい反面、周囲構造との部分容積が増え、外形が不鮮明になります。SiemensのBPAS技術資料でも、20→30→40 mmと厚くすると血管外観が不明瞭になる点が示されています。したがって、<strong>必要範囲を確実に含める最小限の厚さ</strong>にするのが理にかないます。</p>
+</section>
+
+<section id="compare">
+  <h2>5. MRA・BPAS・VWIは何を見ているか</h2>
+  <table class="compare">
+    <thead>
+      <tr><th>手法</th><th>主に見えるもの</th><th>強み</th><th>弱み</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>3D-TOF MRA</strong></td>
+        <td>血流信号を持つ内腔</td>
+        <td>狭窄、閉塞、再開通、血流路の全体像</td>
+        <td>slow flow・乱流・面内流で偽狭窄/信号欠損。外径は分かりにくい</td>
+      </tr>
+      <tr>
+        <td><strong>BPAS</strong></td>
+        <td>CSFに接する血管の外側輪郭</td>
+        <td>外径、紡錘状拡張、閉塞区間の形、低形成との比較</td>
+        <td>壁内血腫やflapを直接評価しにくい。主に頭蓋内VA-BAに限定</td>
+      </tr>
+      <tr>
+        <td><strong>HR-VWI / black-blood</strong></td>
+        <td>血管壁・内膜フラップ・壁内血腫</td>
+        <td>解離そのものの壁病変を直接評価しやすい</td>
+        <td>撮像時間、空間分解能、アーチファクト、装置/プロトコル依存</td>
+      </tr>
+      <tr>
+        <td><strong>CTA / DSA</strong></td>
+        <td>造影された内腔（DSAは高時間・空間分解能）</td>
+        <td>形態評価、治療計画。DSAは詳細な血行動態</td>
+        <td>被ばく・造影剤・侵襲性（特にDSA）。外壁そのものは直接見ない</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="key">
+    <b>解離の理解には「3層」で考えると整理しやすい</b>
+    <p><span class="pill">Flow</span> MRA：血液が流れるスペース<br>
+       <span class="pill">Contour</span> BPAS：血管全体の外形<br>
+       <span class="pill">Wall</span> VWI：血管壁内部の病変</p>
+  </div>
+</section>
+
+<section id="follow">
+  <h2>6. フォロー画像では何を比較するか</h2>
+  <div class="step"><div class="num">1</div><div><strong>同じ側・同じ区間の外径</strong><br>紡錘状拡張が縮小、残存、増大していないか。前回BPASと直接比較する。</div></div>
+  <div class="step"><div class="num">2</div><div><strong>MRAの内腔と並べる</strong><br>再開通・狭窄改善・閉塞継続など、内腔変化が外径変化と一致しているかを見る。</div></div>
+  <div class="step"><div class="num">3</div><div><strong>左右差と正常部径を基準にする</strong><br>一枚の見た目だけでなく、近位/遠位の正常部、対側VAとの連続性・径差を見る。</div></div>
+  <div class="step"><div class="num">4</div><div><strong>壁病変の疑問はVWIへ</strong><br>壁内血腫の吸収、flap、double lumen、壁肥厚などはBPASだけでは答えられない。必要に応じてVWIと統合する。</div></div>
+
+  <h3>典型的な「組合せ」の読み方</h3>
+  <table>
+    <thead><tr><th>MRA</th><th>BPAS</th><th>考え方</th></tr></thead>
+    <tbody>
+      <tr><td>内腔狭窄/閉塞</td><td>外径拡大</td><td>解離に伴う壁内変化・血栓化を強く示唆する組合せの一つ</td></tr>
+      <tr><td>内腔が改善</td><td>外径拡大が残る</td><td>再開通しても外形の異常はまだ残っている可能性</td></tr>
+      <tr><td>内腔が改善/正常化</td><td>外径も縮小/正常化</td><td>形態学的な治癒過程を支持</td></tr>
+      <tr><td>内腔ほぼ不変</td><td>外径が増大</td><td>外側形態の進行を示す可能性。追加評価が必要</td></tr>
+    </tbody>
+  </table>
+
+  <div class="warn"><strong>BPASだけで「安定/不安定」を決めない。</strong> 2006年の報告は4例の小規模症例系列です。現在はHR-VWIなど壁情報を直接評価できる方法もあり、臨床症状・DWI・MRA・VWI・CTA/DSAなどを統合して判断します。</div>
+</section>
+
+<section id="protocol">
+  <h2>7. 撮像条件：何を実現すればBPASになるのか</h2>
+  <p>BPASは特定メーカーの固有シーケンス名ではなく、<strong>「脳槽内CSFを強く高信号化し、椎骨脳底動脈の外形を厚い斜位冠状断に収める」撮像コンセプト</strong>です。</p>
+
+  <h3>原著（GE SIGNA Horizon LX 1.0T）の代表条件</h3>
+  <table>
+    <tbody>
+      <tr><th>Sequence</th><td>Fast Spin Echo</td></tr>
+      <tr><th>Slice</th><td>20 mm厚、斜台に平行なcoronal section</td></tr>
+      <tr><th>TR / TE</th><td>6000 / 250 ms</td></tr>
+      <tr><th>NEX</th><td>2</td></tr>
+      <tr><th>FOV</th><td>190 × 190 mm</td></tr>
+      <tr><th>Matrix</th><td>384 × 224</td></tr>
+      <tr><th>Scan time</th><td>1分36秒</td></tr>
+      <tr><th>Post-process</th><td>Gray-scale reversal</td></tr>
+    </tbody>
+  </table>
+  <p class="mini">NagahataらのAJNR報告。現在の1.5T/3T装置にこの数値をそのまま移植するのではなく、「heavy T2・十分なCSF/血管コントラスト・必要最小限のslab厚」という目的を優先して最適化します。</p>
+
+  <h3>現在の実務での考え方</h3>
+  <ul>
+    <li><strong>2D SSFSE/HASTE系</strong>：1枚の厚いスライスを高速撮像しやすい。動きに比較的強く、簡便。</li>
+    <li><strong>通常FSE/TSE系</strong>：heavy T2を作りやすく、原法に近い。</li>
+    <li><strong>3D TSE系（例：SPACE等）</strong>：薄い元画像からthin-MIP等の再構成ができる。ただし原法の「厚い1枚」とは撮像設計が異なる。</li>
+    <li><strong>GE系での発想</strong>：SSFSE/FSEをheavy T2化し、必要に応じてFast Recovery系の縦磁化回復パルスを利用するMR hydrography的設計が考えられる。</li>
+  </ul>
+
+  <h3>パラメータを動かすと何が起こるか</h3>
+  <table>
+    <thead><tr><th>調整</th><th>期待する効果</th><th>代償・注意</th></tr></thead>
+    <tbody>
+      <tr><td>TEを長くする</td><td>CSF優位のheavy T2化</td><td>SNR低下、FSE blur増加</td></tr>
+      <tr><td>TRを長くする</td><td>T1依存を減らしCSFを十分回復</td><td>通常FSEでは時間延長</td></tr>
+      <tr><td>slab/sliceを厚くする</td><td>VA〜BAを一枚に収めやすい</td><td>部分容積が増えて外形がぼやける</td></tr>
+      <tr><td>分解能を上げる</td><td>輪郭の視認性向上</td><td>SNR/時間とのトレードオフ</td></tr>
+      <tr><td>NEXを上げる</td><td>SNR向上</td><td>撮像時間延長</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="limits">
+  <h2>8. BPASの限界・落とし穴</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>頭蓋外VAには弱い</h3>
+      <p>BPASのコントラスト源は「CSFと血管の境界」です。CSFに囲まれない頭蓋外椎骨動脈は同じ原理で見えません。病変がV1〜V3主体なら別の撮像法が必要です。</p>
+    </div>
+    <div class="card">
+      <h3>壁内血腫を直接見ない</h3>
+      <p>外形が見えても、その内部が真腔・偽腔・血栓・壁内血腫のどれで構成されるかまではBPAS単独では確定できません。</p>
+    </div>
+    <div class="card">
+      <h3>厚いスライスの部分容積</h3>
+      <p>蛇行、近接血管、脳神経、脳実質が重なり、輪郭が不明瞭になることがあります。再現性のため前回と同じ角度・厚さに合わせることが重要です。</p>
+    </div>
+    <div class="card">
+      <h3>「外径が正常」でも解離を否定しない</h3>
+      <p>すべての解離が外向きに拡張するわけではありません。病期や解離方向、血栓化の程度により外形変化が乏しい場合があります。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>9. 技師としての要点を1枚で</h2>
+  <div class="key">
+    <p><strong>① 病態：</strong>解離では「内腔」と「外径」が別々に変わりうる。</p>
+    <p><strong>② MRA：</strong>流れている内腔を評価。slow flow/閉塞で見えにくい。</p>
+    <p><strong>③ BPAS：</strong>heavy T2でCSFを白くし、脳槽内VA-BAの外形を低信号シルエットとして描く。</p>
+    <p><strong>④ フォロー：</strong>MRAで再開通を見ても、BPASで外径拡張が残っていないか確認する。</p>
+    <p><strong>⑤ 位置決め：</strong>斜台にほぼ平行、VA〜BAを含む20 mm前後の厚いoblique coronal。</p>
+    <p><strong>⑥ 限界：</strong>BPASはVWIではない。壁内血腫・flapはHR-VWI等で補う。</p>
+  </div>
+</section>
+
+<section>
+  <h2>参考文献・Web資料</h2>
+  <ol>
+    <li>Nagahata M, et al. <em>Basi-parallel anatomical scanning (BPAS) MRI: a simple MRI technique for demonstrating the surface appearance of the intracranial vertebrobasilar artery.</em> Nippon Acta Radiologica. 2003;63:582-584. PMID: 14699869. <a href="https://pubmed.ncbi.nlm.nih.gov/14699869/">PubMed</a></li>
+    <li>Nagahata M, et al. <em>Surface appearance of the vertebrobasilar artery revealed on basiparallel anatomic scanning (BPAS)-MR imaging: its role for brain MR examination.</em> AJNR Am J Neuroradiol. 2005;26:2508-2513. PMID: 16286392. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7976219/">PMC full text</a></li>
+    <li>Nagahata M, et al. <em>Morphological Change of Unruptured Vertebral Artery Dissection on Serial MR Examinations: Evaluation of the Arterial Outer Contour by BPAS-MRI.</em> Interv Neuroradiol. 2006;12(Suppl 1):133-136. PMID: 20569618. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3387940/">PMC full text</a></li>
+    <li>Takada H, et al. <em>Diagnosis of Vertebral Artery Dissection by Basi-parallel Anatomical Scanning (BPAS) MRI.</em> Interv Neuroradiol. 2006;12(Suppl 1):129-132. PMID: 20569617. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3387939/">PMC full text</a></li>
+    <li>Katsuno M, Kobayashi S. <em>Diagnosis of Vertebral Artery Dissection with Basiparallel Anatomical Scanning Magnetic Resonance Imaging.</em> J Nippon Med Sch. 2011;78:367-373. PMID: 22197869. <a href="https://pubmed.ncbi.nlm.nih.gov/22197869/">PubMed</a></li>
+    <li>Kim et al. <em>Basi-parallel anatomical scanning MRI can improve discrimination of vertebral artery dissection from atherosclerosis and hypoplasia.</em> J Neurol Sci. 2012. PMID: 22906594. <a href="https://pubmed.ncbi.nlm.nih.gov/22906594/">PubMed</a></li>
+    <li>Lee et al. <em>Changes in Vertebrobasilar Artery Dissection Visible with High-Resolution Vessel Wall Imaging: A Serial Follow-Up Study.</em> 2023. PMID: 38066826. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10706611/">PMC full text</a></li>
+    <li>Siemens Healthineers Academy. <em>MRIノート-BPAS撮像</em>. BPASの原理、20 mm程度の撮像範囲、斜台平行の位置決め、2D HASTE/3D SPACE例。<a href="https://academy.siemens-healthineers.com/_/ja-jp/mr-faq-bpas-ja/">資料ページ</a></li>
+    <li>臨床画像 2023;39(13). <em>MR cisternographyとBPAS</em> — MR hydrography、SSFSE、2〜3 cm厚の2D single-slice BPASに関する解説。<a href="https://webview.isho.jp/journal/detail/abs/10.18885/CI.0000001258">医書.jp</a></li>
+  </ol>
+  <p class="mini">作成時点：2026-09-17。本文は教育目的の技術解説です。個々の患者の診断・治療判断は施設のプロトコルおよび専門医の評価に従ってください。</p>
+</section>
+
+<footer>
+  <p>© Educational note — BPAS-MRI / Vertebral Artery Dissection. 外部ライブラリ不使用の単一HTMLファイル。</p>
+</footer>
+</main>
+</body>
+</html>

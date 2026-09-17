@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRI SNRトレードオフ実践ガイド｜臨床場面から考えるパラメータ最適化</title>
+<style>
+:root{
+  --bg:#f4f7fb; --panel:#ffffff; --ink:#162033; --muted:#5b667a;
+  --blue:#1d4ed8; --blue2:#2563eb; --cyan:#0891b2; --green:#059669;
+  --amber:#d97706; --red:#dc2626; --purple:#7c3aed; --line:#dbe3ef;
+  --softblue:#eef4ff; --softgreen:#ecfdf5; --softamber:#fff7ed; --softred:#fff1f2;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Sans","Yu Gothic UI",sans-serif;
+  line-height:1.75;
+}
+header{
+  background:linear-gradient(135deg,#0f172a 0%,#163a7a 58%,#0e7490 100%);
+  color:white;padding:52px 20px 42px;
+}
+.wrap{max-width:1120px;margin:auto}
+.kicker{font-weight:800;letter-spacing:.12em;font-size:.82rem;color:#bae6fd}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.18;margin:.35rem 0 1rem}
+.subtitle{max-width:900px;font-size:1.08rem;color:#dbeafe}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:5px 10px;border-radius:999px;font-size:.86rem}
+main{padding:26px 18px 70px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;
+  box-shadow:var(--shadow);padding:24px;margin:18px 0;
+}
+h2{font-size:1.65rem;margin:.2rem 0 1rem}
+h3{font-size:1.18rem;margin:1.3rem 0 .5rem}
+h4{margin:1rem 0 .4rem}
+p{margin:.65rem 0}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.note,.warn,.good,.key{
+  padding:15px 17px;border-radius:13px;margin:14px 0;border-left:5px solid;
+}
+.note{background:var(--softblue);border-color:var(--blue)}
+.warn{background:var(--softamber);border-color:var(--amber)}
+.good{background:var(--softgreen);border-color:var(--green)}
+.key{background:#f5f3ff;border-color:var(--purple)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px}
+.mini{
+  border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff;
+}
+.mini .tag{font-size:.76rem;font-weight:800;color:white;padding:3px 8px;border-radius:999px;display:inline-block}
+.tag.res{background:var(--red)} .tag.time{background:var(--amber)} .tag.art{background:var(--cyan)}
+.tag.con{background:var(--purple)} .tag.hw{background:var(--green)}
+.eq{
+  font-family:"SFMono-Regular",Consolas,monospace;background:#0f172a;color:#e2e8f0;
+  border-radius:14px;padding:16px;overflow:auto;margin:12px 0;line-height:1.65;
+}
+.bigEq{text-align:center;font-size:1.15rem}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:left;vertical-align:top}
+th{background:#f8fafc;position:sticky;top:0;z-index:1}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
+.up{color:var(--green);font-weight:800}.down{color:var(--red);font-weight:800}.neutral{color:var(--muted);font-weight:700}
+.metric{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0
+}
+.metric>div{padding:13px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}
+.metric b{display:block;font-size:1.25rem}
+@media(max-width:720px){.metric{grid-template-columns:1fr 1fr}th{position:static}}
+.flow{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:stretch;margin:16px 0
+}
+.step{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:.9rem}
+.step b{color:var(--blue);display:block;margin-bottom:3px}
+@media(max-width:850px){.flow{grid-template-columns:1fr}}
+.scenario{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.scenario:first-child{border-top:0;padding-top:0}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:.78rem;font-weight:700;margin-right:5px}
+.logic{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin:12px 0}
+.logic .box{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdff}
+.arrow{font-size:1.3rem;color:var(--blue);font-weight:900}
+@media(max-width:800px){.logic{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}}
+details{border:1px solid var(--line);border-radius:12px;margin:9px 0;background:white}
+summary{cursor:pointer;font-weight:800;padding:13px 15px}
+details>div{padding:0 15px 15px}
+.calc{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px
+}
+@media(max-width:780px){.calc{grid-template-columns:1fr}}
+.calcbox{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfdff}
+label{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:8px 0;font-size:.92rem}
+input{width:100%;padding:8px;border:1px solid #b9c4d3;border-radius:8px;font-size:1rem}
+button{background:var(--blue);color:white;border:0;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}
+.result{font-size:1.35rem;font-weight:900;color:var(--blue);margin-top:10px}
+.small{font-size:.86rem;color:var(--muted)}
+.svgbox{background:#f8fafc;border:1px solid var(--line);border-radius:15px;padding:12px;margin:14px 0}
+footer{color:var(--muted);font-size:.88rem;padding-top:15px}
+.ref li{margin:.55rem 0}
+.sticky-nav{display:flex;gap:8px;overflow:auto;padding:8px 0 2px}
+.sticky-nav a{white-space:nowrap;background:white;border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:.86rem}
+hr{border:none;border-top:1px solid var(--line);margin:22px 0}
+code{background:#eef2f7;padding:2px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="kicker">MRI PROTOCOL DESIGN / SNR</div>
+    <h1>MRIでSNRを上げると、何を代償するのか</h1>
+    <p class="subtitle">
+      臨床で起こる「画像がザラつく」「薄切りで信号が足りない」「高b値DWIが苦しい」などの場面から、
+      SNR・空間分解能・撮像時間・コントラスト・アーチファクトのトレードオフを、数式と判断手順で整理する実践教材。
+    </p>
+    <div class="badges">
+      <span class="badge">初学者→実務者</span><span class="badge">数式あり</span><span class="badge">臨床シナリオ</span>
+      <span class="badge">GE装置での考え方も補足</span><span class="badge">完全オフラインHTML</span>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <nav class="sticky-nav">
+    <a href="#core">本質</a><a href="#formula">数式</a><a href="#levers">パラメータ表</a>
+    <a href="#workflow">判断フロー</a><a href="#scenarios">臨床シナリオ</a>
+    <a href="#calc">計算機</a><a href="#ge">GE補足</a><a href="#refs">参考文献</a>
+  </nav>
+
+  <section class="card" id="core">
+    <h2>1. まず本質：SNRはMRIの「通貨」</h2>
+    <p>
+      MRIでは、同じ装置・同じコイル・同じ組織を撮るなら、SNRを大きくする最も基本的な方法は
+      <strong>1ボクセルに入るスピン数を増やす</strong>か、<strong>測定を長くしてノイズを平均する</strong>ことです。
+      そのためSNRは「空間分解能」と「撮像時間」を購入するための通貨のように扱えます。
+    </p>
+    <div class="key">
+      <b>最重要：</b>最終目的は「SNR最大化」ではなく、<strong>診断タスクに必要なCNR・空間分解能・時間・アーチファクト耐性を満たすこと</strong>。
+      SNRだけを上げると、部分容積効果やコントラスト低下で病変検出能を逆に落とす場合があります。
+    </div>
+
+    <div class="svgbox">
+      <svg viewBox="0 0 900 280" width="100%" role="img" aria-label="SNR tradeoff diagram">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1">
+            <stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#0891b2"/>
+          </linearGradient>
+        </defs>
+        <circle cx="450" cy="140" r="72" fill="url(#g1)"/>
+        <text x="450" y="133" text-anchor="middle" fill="white" font-size="26" font-weight="800">SNR</text>
+        <text x="450" y="160" text-anchor="middle" fill="#dbeafe" font-size="16">画像の通貨</text>
+
+        <line x1="380" y1="115" x2="190" y2="70" stroke="#94a3b8" stroke-width="3"/>
+        <line x1="520" y1="115" x2="710" y2="70" stroke="#94a3b8" stroke-width="3"/>
+        <line x1="380" y1="165" x2="190" y2="215" stroke="#94a3b8" stroke-width="3"/>
+        <line x1="520" y1="165" x2="710" y2="215" stroke="#94a3b8" stroke-width="3"/>
+
+        <rect x="70" y="35" rx="14" width="235" height="72" fill="#fff" stroke="#cbd5e1"/>
+        <text x="188" y="65" text-anchor="middle" font-size="18" font-weight="800" fill="#dc2626">空間分解能</text>
+        <text x="188" y="88" text-anchor="middle" font-size="14" fill="#475569">大きいボクセル → SNR↑</text>
+
+        <rect x="595" y="35" rx="14" width="235" height="72" fill="#fff" stroke="#cbd5e1"/>
+        <text x="712" y="65" text-anchor="middle" font-size="18" font-weight="800" fill="#d97706">撮像時間</text>
+        <text x="712" y="88" text-anchor="middle" font-size="14" fill="#475569">平均回数↑ → SNR↑</text>
+
+        <rect x="70" y="180" rx="14" width="235" height="72" fill="#fff" stroke="#cbd5e1"/>
+        <text x="188" y="210" text-anchor="middle" font-size="18" font-weight="800" fill="#7c3aed">コントラスト</text>
+        <text x="188" y="233" text-anchor="middle" font-size="14" fill="#475569">TR/TE/FA変更の代償</text>
+
+        <rect x="595" y="180" rx="14" width="235" height="72" fill="#fff" stroke="#cbd5e1"/>
+        <text x="712" y="210" text-anchor="middle" font-size="18" font-weight="800" fill="#0891b2">アーチファクト</text>
+        <text x="712" y="233" text-anchor="middle" font-size="14" fill="#475569">BW・PI・EPIなど</text>
+      </svg>
+    </div>
+  </section>
+
+  <section class="card" id="formula">
+    <h2>2. SNRの基本式を「臨床操作」に翻訳する</h2>
+    <p>単純化した関係式として、固定した磁場強度・コイル・シーケンス条件のもとでは次を考えると理解しやすくなります。</p>
+    <div class="eq bigEq">
+SNR ∝ (Δx × Δy × Δz) × √NEX × 1/√BW × sequence_factor
+    </div>
+    <p>
+      <code>Δx × Δy × Δz</code> はボクセル体積、<code>NEX</code> は平均回数、
+      <code>BW</code> は受信帯域幅です。sequence factorにはTR・TE・flip angle・T1/T2/T2*・拡散減衰などが入ります。
+    </p>
+    <div class="eq">
+Δx = FOVx / Nx
+Δy = FOVy / Ny
+
+したがって
+
+Voxel volume = (FOVx/Nx) × (FOVy/Ny) × slice thickness
+    </div>
+
+    <div class="metric">
+      <div><span>Slice 3→4 mm</span><b>約1.33× SNR</b><small>他条件一定</small></div>
+      <div><span>NEX 1→2</span><b>約1.41× SNR</b><small>時間は約2倍</small></div>
+      <div><span>BW 250→125</span><b>約1.41× SNR</b><small>BW半分の理想近似</small></div>
+      <div><span>NEX 1→4</span><b>2.0× SNR</b><small>時間は約4倍</small></div>
+    </div>
+
+    <div class="warn">
+      <b>「SNRを2倍にしたいからNEXを2倍」は誤り。</b>
+      NEXによるSNRは平方根則なので、SNRを2倍にするには理想的にはNEXを4倍にする必要があります。
+      一方、ボクセル体積はSNRにほぼ一次比例するため、空間分解能を少し緩める方が時間効率は高いことがあります。
+    </div>
+
+    <h3>TRとTEは「SNRノブ」である前に「コントラストノブ」</h3>
+    <p>単純なspin echoの信号を概念的に書くと：</p>
+    <div class="eq bigEq">
+S ≈ ρ × (1 − e<sup>−TR/T1</sup>) × e<sup>−TE/T2</sup>
+    </div>
+    <p>
+      TRを延ばすと縦磁化がより回復するため信号は増えますが、撮像時間が延び、T1強調は弱くなります。
+      TEを短くすると横磁化減衰前に信号を読むため信号は増えますが、T2/T2*強調を弱めます。
+      つまり<strong>TR/TEによるSNR改善は、コントラストを同時に変えてしまう</strong>のが重要です。
+    </p>
+  </section>
+
+  <section class="card" id="levers">
+    <h2>3. SNRを上げる方法と「支払う代償」一覧</h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>操作</th><th>SNR</th><th>主な代償</th><th>物理的理由</th><th>臨床上の注意</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><b>スライス厚 ↑</b></td>
+          <td class="up">↑ ほぼ比例</td>
+          <td>through-plane分解能↓、部分容積↑</td>
+          <td>1ボクセル内のプロトン数が増える</td>
+          <td>小病変・薄い靱帯・神経・軟骨では代償が大きい</td>
+        </tr>
+        <tr>
+          <td><b>FOV ↑</b>（matrix固定）</td>
+          <td class="up">↑</td>
+          <td>in-plane分解能↓</td>
+          <td>1画素あたりの面積が増える</td>
+          <td>FOVを広げた分matrixも増やすとSNR改善は相殺されやすい</td>
+        </tr>
+        <tr>
+          <td><b>Matrix ↓</b></td>
+          <td class="up">↑</td>
+          <td>in-plane分解能↓</td>
+          <td>1画素が大きくなり信号が増える</td>
+          <td>phase matrix低下は単純シーケンスでは時間短縮にも寄与</td>
+        </tr>
+        <tr>
+          <td><b>NEX/NSA ↑</b></td>
+          <td class="up">↑ √NEX</td>
+          <td>撮像時間↑、体動機会↑</td>
+          <td>ランダムノイズは平均で√Nだけ減る</td>
+          <td>周期的運動や位置ずれは平均しても消えないことがある</td>
+        </tr>
+        <tr>
+          <td><b>Receiver BW ↓</b></td>
+          <td class="up">↑ ≈1/√BW</td>
+          <td>chemical shift↑、読出し時間↑、最小TE延長、歪み増加</td>
+          <td>受信するノイズ帯域が狭くなる</td>
+          <td>金属・EPI・susceptibilityが問題なら逆にBW↑が重要</td>
+        </tr>
+        <tr>
+          <td><b>TR ↑</b></td>
+          <td class="up">↑（飽和が減る）</td>
+          <td>時間↑、T1 contrast↓</td>
+          <td>縦磁化がより回復する</td>
+          <td>TR≫T1では追加SNRの効率が急に悪化</td>
+        </tr>
+        <tr>
+          <td><b>TE ↓</b></td>
+          <td class="up">↑</td>
+          <td>T2/T2* contrast↓</td>
+          <td>横磁化減衰前に読む</td>
+          <td>DWIでは短TEはSNR・EPI歪みの両方に有利なことが多い</td>
+        </tr>
+        <tr>
+          <td><b>Parallel imaging R ↓</b></td>
+          <td class="up">↑</td>
+          <td>時間↑、echo trainが長くなる場合あり</td>
+          <td>SNR<sub>PI</sub>≈SNR<sub>full</sub>/(g√R)</td>
+          <td>高Rではg-factor noiseが局所的に強くなる</td>
+        </tr>
+        <tr>
+          <td><b>Partial Fourier fraction ↑</b></td>
+          <td class="up">↑ / 再構成安定性↑</td>
+          <td>時間↑またはTE↑</td>
+          <td>実測するk-space量を増やす</td>
+          <td>PF低下はSNRだけでなく位相誤差・blurにも関係</td>
+        </tr>
+        <tr>
+          <td><b>最適なsurface/array coil</b></td>
+          <td class="up">↑</td>
+          <td>範囲制限、位置依存性</td>
+          <td>受信感度↑、対象までの距離↓</td>
+          <td>「撮像パラメータを犠牲にしない」最優先の改善策</td>
+        </tr>
+        <tr>
+          <td><b>B0 ↑（例 1.5T→3T）</b></td>
+          <td class="up">↑</td>
+          <td>B0/B1不均一、susceptibility、SAR等</td>
+          <td>平衡磁化・受信感度が増える</td>
+          <td>SNR増分を高分解能や短時間化へ再配分できる</td>
+        </tr>
+        <tr>
+          <td><b>DL reconstruction / denoising</b></td>
+          <td class="up">見かけのSNR↑</td>
+          <td>再構成依存、texture/微細構造の評価に注意</td>
+          <td>raw dataまたは画像からnoise/ringingを抑制</td>
+          <td>従来のSNR式だけでは画質を評価できない</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card" id="workflow">
+    <h2>4. 臨床での「考え方」を再現する5ステップ</h2>
+    <p>
+      ここでは内部的な思考の開示ではなく、誰でも再現できる<strong>明示的な臨床判断フレーム</strong>として整理します。
+    </p>
+    <div class="flow">
+      <div class="step"><b>① 何が不足？</b>SNR不足なのか、CNR不足なのか、blurなのか、motionなのかを分離</div>
+      <div class="step"><b>② 守るものは？</b>分解能・contrast・時間・breath-hold・歪みの優先順位</div>
+      <div class="step"><b>③ 無償策から</b>coil、positioning、shimming、recon設定を先に確認</div>
+      <div class="step"><b>④ 最安の代償</b>その診断目的で最も影響の少ない要素を少しだけ支払う</div>
+      <div class="step"><b>⑤ 画像で再評価</b>SNRではなく病変視認性・artifact・coverageで評価</div>
+    </div>
+
+    <div class="good">
+      <b>実務的な優先順位：</b>
+      まずコイル・位置・shimming・reconstructionを最適化 →
+      次に「診断上余っている分解能」か「余っている時間」を使う →
+      最後にcontrastを変えるTR/TE/FAへ触る、という順が安全です。
+    </div>
+  </section>
+
+  <section class="card" id="scenarios">
+    <h2>5. 臨床で想定されるSNR不足：何を代償するか</h2>
+
+    <div class="scenario">
+      <h3>A. 膝・肩などMSK：高matrix＋薄切りPD/PD-FSでザラつく</h3>
+      <span class="pill">高空間分解能</span><span class="pill">small FOV</span><span class="pill">脂肪抑制</span>
+      <div class="logic">
+        <div class="box"><b>原因</b><br>small voxel＋fat-satで信号が少ない</div><div class="arrow">→</div>
+        <div class="box"><b>第一候補</b><br>coil密着、DL recon、NEXを少し増やす</div><div class="arrow">→</div>
+        <div class="box"><b>支払うもの</b><br>主に撮像時間</div>
+      </div>
+      <p>
+        靱帯・半月板・腱板のような細構造では、先にスライス厚やmatrixを落とすと診断目的そのものを傷つけます。
+        患者が静止可能ならNEX増加は合理的です。ただしNEX 1→2でSNRは約1.41倍に対し時間は約2倍です。
+      </p>
+      <div class="note"><b>妥協点：</b>時間が厳しいなら、matrixを一段だけ落とす・phase FOVを最適化するなど「診断に不要な方向の分解能」を先に削る。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>B. 高b値DWI：b=1500–2000でSNRが足りない</h3>
+      <span class="pill">DWI</span><span class="pill">EPI</span><span class="pill">高b値</span>
+      <p>拡散信号は概念的に <code>S(b)=S0·e<sup>−bD</sup></code> で低下します。b値を上げるほど拡散contrastは増えますが、信号は指数関数的に減ります。</p>
+      <div class="eq">
+例：ADC = 0.8×10⁻³ mm²/s
+b 1000 → 1500 s/mm²
+
+S1500 / S1000
+= exp[-(1500−1000)×0.8×10⁻³]
+= exp(-0.4)
+≈ 0.67
+
+→ 信号は約33%低下
+→ NEXだけで元のSNRに戻すなら (1/0.67)² ≈ 2.23倍の平均回数が必要
+      </div>
+      <p>
+        対応はNEX増加、voxelを少し大きくする、TEを可能な範囲で短縮することです。
+        ただしEPIではBWを下げてSNRを稼ぐと、susceptibilityによる歪みを悪化させる可能性があるため慎重です。
+      </p>
+      <div class="warn"><b>守るもの：</b>高b値そのものが診断contrastの目的なら、b値を下げてSNRを上げるのは「目的を変える」操作。まずTE・coil・NEX・voxel側で救済。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>C. 肝・上腹部の息止め3D T1 GRE：SNR不足だが時間を延ばせない</h3>
+      <span class="pill">breath-hold</span><span class="pill">dynamic</span><span class="pill">3D GRE</span>
+      <p>
+        息止め時間は上限が決まっているため、NEX増加は使いにくい場面です。この場合、SNR改善の代償は主に
+        <strong>空間分解能</strong>になります。matrixを少し下げる、slice/partitionを少し厚くするなどです。
+      </p>
+      <p>
+        一方、parallel imagingを弱めるとSNRは上がりますが撮像時間も延びるため、breath-hold制約と衝突します。
+        DL reconstructionが利用可能なら、従来のresolution/time tradeoffを緩和する選択肢になります。
+      </p>
+      <div class="good"><b>優先：</b>breath-hold成功率を守る。長くしてmotionを増やすより、少し粗いが止まった画像の方が診断的であることが多い。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>D. 金属近傍：高BWで歪みを抑えたいがSNRが落ちる</h3>
+      <span class="pill">metal</span><span class="pill">high BW</span><span class="pill">susceptibility</span>
+      <p>
+        高BWはpixelあたりの周波数範囲を広げ、off-resonanceの位置ずれを小さくするため金属アーチファクト低減に有効です。
+        しかしnoise bandwidthも広がるためSNRは下がります。
+      </p>
+      <div class="logic">
+        <div class="box"><b>守る</b><br>高BW・歪み低減</div><div class="arrow">→</div>
+        <div class="box"><b>SNR救済</b><br>NEX↑ / slice厚↑ / voxel↑</div><div class="arrow">→</div>
+        <div class="box"><b>支払う</b><br>時間 or 分解能</div>
+      </div>
+      <div class="warn"><b>やってはいけない発想：</b>「SNRが低いからBWを下げる」。金属評価ではartifactが診断を破壊するので、本末転倒になりやすい。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>E. 内耳道・下垂体・眼窩：微細構造を保ちたいのにSNR不足</h3>
+      <span class="pill">微細構造</span><span class="pill">small FOV</span><span class="pill">thin slice</span>
+      <p>
+        この領域では空間分解能が目的そのものです。したがってスライス厚増加やmatrix低下の「価格」は高い。
+        最優先は専用/高密度coil、位置合わせ、NEX、3TのSNR利益、DL reconstructionです。
+      </p>
+      <div class="good"><b>考え方：</b>「分解能を売ってSNRを買わない」。代わりに時間・hardware・reconstructionで買う。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>F. 全脊椎・体格の大きい患者：全体にノイジー</h3>
+      <span class="pill">large patient</span><span class="pill">coverage</span>
+      <p>
+        体表から深部までの距離増加、coil感度低下、B1不均一などが重なります。まずcoil element選択・位置・centeringを確認。
+        FOVを広げるとmatrix固定ならvoxelが大きくなりSNRは上がりますが、分解能は低下します。
+      </p>
+      <div class="note"><b>重要：</b>「FOV↑＝必ずSNR↑」ではありません。FOVを広げた分matrixも増やしてpixel sizeを維持すれば、voxel体積のSNR利得はほぼ得られません。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>G. 3D isotropic（CUBEなど）：1 mm等方でSNR不足</h3>
+      <span class="pill">3D</span><span class="pill">isotropic</span><span class="pill">reformat</span>
+      <p>
+        1 mm³ voxelは高いMPR性能と引き換えに、1 voxelに入るスピン数が少なくなります。
+        SNRを戻すなら、isotropic voxelを1.0→1.2 mmに緩める、parallel accelerationを下げる、時間を増やす、DL reconを使う、が候補です。
+      </p>
+      <div class="eq">
+1.0×1.0×1.0 mm³ = 1.00 mm³
+1.2×1.2×1.2 mm³ = 1.728 mm³
+
+→ voxel volumeだけなら理想的には約1.73×のSNR
+→ ただし空間分解能は3方向すべて低下
+      </div>
+      <p>3Dは「各辺を少し緩めるだけで体積が立方で増える」ため、SNR回復効率が高い反面、微細構造の視認性を必ず再確認します。</p>
+    </div>
+
+    <div class="scenario">
+      <h3>H. MRCP・heavy T2：長TEでSNRが低い</h3>
+      <span class="pill">heavy T2</span><span class="pill">long TE</span>
+      <p>
+        TEを短縮すれば信号は増えますが、胆汁・膵液を強調するheavy T2の目的を損ないます。
+        この場合はTEをSNR目的だけで動かすのではなく、NEX、voxel、parallel acceleration、respiratory strategyで調整します。
+      </p>
+      <div class="key"><b>原則：</b>contrastを作っているパラメータは最後まで守る。そのcontrastが検査目的だからです。</div>
+    </div>
+
+    <div class="scenario">
+      <h3>I. T2/T2*強調画像：TEを短くすればSNR↑、でも病変contrastは？</h3>
+      <p>
+        T2=80 msの組織を単純化して考え、TE 100→80 msにすると：
+      </p>
+      <div class="eq">
+Signal ratio = exp(-80/80) / exp(-100/80)
+             = exp(0.25)
+             ≈ 1.28
+
+→ 約28%信号増加
+      </div>
+      <p>
+        しかしTEを20 ms短くしたことでT2 contrastも弱くなります。病変が「長T2で明るく見える」ことが重要なら、
+        SNR増加がCNR低下を補えない可能性があります。
+      </p>
+    </div>
+
+    <div class="scenario">
+      <h3>J. Parallel imagingを強くして時間は短いが、中央部がざらつく</h3>
+      <span class="pill">ASSET/SENSE</span><span class="pill">g-factor</span>
+      <p>parallel imagingの代表的なSNR関係は：</p>
+      <div class="eq bigEq">
+SNR<sub>PI</sub> = SNR<sub>full</sub> / (g × √R)
+      </div>
+      <p>
+        R=2なら√2によるSNR低下に加え、coil geometryによるg-factor noiseが加わります。
+        accelerationを下げればSNRは回復しますが、撮像時間が延びます。一方EPIではRを下げるとecho trainが長くなり、
+        歪みやT2* blurが悪化する場合があるため「SNRだけ見てRを下げる」のも危険です。
+      </p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. 「どの代償を選ぶか」早見表</h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>検査目的</th><th>守るべきもの</th><th>SNR不足時に支払い易いもの</th><th>避けたい操作</th></tr></thead>
+      <tbody>
+        <tr><td>微細解剖（IAC/下垂体/MSK）</td><td>空間分解能</td><td>時間、recon、hardware</td><td>安易な厚切り・matrix低下</td></tr>
+        <tr><td>息止め腹部</td><td>時間・motion-free</td><td>少量の空間分解能</td><td>NEX大幅増加</td></tr>
+        <tr><td>高b値DWI</td><td>diffusion contrast、短TE、EPI歪み</td><td>NEX、voxel</td><td>BW低下による歪み悪化</td></tr>
+        <tr><td>金属周囲</td><td>高BW、artifact抑制</td><td>NEX、voxel、時間</td><td>SNR目的のBW低下</td></tr>
+        <tr><td>heavy T2 / MRCP</td><td>長TE由来のcontrast</td><td>NEX、voxel</td><td>SNR目的だけのTE短縮</td></tr>
+        <tr><td>3D isotropic</td><td>MPRに必要な分解能</td><td>voxelを少しだけ緩める、時間</td><td>高Rのまま過剰高分解能</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card" id="calc">
+    <h2>7. 相対SNRミニ計算機</h2>
+    <p>
+      ボクセル体積・NEX・BW・parallel imagingの変化から、単純モデルで相対SNRを概算します。
+      <strong>TR/TE/flip angle、coil、g-factor変化、reconstructionは含めていません。</strong>
+    </p>
+    <div class="calc">
+      <div class="calcbox">
+        <h3>変更前</h3>
+        <label>FOV x [mm]<input id="fovx1" type="number" value="240"></label>
+        <label>FOV y [mm]<input id="fovy1" type="number" value="240"></label>
+        <label>Matrix x<input id="mx1" type="number" value="320"></label>
+        <label>Matrix y<input id="my1" type="number" value="256"></label>
+        <label>Slice [mm]<input id="sl1" type="number" step="0.1" value="3"></label>
+        <label>NEX<input id="nex1" type="number" step="0.1" value="1"></label>
+        <label>BW [任意同一単位]<input id="bw1" type="number" step="0.1" value="250"></label>
+        <label>PI factor R<input id="r1" type="number" step="0.1" value="1"></label>
+      </div>
+      <div class="calcbox">
+        <h3>変更後</h3>
+        <label>FOV x [mm]<input id="fovx2" type="number" value="240"></label>
+        <label>FOV y [mm]<input id="fovy2" type="number" value="240"></label>
+        <label>Matrix x<input id="mx2" type="number" value="320"></label>
+        <label>Matrix y<input id="my2" type="number" value="256"></label>
+        <label>Slice [mm]<input id="sl2" type="number" step="0.1" value="4"></label>
+        <label>NEX<input id="nex2" type="number" step="0.1" value="1"></label>
+        <label>BW [任意同一単位]<input id="bw2" type="number" step="0.1" value="250"></label>
+        <label>PI factor R<input id="r2" type="number" step="0.1" value="1"></label>
+      </div>
+    </div>
+    <button onclick="calcSNR()">相対SNRを計算</button>
+    <div id="result" class="result">変更後 / 変更前 = 1.33×（初期値）</div>
+    <p class="small">
+      使用式：SNR ∝ voxel volume × √NEX × 1/√BW × 1/√R。実際のparallel imagingではg-factorが加わるため、この計算より悪化することがあります。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>8. 数字で理解する「代償の重さ」</h2>
+    <details open>
+      <summary>例1：SNRを40%上げたい。NEXとslice厚、どちらが効率的？</summary>
+      <div>
+        <p><b>NEX：</b>1.4倍SNRに必要なNEX倍率 ≈ 1.4² = 1.96 → ほぼ2倍の撮像時間。</p>
+        <p><b>slice：</b>3.0→4.2 mmなら体積が1.4倍 → 理想的にはSNRも約1.4倍。ただしthrough-plane resolutionを40%犠牲。</p>
+        <p><b>結論：</b>時間を払うか、分解能を払うか。どちらが「安い」かは診断タスクで決まる。</p>
+      </div>
+    </details>
+    <details>
+      <summary>例2：BWを2倍にしたらSNRはどうなる？</summary>
+      <div>
+        <div class="eq">SNR₂ / SNR₁ ≈ √(BW₁/BW₂) = √(1/2) ≈ 0.707</div>
+        <p>約29%低下。ただしchemical shiftやoff-resonance歪みは改善し、minimum TE短縮が可能になることもあります。</p>
+      </div>
+    </details>
+    <details>
+      <summary>例3：TRを延ばせばいつでも効率よくSNRが増える？</summary>
+      <div>
+        <p>いいえ。縦磁化回復は指数関数なので、TRがT1より十分長い領域では飽和します。</p>
+        <div class="eq">
+T1 = 1000 ms と仮定
+TR 3000 ms: 1−e⁻³ ≈ 0.950
+TR 5000 ms: 1−e⁻⁵ ≈ 0.993
+
+信号は約4.5%増えるだけ
+しかし単純SEなら時間は約67%増える
+        </div>
+        <p>つまり長TR域では、SNR/時間効率が悪い。さらにT1 contrastも低下します。</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="card" id="ge">
+    <h2>9. GE装置で考えるときの対応づけ</h2>
+    <p>
+      GE SIGNA系で臨床プロトコルを考える場合も原理は同じです。表示名や単位はソフトウェア世代・sequenceで異なりますが、
+      概念上は次のように対応します。
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>一般概念</th><th>GEでよく意識する項目</th><th>SNR視点</th></tr></thead>
+        <tbody>
+          <tr><td>平均回数</td><td>NEX</td><td>↑で√NEXに従い改善、時間↑</td></tr>
+          <tr><td>受信帯域幅</td><td>Receiver Bandwidth</td><td>狭くするとSNR↑、chemical shift/歪みとの交換</td></tr>
+          <tr><td>Parallel imaging</td><td>ASSET / ARC等（sequence依存）</td><td>acceleration↑で時間↓、SNR↓＋geometry依存</td></tr>
+          <tr><td>DL再構成</td><td>AIR Recon DL（対応sequence/装置）</td><td>noise/ringing低減によりSNR・sharpnessを改善し得る</td></tr>
+          <tr><td>3D FSE</td><td>CUBE</td><td>isotropic voxel、acceleration、ETL、時間の配分が重要</td></tr>
+          <tr><td>Motion-insensitive FSE</td><td>PROPELLER</td><td>sampling冗長性・時間・motion robustnessのバランス</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      AIR Recon DLのようなDL再構成は、従来の「SNRを上げるには時間かvoxelを犠牲にする」という関係を緩和します。
+      ただし再構成後の見かけのnoise低下を、従来のraw SNRと同一視しないことが重要です。病変視認性・texture・sharpnessを実画像で評価します。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>10. 実践用：プロトコル調整のチェックリスト</h2>
+    <ol>
+      <li><b>本当にSNR不足か？</b> CNR不足、fat-sat不良、motion blur、g-factor noiseを混同していないか。</li>
+      <li><b>検査目的を1文で言えるか？</b> 「半月板断裂」「小梗塞」「肝dynamic」など。</li>
+      <li><b>絶対に守るものは何か？</b> 分解能・contrast・breath-hold時間・distortionのどれか。</li>
+      <li><b>coil/position/shim/reconで改善できないか？</b> ここは分解能や時間を売らない「無償策」。</li>
+      <li><b>voxelを大きくしても診断目的を壊さないか？</b> 壊さないなら最も時間効率の良いSNR対策。</li>
+      <li><b>NEXを増やす価値があるか？</b> 平方根則を意識し、motion増加も考える。</li>
+      <li><b>BWを下げてもartifactが許容されるか？</b> metal/EPIでは特に慎重。</li>
+      <li><b>TR/TE変更でcontrastを壊さないか？</b> SNR改善よりcontrast lossが大きくないか。</li>
+      <li><b>PI/PFを緩めた際、別artifactが悪化しないか？</b> echo train・distortion・blurを見る。</li>
+      <li><b>最終評価はSNR値ではなく診断タスク</b> 小病変、境界、均一性、artifact、再現性で判断。</li>
+    </ol>
+  </section>
+
+  <section class="card" id="refs">
+    <h2>11. 参考文献・検索資料</h2>
+    <p class="small">本教材は主に査読論文・大学教育資料・メーカー公式資料をもとに、臨床技師向けに再構成しています。</p>
+    <ol class="ref">
+      <li>Ayde R, et al. <i>MRI at low field: A review of software solutions for improving SNR.</i> NMR Biomed. 2024. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11605168/">PMC</a></li>
+      <li>Parker DL, Gullberg GT. <i>Signal-to-noise efficiency in magnetic resonance imaging.</i> Med Phys. 1990. <a href="https://pubmed.ncbi.nlm.nih.gov/2333051/">PubMed</a></li>
+      <li>Hamilton J, et al. <i>Parallel MR Imaging.</i> Concepts Magn Reson Part A. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4459721/">PMC</a></li>
+      <li>Hamilton J, et al. <i>Recent Advances in Parallel Imaging for MRI.</i> Magn Reson Imaging Clin N Am. 2017. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5927614/">PMC</a></li>
+      <li>Dietrich O, et al. <i>Measuring signal-to-noise ratio in partially parallel imaging MRI.</i> Med Phys. 2011. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3170395/">PMC</a></li>
+      <li>Siemens Healthineers Academy. <i>MR Essentials – Image Quality.</i> <a href="https://academy.siemens-healthineers.com/_/en-us/mr-essentials-image-quality-usa/">Official educational material</a></li>
+      <li>Larson PEZ. <i>Principles of MRI – Scan Time and Signal to Noise Ratio.</i> UCSF. <a href="https://larsonlab.github.io/MRI-education-resources/Signal%20to%20Noise%20Ratio.html">Educational resource</a></li>
+      <li>Ogura A, et al. <i>Effects of Slice Thickness and Matrix Size on MRI for Signal Detection.</i> Japanese Journal of Radiological Technology. 2005. <a href="https://www.jstage.jst.go.jp/article/jjrt/61/8/61_KJ00003943075/_article/-char/en">J-STAGE</a></li>
+      <li>Le Bihan / cancer DWI review: <i>Diffusion MRI of Cancer: from Low to High b-Values.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6298843/">PMC</a></li>
+      <li>Padhani AR, et al. <i>Diffusion-Weighted MRI as a Cancer Biomarker: Consensus and Recommendations.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2631136/">PMC</a></li>
+      <li>Ye JC. <i>Compressed sensing MRI: a review from signal processing perspective.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7412677/">PMC</a></li>
+      <li>Jaspan ON, et al. <i>Compressed sensing MRI: a review of the clinical literature.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4984938/">PMC</a></li>
+      <li>GE HealthCare. <i>AIR Image Quality / AIR Recon DL.</i> <a href="https://www.gehealthcare.com/ja-jp/products/magnetic-resonance-imaging/air-technology/air-image-quality">GE公式（日本）</a></li>
+    </ol>
+    <div class="warn">
+      <b>教育用途の注意：</b>ここに示した比例関係は、他条件を一定とした近似です。
+      実際の装置ではsequence timing、echo train、coil combination、フィルタ、parallel imaging、partial Fourier、DL reconstruction等が相互作用します。
+      プロトコル変更は施設基準・装置仕様・診断目的に基づいて検証してください。
+    </div>
+  </section>
+
+  <footer>
+    作成日: 2026-09-17 ／ テーマ: MRI SNR trade-off & clinical protocol reasoning
+  </footer>
+</div>
+</main>
+
+<script>
+function v(id){ return parseFloat(document.getElementById(id).value); }
+function calcSNR(){
+  const vox1=(v('fovx1')/v('mx1'))*(v('fovy1')/v('my1'))*v('sl1');
+  const vox2=(v('fovx2')/v('mx2'))*(v('fovy2')/v('my2'))*v('sl2');
+  const s1=vox1*Math.sqrt(v('nex1'))/Math.sqrt(v('bw1'))/Math.sqrt(v('r1'));
+  const s2=vox2*Math.sqrt(v('nex2'))/Math.sqrt(v('bw2'))/Math.sqrt(v('r2'));
+  const ratio=s2/s1;
+  const pct=(ratio-1)*100;
+  const dir = pct>=0 ? "増加" : "低下";
+  document.getElementById('result').textContent =
+    `変更後 / 変更前 = ${ratio.toFixed(2)}×（約${Math.abs(pct).toFixed(0)}% ${dir}）`;
+}
+calcSNR();
+</script>
+</body>
+</html>

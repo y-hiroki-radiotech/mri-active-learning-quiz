@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q029 圧縮センシングにおけるランダム間引きの数理・物理・臨床応用 - 完全復習教材</title>
+<style>
+  :root {
+    --bg-main: #0a0f1d;
+    --bg-card: #131d31;
+    --bg-card-hover: #18243c;
+    --bg-card-subtle: #0d1627;
+    --border-color: #223252;
+    --border-light: #2d426d;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-bright: #ffffff;
+    --primary: #38bdf8;
+    --primary-glow: rgba(56, 189, 248, 0.2);
+    --accent: #818cf8;
+    --success: #34d399;
+    --success-bg: rgba(52, 211, 153, 0.12);
+    --success-border: #059669;
+    --danger: #f87171;
+    --danger-bg: rgba(248, 113, 113, 0.12);
+    --danger-border: #dc2626;
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.12);
+    --warning-border: #d97706;
+    --math-bg: #060a12;
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --border-radius: 12px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
+    line-height: 1.75;
+    color: var(--text-main);
+    background-color: var(--bg-main);
+    padding: 24px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  /* ヘッダーカード */
+  .header-card {
+    background: linear-gradient(135deg, #0d182e 0%, #1e1b4b 50%, #0c1c38 100%);
+    border: 1px solid var(--border-light);
+    color: var(--text-bright);
+    padding: 32px 28px;
+    border-radius: var(--border-radius);
+    margin-bottom: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .badge-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-id {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+  }
+
+  .badge-tag {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #7dd3fc;
+    border: 1px solid rgba(125, 211, 252, 0.25);
+  }
+
+  .header-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+  }
+
+  .header-subtitle {
+    font-size: 0.96rem;
+    color: #94a3b8;
+    line-height: 1.65;
+  }
+
+  /* カード共通 */
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: 28px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 14px;
+  }
+
+  .card-title svg {
+    width: 26px;
+    height: 26px;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* 採点サマリーグリッド */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 22px;
+    margin-bottom: 22px;
+  }
+
+  @media (max-width: 768px) {
+    .score-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .score-hero {
+    background: linear-gradient(180deg, var(--bg-card-subtle) 0%, rgba(248, 113, 113, 0.06) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    text-align: center;
+  }
+
+  .score-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .score-val {
+    font-size: 3.8rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--danger);
+    text-shadow: 0 0 25px rgba(248, 113, 113, 0.35);
+  }
+
+  .score-total {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .score-status {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    background-color: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+  }
+
+  .summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .summary-row {
+    display: flex;
+    border-radius: 8px;
+    padding: 12px 16px;
+    background-color: var(--bg-card-subtle);
+    border-left: 4px solid var(--border-light);
+    font-size: 0.92rem;
+  }
+
+  .summary-row.success { border-left-color: var(--success); background-color: var(--success-bg); }
+  .summary-row.danger { border-left-color: var(--danger); background-color: var(--danger-bg); }
+  .summary-row.warning { border-left-color: var(--warning); background-color: var(--warning-bg); }
+
+  .summary-row-label {
+    width: 140px;
+    flex-shrink: 0;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .summary-row-content {
+    flex-grow: 1;
+    color: var(--text-main);
+  }
+
+  /* 比較ボックス */
+  .comparison-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 18px 0;
+  }
+
+  @media (max-width: 680px) {
+    .comparison-box { grid-template-columns: 1fr; }
+  }
+
+  .compare-item {
+    border-radius: 8px;
+    padding: 18px;
+    border: 1px solid var(--border-color);
+  }
+
+  .compare-item.user {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+  }
+
+  .compare-item.correct {
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
+  }
+
+  .compare-item-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare-item.user .compare-item-title { color: var(--danger); }
+  .compare-item.correct .compare-item-title { color: var(--success); }
+
+  /* 講義セクション要素 */
+  .section-intro {
+    font-size: 1rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+  }
+
+  .key-point-box {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(129, 140, 248, 0.08) 100%);
+    border-left: 4px solid var(--primary);
+    padding: 18px 22px;
+    border-radius: 0 8px 8px 0;
+    margin: 22px 0;
+    border-top: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .key-point-box h4 {
+    color: var(--primary);
+    margin-bottom: 8px;
+    font-size: 1.02rem;
+    font-weight: 700;
+  }
+
+  /* 完全ネイティブMathML数式ブロック */
+  .math-block {
+    background-color: var(--math-bg);
+    border: 1px solid var(--border-color);
+    color: #f8fafc;
+    padding: 22px 24px;
+    border-radius: 8px;
+    margin: 18px 0;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+  }
+
+  .math-step-title {
+    align-self: flex-start;
+    font-size: 0.88rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  math {
+    font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif;
+    font-size: 1.25rem;
+    color: #f8fafc;
+  }
+
+  /* テーブルスタイル */
+  .custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    background-color: var(--bg-card-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  .custom-table th, .custom-table td {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .custom-table th {
+    background-color: rgba(255, 255, 255, 0.04);
+    font-weight: 700;
+    color: #7dd3fc;
+  }
+
+  .custom-table tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  /* SVG 図解コンテナ */
+  .svg-container {
+    width: 100%;
+    max-width: 880px;
+    margin: 22px auto;
+    background: #080d18;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .svg-caption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+
+  /* インタラクティブシミュレータ */
+  .simulator-panel {
+    background-color: var(--bg-card-subtle);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 22px;
+    margin: 20px 0;
+  }
+
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    align-items: center;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff;
+    border: none;
+    padding: 9px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+  }
+
+  .btn:hover {
+    background: linear-gradient(135deg, #0369a1, #075985);
+    transform: translateY(-1px);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn-outline {
+    background-color: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    box-shadow: none;
+  }
+
+  .btn-outline:hover {
+    background-color: rgba(56, 189, 248, 0.1);
+  }
+
+  .btn-outline.active {
+    background: var(--primary);
+    color: #080d18;
+    border-color: var(--primary);
+  }
+
+  .sim-status {
+    font-size: 0.88rem;
+    color: #bae6fd;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  /* 臨床現場ブロック */
+  .clinical-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  .clinical-item {
+    background-color: var(--bg-card-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .clinical-item h4 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .clinical-item p {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    line-height: 1.65;
+  }
+
+  /* 印刷・PDF最適化（@media print） */
+  @media print {
+    body {
+      background-color: #ffffff;
+      padding: 0;
+      color: #000000;
+    }
+
+    .container {
+      max-width: 100%;
+    }
+
+    .card {
+      box-shadow: none;
+      border: 1px solid #94a3b8;
+      background-color: #ffffff;
+      color: #000000;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 16px;
+      padding: 16px;
+    }
+
+    .header-card {
+      background: none;
+      color: #000000;
+      border: 2px solid #000000;
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .header-title { color: #000000; }
+    .header-subtitle { color: #333333; }
+    .card-title { color: #000000; border-bottom: 1px solid #000000; }
+    .summary-row-label { color: #000000; }
+    .summary-row-content { color: #111111; }
+
+    .sim-controls {
+      display: none !important;
+    }
+
+    .math-block {
+      background-color: #f8fafc;
+      color: #000000;
+      border: 1px solid #cbd5e1;
+      box-shadow: none;
+    }
+
+    math {
+      color: #000000;
+    }
+
+    .custom-table {
+      background-color: #ffffff;
+      border: 1px solid #000000;
+    }
+
+    .custom-table th {
+      background-color: #f1f5f9;
+      color: #000000;
+    }
+
+    .custom-table td {
+      border: 1px solid #cbd5e1;
+      color: #000000;
+    }
+
+    .svg-container {
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダーカード -->
+  <header class="header-card">
+    <div class="badge-group">
+      <span class="badge badge-id">Q029 応用</span>
+      <span class="badge badge-tag">Parallel Imaging · CS</span>
+      <span class="badge badge-tag">完全オフライン復習教材</span>
+      <span class="badge badge-tag">数理導出・臨床完全統合版</span>
+    </div>
+    <h1 class="header-title">Compressed Sensingが「規則的な間引き」ではなく<br>ランダム間引きを使う理由</h1>
+    <p class="header-subtitle">
+      フーリエ畳み込み定理と点像分布関数（PSF）から解き明かす、コヒーレント折り返しからインコヒーレント折り返しへの変換、非線形<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>復元機構、および実臨床プロトコル設計指針
+    </p>
+  </header>
+
+  <!-- 8. 採点サマリー＆診断結果カード -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      採点サマリー &amp; 診断結果
+    </h2>
+
+    <div class="score-grid">
+      <div class="score-hero">
+        <span class="score-label">獲得得点</span>
+        <span class="score-val">38</span>
+        <span class="score-total">/ 100 点</span>
+        <span class="score-status">要再学習（根本概念の混同）</span>
+      </div>
+
+      <div class="summary-details">
+        <div class="summary-row success">
+          <div class="summary-row-label">正しく理解できた点</div>
+          <div class="summary-row-content">
+            「信号の本質的な情報量は少ない（スパース性）」という圧縮センシングの根幹前提を把握しており、「ナイキスト周波数未満の過少サンプリングデータから元データを完全復元する」という工学的目的を明解に捉えられています。
+          </div>
+        </div>
+
+        <div class="summary-row danger">
+          <div class="summary-row-label">根本的誤概念</div>
+          <div class="summary-row-content">
+            <strong>「ランダム間引きを利用することでノイズを減らすことができる」という点。</strong><br>
+            サンプリング点数を減らす（間引く）操作は、物理的な積算効果を損なうためSNRを低下させます。間引きそのものがハードウェア的・熱的ノイズを減らすことは物理的にあり得ません。
+          </div>
+        </div>
+
+        <div class="summary-row warning">
+          <div class="summary-row-label">最大の修正点</div>
+          <div class="summary-row-content">
+            ランダム間引きの真の機能はノイズ低減ではなく、<strong>「周期的な折り返し（干渉性の高い構造的ゴースト）を、全画素へ均一に散乱したノイズ様干渉（インコヒーレント・エイリアシング）へ数学的に変換すること」</strong>です。散乱して微小化した折り返しを、その後の非線形凸最適化（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>正則化）によって一括消去します。
+          </div>
+        </div>
+
+        <div class="summary-row">
+          <div class="summary-row-label">学習優先度</div>
+          <div class="summary-row-content">
+            <span style="color: var(--danger); font-weight: 700;">★☆☆ 最優先（重要原理の再構築）</span>：k空間間引きと点像分布関数（PSF）のフーリエ変換ペア、および<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>ノルム閾値処理の数学的必然性を連結して修得する必要があります。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ユーザー解答と模範解答の対比 -->
+    <div class="comparison-box">
+      <div class="compare-item user">
+        <div class="compare-item-title">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+          あなたの解答
+        </div>
+        <p style="font-size: 0.92rem;">
+          「圧縮センシング技術は信号や画素の本質的な情報量は少ないと仮定し、ナイキスト周波数よりも少ない観測データから正確な元データを復元する。<span style="text-decoration: underline #f87171; font-weight: 700;">その観測の少ないデータをランダムな間引きを利用することでノイズを減らすことができる</span>」
+        </p>
+      </div>
+
+      <div class="compare-item correct">
+        <div class="compare-item-title">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          模範解答（合格基準）
+        </div>
+        <p style="font-size: 0.92rem;">
+          「規則的な間引きを行うと、実空間において点像分布関数（PSF）がデルタ関数列となり、<strong>構造を持った周期的な折り返し（コヒーレント・エイリアシング）</strong>が生じ、解剖学的信号と区別不能になる。一方、<strong>ランダム間引き</strong>を行うとPSFの周期性が破壊され、折り返しが<strong>背景全域に散乱するノイズ様干渉（インコヒーレント・アーチファクト）へ変換</strong>される。これによりウェーブレット変換等のスパース領域で『真の信号（大振幅）』と『散乱した折り返し（微小フロア）』が明確に分離可能となり、<strong><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>ノルム最小化（ソフト閾値処理）によって折り返し成分のみを完全に消去</strong>できるため。」
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 数式解説と途中仮定を省略しない完全導出 -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+      現象の数理解析：間引きとPSF（点像分布関数）の完全導出
+    </h2>
+
+    <p class="section-intro">
+      なぜランダム間引きでなければならないのか。k空間のサンプリング関数から実空間の折り返し画像に至る数学的プロセスを、途中仮定を省略せずに証明します。
+    </p>
+
+    <!-- 導出ステップ1 -->
+    <div class="math-block">
+      <div class="math-step-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        ステップ1：k空間サンプリングと実空間像の畳み込み表現
+      </div>
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mtable columnalign="left">
+          <mtr>
+            <mtd>
+              <mi>S</mi>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msub>
+                <mi>S</mi>
+                <mtext>full</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+              <mo>&#x22C5;</mo>
+              <mi>M</mi>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mi>I</mi>
+                <mtext>alias</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msup>
+                <mi mathvariant="script">F</mi>
+                <mrow>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+              </msup>
+              <mo stretchy="false">{</mo>
+              <mi>S</mi>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">}</mo>
+              <mo>=</mo>
+              <msub>
+                <mi>I</mi>
+                <mtext>true</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>&#x2217;</mo>
+              <mtext>PSF</mtext>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+        </mtable>
+      </math>
+    </div>
+    <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 16px;">
+      ここで <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>M</mi><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></math> はk空間のサンプリングマスク関数（計測する点は1、間引く点は0）、<math xmlns="http://www.w3.org/1998/Math/MathML"><mo>&#x2217;</mo></math> は空間畳み込み積分を表します。フーリエ変換の畳み込み定理により、<strong>再構成される初期画像は、真の画像とマスク関数の逆フーリエ変換である点像分布関数（PSF: Point Spread Function）との畳み込み</strong>に等しくなります。
+    </p>
+
+    <!-- 導出ステップ2 -->
+    <div class="math-block">
+      <div class="math-step-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        ステップ2：規則的間引きにおけるコヒーレント折り返しの導出
+      </div>
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mtable columnalign="left">
+          <mtr>
+            <mtd>
+              <msub>
+                <mi>M</mi>
+                <mtext>reg</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>k</mi>
+                <mi>y</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <munderover>
+                <mo>&#x2211;</mo>
+                <mrow>
+                  <mi>n</mi>
+                  <mo>=</mo>
+                  <mo>&#x2212;</mo>
+                  <mo>&#x221E;</mo>
+                </mrow>
+                <mo>&#x221E;</mo>
+              </munderover>
+              <mi>&#x03B4;</mi>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>k</mi>
+                <mi>y</mi>
+              </msub>
+              <mo>&#x2212;</mo>
+              <mi>n</mi>
+              <mo>&#x22C5;</mo>
+              <mi>R</mi>
+              <mi>&#x0394;</mi>
+              <msub>
+                <mi>k</mi>
+                <mi>y</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mtext>PSF</mtext>
+                <mtext>reg</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>y</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msup>
+                <mi mathvariant="script">F</mi>
+                <mrow>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+              </msup>
+              <mo stretchy="false">{</mo>
+              <msub>
+                <mi>M</mi>
+                <mtext>reg</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>k</mi>
+                <mi>y</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">}</mo>
+              <mo>=</mo>
+              <mfrac>
+                <mn>1</mn>
+                <mi>R</mi>
+              </mfrac>
+              <munderover>
+                <mo>&#x2211;</mo>
+                <mrow>
+                  <mi>m</mi>
+                  <mo>=</mo>
+                  <mo>&#x2212;</mo>
+                  <mo>&#x221E;</mo>
+                </mrow>
+                <mo>&#x221E;</mo>
+              </munderover>
+              <mi>&#x03B4;</mi>
+              <mrow>
+                <mo>(</mo>
+                <mi>y</mi>
+                <mo>&#x2212;</mo>
+                <mi>m</mi>
+                <mo>&#x22C5;</mo>
+                <mfrac>
+                  <mtext>FOV</mtext>
+                  <mi>R</mi>
+                </mfrac>
+                <mo>)</mo>
+              </mrow>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mi>I</mi>
+                <mtext>alias</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>y</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msub>
+                <mi>I</mi>
+                <mtext>true</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>y</mi>
+              <mo stretchy="false">)</mo>
+              <mo>&#x2217;</mo>
+              <msub>
+                <mtext>PSF</mtext>
+                <mtext>reg</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>y</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mfrac>
+                <mn>1</mn>
+                <mi>R</mi>
+              </mfrac>
+              <munderover>
+                <mo>&#x2211;</mo>
+                <mrow>
+                  <mi>m</mi>
+                  <mo>=</mo>
+                  <mn>0</mn>
+                </mrow>
+                <mrow>
+                  <mi>R</mi>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+              </munderover>
+              <msub>
+                <mi>I</mi>
+                <mtext>true</mtext>
+              </msub>
+              <mrow>
+                <mo>(</mo>
+                <mi>y</mi>
+                <mo>&#x2212;</mo>
+                <mi>m</mi>
+                <mo>&#x22C5;</mo>
+                <mfrac>
+                  <mtext>FOV</mtext>
+                  <mi>R</mi>
+                </mfrac>
+                <mo>)</mo>
+              </mrow>
+            </mtd>
+          </mtr>
+        </mtable>
+      </math>
+    </div>
+    <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 16px;">
+      加速係数 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> で等間隔に間引くと、ポアソン和公式によりPSFは周期 <math xmlns="http://www.w3.org/1998/Math/MathML"><mtext>FOV</mtext><mo>/</mo><mi>R</mi></math> のディラックの櫛（等間隔デルタ関数列）になります。真の画像と畳み込むと、距離 <math xmlns="http://www.w3.org/1998/Math/MathML"><mtext>FOV</mtext><mo>/</mo><mi>R</mi></math> ごとに<strong>真の画像と全く同じ輪郭・エッジ強度を持った鮮明なゴースト（コヒーレント・エイリアシング）</strong>が重複します。
+    </p>
+
+    <!-- 導出ステップ3 -->
+    <div class="math-block">
+      <div class="math-step-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        ステップ3：ランダム間引きにおけるインコヒーレント散乱の導出
+      </div>
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mtable columnalign="left">
+          <mtr>
+            <mtd>
+              <msub>
+                <mi>M</mi>
+                <mtext>rand</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>p</mi>
+              <mo>+</mo>
+              <msub>
+                <mi>&#x03B7;</mi>
+                <mi>k</mi>
+              </msub>
+              <mspace width="1em"/>
+              <mo stretchy="false">(</mo>
+              <mi>p</mi>
+              <mo>=</mo>
+              <mi>M</mi>
+              <mo>/</mo>
+              <mi>N</mi>
+              <mo>:</mo>
+              <mtext>平均サンプリング率</mtext>
+              <mo>,</mo>
+              <mspace width="0.222em"/>
+              <mi mathvariant="double-struck">E</mi>
+              <mo stretchy="false">[</mo>
+              <msub>
+                <mi>&#x03B7;</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">]</mo>
+              <mo>=</mo>
+              <mn>0</mn>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mtext>PSF</mtext>
+                <mtext>rand</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <msup>
+                <mi mathvariant="script">F</mi>
+                <mrow>
+                  <mo>&#x2212;</mo>
+                  <mn>1</mn>
+                </mrow>
+              </msup>
+              <mo stretchy="false">{</mo>
+              <msub>
+                <mi>M</mi>
+                <mtext>rand</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>k</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">}</mo>
+              <mo>=</mo>
+              <mi>p</mi>
+              <mo>&#x22C5;</mo>
+              <mi>&#x03B4;</mi>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>+</mo>
+              <msub>
+                <mi>e</mi>
+                <mtext>noise</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mi>I</mi>
+                <mtext>alias</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mi>p</mi>
+              <mo>&#x22C5;</mo>
+              <msub>
+                <mi>I</mi>
+                <mtext>true</mtext>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>r</mi>
+              <mo stretchy="false">)</mo>
+              <mo>+</mo>
+              <munder>
+                <mrow>
+                  <msub>
+                    <mi>I</mi>
+                    <mtext>true</mtext>
+                  </msub>
+                  <mo stretchy="false">(</mo>
+                  <mi>r</mi>
+                  <mo stretchy="false">)</mo>
+                  <mo>&#x2217;</mo>
+                  <msub>
+                    <mi>e</mi>
+                    <mtext>noise</mtext>
+                  </msub>
+                  <mo stretchy="false">(</mo>
+                  <mi>r</mi>
+                  <mo stretchy="false">)</mo>
+                </mrow>
+                <mrow>
+                  <mtext>インコヒーレント散乱雑音（ホワイトノイズ様）</mtext>
+                </mrow>
+              </munder>
+            </mtd>
+          </mtr>
+        </mtable>
+      </math>
+    </div>
+    <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 16px;">
+      k空間をランダムに選ぶと、周期性が完全に破壊されます。PSFは中心の鋭い主ピーク（真の信号）と、<strong>実空間全体に均一に広がる微小なノイズフロア（干渉散乱）</strong>に分かれます。折り返しが特定の解剖形態を持たず、統計的に無相関な「疑似白色雑音」へ変換される現象を<strong>インコヒーレント・アーチファクト</strong>と呼びます。
+    </p>
+
+    <!-- 導出ステップ4 -->
+    <div class="math-block">
+      <div class="math-step-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        ステップ4：圧縮センシングの定式化と近接作用素（ソフト閾値）導出
+      </div>
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mtable columnalign="left">
+          <mtr>
+            <mtd>
+              <munder>
+                <mi>min</mi>
+                <mi>x</mi>
+              </munder>
+              <mspace width="0.222em"/>
+              <mrow>
+                <mo>{</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <mn>2</mn>
+                </mfrac>
+                <msubsup>
+                  <mrow>
+                    <mo>&#x2225;</mo>
+                    <mi>y</mi>
+                    <mo>&#x2212;</mo>
+                    <msub>
+                      <mi mathvariant="script">F</mi>
+                      <mi>u</mi>
+                    </msub>
+                    <mi>x</mi>
+                    <mo>&#x2225;</mo>
+                  </mrow>
+                  <mn>2</mn>
+                  <mn>2</mn>
+                </msubsup>
+                <mo>+</mo>
+                <mi>&#x03BB;</mi>
+                <msub>
+                  <mrow>
+                    <mo>&#x2225;</mo>
+                    <mi mathvariant="normal">&#x03A8;</mi>
+                    <mi>x</mi>
+                    <mo>&#x2225;</mo>
+                  </mrow>
+                  <mn>1</mn>
+                </msub>
+                <mo>}</mo>
+              </mrow>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <mtext>反復近接勾配法（ISTA）の更新式：</mtext>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msup>
+                <mi>x</mi>
+                <mrow>
+                  <mo stretchy="false">(</mo>
+                  <mi>n</mi>
+                  <mo>+</mo>
+                  <mn>1</mn>
+                  <mo stretchy="false">)</mo>
+                </mrow>
+              </msup>
+              <mo>=</mo>
+              <msup>
+                <mi mathvariant="normal">&#x03A8;</mi>
+                <mo>&#x2020;</mo>
+              </msup>
+              <mo>&#x22C5;</mo>
+              <msub>
+                <mi mathvariant="script">S</mi>
+                <mrow>
+                  <mi>&#x03BB;</mi>
+                  <mi>t</mi>
+                </mrow>
+              </msub>
+              <mrow>
+                <mo>(</mo>
+                <mi mathvariant="normal">&#x03A8;</mi>
+                <mo>&#x22C5;</mo>
+                <mrow>
+                  <mo>[</mo>
+                  <msup>
+                    <mi>x</mi>
+                    <mrow>
+                      <mo stretchy="false">(</mo>
+                      <mi>n</mi>
+                      <mo stretchy="false">)</mo>
+                    </mrow>
+                  </msup>
+                  <mo>+</mo>
+                  <mi>t</mi>
+                  <msubsup>
+                    <mi mathvariant="script">F</mi>
+                    <mi>u</mi>
+                    <mi>H</mi>
+                  </msubsup>
+                  <mo stretchy="false">(</mo>
+                  <mi>y</mi>
+                  <mo>&#x2212;</mo>
+                  <msub>
+                    <mi mathvariant="script">F</mi>
+                    <mi>u</mi>
+                  </msub>
+                  <msup>
+                    <mi>x</mi>
+                    <mrow>
+                      <mo stretchy="false">(</mo>
+                      <mi>n</mi>
+                      <mo stretchy="false">)</mo>
+                    </mrow>
+                  </msup>
+                  <mo stretchy="false">)</mo>
+                  <mo>]</mo>
+                </mrow>
+                <mo>)</mo>
+              </mrow>
+            </mtd>
+          </mtr>
+          <mtr>
+            <mtd>
+              <msub>
+                <mi mathvariant="script">S</mi>
+                <mi>&#x03C4;</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>z</mi>
+              <mo stretchy="false">)</mo>
+              <mo>=</mo>
+              <mtext>sgn</mtext>
+              <mo stretchy="false">(</mo>
+              <mi>z</mi>
+              <mo stretchy="false">)</mo>
+              <mo>&#x22C5;</mo>
+              <mi>max</mi>
+              <mo stretchy="false">(</mo>
+              <mo>|</mo>
+              <mi>z</mi>
+              <mo>|</mo>
+              <mo>&#x2212;</mo>
+              <mi>&#x03C4;</mi>
+              <mo>,</mo>
+              <mspace width="0.222em"/>
+              <mn>0</mn>
+              <mo stretchy="false">)</mo>
+              <mspace width="1em"/>
+              <mo stretchy="false">(</mo>
+              <mtext>ソフト閾値作用素</mtext>
+              <mo stretchy="false">)</mo>
+            </mtd>
+          </mtr>
+        </mtable>
+      </math>
+    </div>
+
+    <!-- 数式パラメータ詳細表 -->
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>記号</th>
+          <th>名称・物理的意味</th>
+          <th>単位 / 空間</th>
+          <th>物理的役割とパラメータ増減の影響</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi></math></td>
+          <td>復元対象の未知画像ベクトル</td>
+          <td>複素信号強度（a.u.）</td>
+          <td>最終的に得たい高精細なMR再構成画像（全ピクセル数 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>N</mi></math>）。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>y</mi></math></td>
+          <td>実測k空間データ</td>
+          <td>受信RF電圧（mV / a.u.）</td>
+          <td>ナイキスト周波数未満で間引いて収集された少数データ（データ数 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>M</mi><mo>&#x226A;</mo><mi>N</mi></math>）。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="script">F</mi><mi>u</mi></msub></math></td>
+          <td>アンダーサンプリング・フーリエ作用素</td>
+          <td>作用素行列（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>M</mi><mo>&#xD7;</mo><mi>N</mi></math>）</td>
+          <td>k空間をサンプリングマスクに従って間引く物理操作。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x03A8;</mi></math></td>
+          <td>スパース変換作用素</td>
+          <td>直交基底（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>N</mi><mo>&#xD7;</mo><mi>N</mi></math>）</td>
+          <td>ウェーブレット変換や有限差分（Total Variation: TV）。生体画像をこの領域へ写像すると、大部分の係数がゼロになります。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow><mo>&#x2225;</mo><mo>&#x22C5;</mo><mo>&#x2225;</mo></mrow><mn>2</mn></msub></math></td>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>2</mn></msub></math>ノルム（二乗残差）</td>
+          <td>データ整合項（Fidelity）</td>
+          <td>実測k空間データと再構成画像の矛盾の少なさを評価します。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow><mo>&#x2225;</mo><mo>&#x22C5;</mo><mo>&#x2225;</mo></mrow><mn>1</mn></msub></math></td>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>ノルム（絶対値総和）</td>
+          <td>スパース性促進項</td>
+          <td>係数の絶対値和 <math xmlns="http://www.w3.org/1998/Math/MathML"><mo>&#x2211;</mo><mo>|</mo><msub><mi>c</mi><mi>i</mi></msub><mo>|</mo></math>。非ゼロ成分に強いペナルティを与え、微小な値を正確にゼロに収束させます。</td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03BB;</mi></math></td>
+          <td>正則化重み付けパラメータ</td>
+          <td>無次元スカラー</td>
+          <td>
+            <strong>増減の挙動：</strong><br>
+            ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03BB;</mi></math>を過大に設定：スパース性が過剰に優先され、微小血管や微細構造が消失（水彩画様・ワックス様のパッチ状ブラーが発生）。<br>
+            ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03BB;</mi></math>を過小に設定：インコヒーレント折り返しの消去が不十分となり、背景に砂嵐状の残存ノイズが出現。
+          </td>
+        </tr>
+        <tr>
+          <td><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="script">S</mi><mi>&#x03C4;</mi></msub><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></math></td>
+          <td>ソフト閾値処理（Shrinkage）</td>
+          <td>非線形作用素</td>
+          <td>
+            閾値 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03C4;</mi></math> 以下の微小な成分を完全に0とし、閾値を超える成分を <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03C4;</mi></math> だけ引き戻す処理。<strong>全域に分散した微小な折り返しノイズフロアを一括除去する核心エンジン</strong>。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="key-point-box">
+      <h4>数学的帰結：なぜ規則的間引きでは解けないのか？</h4>
+      規則的間引きの場合、折り返し成分がスパース変換領域（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">&#x03A8;</mi><mi>x</mi></math>）においても<strong>大きな振幅を持った少数の係数</strong>として集中してしまいます。このため、ソフト閾値処理 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="script">S</mi><mi>&#x03C4;</mi></msub><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></math> を適用しても「真の信号」と「折り返し」の振幅差が存在せず、折り返しだけを消し去ることは原理的に不可能です。<br>
+      <strong>ランダム間引きによって折り返しエネルギーを数万個の変換基底へ極小振幅として均等分散（インコヒーレント化）させることではじめて、ソフト閾値による完全分離が可能になります。</strong>
+    </div>
+
+    <!-- 4要素トイモデルによる具体的数値計算例 -->
+    <div class="key-point-box" style="background: rgba(129, 140, 248, 0.06); border-left-color: var(--accent);">
+      <h4 style="color: #a5b4fc;">4要素モデルによる具体的な数値計算例（直感的な数値の振る舞い）</h4>
+      <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 8px;">
+        理解を深めるため、4画素の1次元信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi><mo>=</mo><msup><mrow><mo>[</mo><mn>8</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo>]</mo></mrow><mi>T</mi></msup></math> （1点のみ信号が存在する極めてスパースな系）を考えます。このDFT（離散フーリエ変換）は <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>=</mo><msup><mrow><mo>[</mo><mn>8</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>8</mn><mo>]</mo></mrow><mi>T</mi></msup></math> です。
+      </p>
+      <ul style="padding-left: 20px; font-size: 0.88rem; line-height: 1.7; color: var(--text-main);">
+        <li>
+          <strong>ケースA：規則的間引き（インデックス0と2の2点を収集、1と3を0詰め）</strong><br>
+          観測k空間： <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>Y</mi><mtext>reg</mtext></msub><mo>=</mo><msup><mrow><mo>[</mo><mn>8</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>0</mn><mo>]</mo></mrow><mi>T</mi></msup></math><br>
+          逆DFT再構成： <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>x</mi><mtext>alias</mtext></msub><mo>=</mo><msup><mrow><mo>[</mo><mn>4</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>0</mn><mo>]</mo></mrow><mi>T</mi></msup></math><br>
+          <span style="color: var(--danger);">結果：</span> 本来ゼロであるはずの3番目の位置に、真の信号と全く同一の大きさ「4」のゴーストが出現します。振幅が等しいため、どんな閾値 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03C4;</mi></math> を設定しても真の信号とゴーストを分離することはできません。
+        </li>
+        <li style="margin-top: 8px;">
+          <strong>ケースB：ランダム間引き（不規則にインデックス0と1の2点を収集、2と3を0詰め）</strong><br>
+          観測k空間： <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>Y</mi><mtext>rand</mtext></msub><mo>=</mo><msup><mrow><mo>[</mo><mn>8</mn><mo>,</mo><mn>8</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo>]</mo></mrow><mi>T</mi></msup></math><br>
+          逆DFT再構成： <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>x</mi><mtext>alias</mtext></msub><mo>=</mo><msup><mrow><mo>[</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>&#x2212;</mo><mn>2</mn><mi>i</mi><mo>,</mo><mn>0</mn><mo>,</mo><mn>2</mn><mo>+</mo><mn>2</mn><mi>i</mi><mo>]</mo></mrow><mi>T</mi></msup></math> （絶対値： <math xmlns="http://www.w3.org/1998/Math/MathML"><mo>[</mo><mn>4</mn><mo>,</mo><mn>2.83</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>2.83</mn><mo>]</mo></math>）<br>
+          <span style="color: var(--success);">結果：</span> 折り返しエネルギーが全座標に分散し、ゴーストピークの最大値が抑制されました。実際の多次元MRIでは数万画素に薄く散乱するため、折り返し振幅は極小フロア（例：真の信号100に対して折り返し各1〜2以下）となり、閾値処理（例：<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03C4;</mi><mo>=</mo><mn>10</mn></math>）で一網打尽に消去できます。
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. インラインSVGによる物理現象の幾何学可視化 -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+      物理現象の視覚化：規則的 vs ランダム間引き
+    </h2>
+
+    <!-- SVG図1: k空間マスクと実空間PSF -->
+    <div class="svg-container">
+      <svg viewBox="0 0 800 370" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <rect width="800" height="370" fill="#080d18" rx="8"/>
+
+        <!-- 左：規則的間引き -->
+        <g transform="translate(30, 20)">
+          <text x="160" y="24" font-size="15" font-weight="bold" fill="#f87171" text-anchor="middle">【規則的間引き（Uniform 1/2）】</text>
+          
+          <!-- k空間マスク -->
+          <rect x="20" y="45" width="120" height="120" fill="#030712" stroke="#1f2937" rx="4"/>
+          <line x1="20" y1="55" x2="140" y2="55" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="20" y1="75" x2="140" y2="75" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="20" y1="95" x2="140" y2="95" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="20" y1="115" x2="140" y2="115" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="20" y1="135" x2="140" y2="135" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="20" y1="155" x2="140" y2="155" stroke="#38bdf8" stroke-width="3"/>
+          <text x="80" y="184" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-weight="bold">周期サンプリング</text>
+
+          <!-- 矢印 -->
+          <path d="M 155 105 L 185 105" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="170" y="96" font-size="10" fill="#94a3b8" text-anchor="middle">FT</text>
+
+          <!-- PSFグラフ -->
+          <rect x="200" y="45" width="140" height="120" fill="#0b1120" stroke="#1e293b" rx="4"/>
+          <line x1="210" y1="150" x2="330" y2="150" stroke="#475569" stroke-width="1.5"/>
+          <line x1="270" y1="55" x2="270" y2="150" stroke="#475569" stroke-width="1.5"/>
+          <!-- メインピーク＆巨大サイドローブ -->
+          <line x1="270" y1="150" x2="270" y2="65" stroke="#f87171" stroke-width="3"/>
+          <circle cx="270" cy="65" r="3" fill="#f87171"/>
+          <line x1="225" y1="150" x2="225" y2="75" stroke="#f87171" stroke-width="2.5" stroke-dasharray="2,2"/>
+          <circle cx="225" cy="75" r="3" fill="#f87171"/>
+          <line x1="315" y1="150" x2="315" y2="75" stroke="#f87171" stroke-width="2.5" stroke-dasharray="2,2"/>
+          <circle cx="315" cy="75" r="3" fill="#f87171"/>
+          <text x="270" y="184" font-size="11.5" fill="#f87171" text-anchor="middle" font-weight="bold">ディラックの櫛（サイドローブ大）</text>
+
+          <!-- 物理説明 -->
+          <rect x="20" y="205" width="320" height="130" fill="rgba(248, 113, 113, 0.08)" stroke="rgba(248, 113, 113, 0.3)" rx="6"/>
+          <text x="30" y="228" font-size="13" font-weight="bold" fill="#fca5a5">■ コヒーレント・エイリアシング</text>
+          <text x="30" y="250" font-size="11.5" fill="#fecaca">• 実空間で解剖学的構造を持ったゴーストが重なる。</text>
+          <text x="30" y="270" font-size="11.5" fill="#fecaca">• ゴースト自体が高いエッジ強度と局在性を持つ。</text>
+          <text x="30" y="292" font-size="11.5" fill="#fecaca">• 変換領域でも真の信号と同等振幅のスパイクとなる。</text>
+          <text x="30" y="314" font-size="11.5" font-weight="bold" fill="#f87171">⇒ いかなる閾値処理でも偽像の消去は不可能！</text>
+        </g>
+
+        <line x1="400" y1="20" x2="400" y2="350" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+        <!-- 右：ランダム間引き -->
+        <g transform="translate(430, 20)">
+          <text x="160" y="24" font-size="15" font-weight="bold" fill="#34d399" text-anchor="middle">【ランダム間引き（Random CS）】</text>
+          
+          <!-- k空間マスク -->
+          <rect x="20" y="45" width="120" height="120" fill="#030712" stroke="#1f2937" rx="4"/>
+          <line x1="20" y1="52" x2="140" y2="52" stroke="#34d399" stroke-width="2"/>
+          <line x1="20" y1="68" x2="140" y2="68" stroke="#34d399" stroke-width="2"/>
+          <line x1="20" y1="92" x2="140" y2="92" stroke="#34d399" stroke-width="3"/>
+          <line x1="20" y1="98" x2="140" y2="98" stroke="#34d399" stroke-width="3"/>
+          <line x1="20" y1="104" x2="140" y2="104" stroke="#34d399" stroke-width="3"/>
+          <line x1="20" y1="110" x2="140" y2="110" stroke="#34d399" stroke-width="3"/>
+          <line x1="20" y1="126" x2="140" y2="126" stroke="#34d399" stroke-width="2"/>
+          <line x1="20" y1="158" x2="140" y2="158" stroke="#34d399" stroke-width="2"/>
+          <text x="80" y="184" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-weight="bold">不規則サンプリング（中心密）</text>
+
+          <!-- 矢印 -->
+          <path d="M 155 105 L 185 105" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="170" y="96" font-size="10" fill="#94a3b8" text-anchor="middle">FT</text>
+
+          <!-- PSFグラフ -->
+          <rect x="200" y="45" width="140" height="120" fill="#0b1120" stroke="#1e293b" rx="4"/>
+          <line x1="210" y1="150" x2="330" y2="150" stroke="#475569" stroke-width="1.5"/>
+          <line x1="270" y1="55" x2="270" y2="150" stroke="#475569" stroke-width="1.5"/>
+          <!-- メインピーク＆微小ノイズフロア -->
+          <line x1="270" y1="150" x2="270" y2="65" stroke="#34d399" stroke-width="3"/>
+          <circle cx="270" cy="65" r="3" fill="#34d399"/>
+          <path d="M 210 148 L 215 142 L 220 146 L 225 140 L 230 145 L 235 138 L 240 146 L 245 141 L 250 144 L 255 139 L 260 143 L 265 147 L 275 146 L 280 141 L 285 144 L 290 137 L 295 145 L 300 139 L 305 146 L 310 141 L 315 144 L 320 140 L 325 147 L 330 148" fill="none" stroke="#34d399" stroke-width="1.5"/>
+          <text x="270" y="184" font-size="11.5" fill="#34d399" text-anchor="middle" font-weight="bold">単一デルタ関数＋ノイズフロア</text>
+
+          <!-- 物理説明 -->
+          <rect x="20" y="205" width="320" height="130" fill="rgba(52, 211, 153, 0.08)" stroke="rgba(52, 211, 153, 0.3)" rx="6"/>
+          <text x="30" y="228" font-size="13" font-weight="bold" fill="#6ee7b7">■ インコヒーレント・アーチファクト</text>
+          <text x="30" y="250" font-size="11.5" fill="#a7f3d0">• 折り返しが構造を持たず、背景全域に散乱。</text>
+          <text x="30" y="270" font-size="11.5" fill="#a7f3d0">• 見かけ上「微弱なランダム白色雑音」と化す。</text>
+          <text x="30" y="292" font-size="11.5" fill="#a7f3d0">• 変換領域で『真の信号（巨大）』と『折り返し（微小）』に分離。</text>
+          <text x="30" y="314" font-size="11.5" font-weight="bold" fill="#34d399">⇒ L1ソフト閾値処理により折り返しのみ完全消去！</text>
+        </g>
+
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b"/>
+          </marker>
+        </defs>
+      </svg>
+      <div class="svg-caption">【図1】k空間間引きパターンとPSF（点像分布関数）の数学的フーリエ双対性</div>
+    </div>
+
+    <!-- SVG図2: スパース領域におけるソフト閾値処理 -->
+    <div class="svg-container">
+      <svg viewBox="0 0 800 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <rect width="800" height="240" fill="#080d18" rx="8"/>
+        
+        <!-- 左：ウェーブレット係数分布 -->
+        <g transform="translate(40, 20)">
+          <text x="160" y="20" font-size="14" font-weight="bold" fill="#f1f5f9" text-anchor="middle">スパース変換領域における係数分布</text>
+          <line x1="20" y1="160" x2="320" y2="160" stroke="#475569" stroke-width="1.5"/>
+          <line x1="20" y1="30" x2="20" y2="160" stroke="#475569" stroke-width="1.5"/>
+          <text x="15" y="25" font-size="11" fill="#94a3b8" text-anchor="end">係数の絶対値</text>
+          
+          <!-- 真の信号（巨大スパイク） -->
+          <line x1="60" y1="160" x2="60" y2="40" stroke="#38bdf8" stroke-width="4"/>
+          <circle cx="60" cy="40" r="3" fill="#38bdf8"/>
+          <text x="60" y="32" font-size="10" fill="#38bdf8" font-weight="bold" text-anchor="middle">真の信号</text>
+
+          <line x1="120" y1="160" x2="120" y2="60" stroke="#38bdf8" stroke-width="4"/>
+          <circle cx="120" cy="60" r="3" fill="#38bdf8"/>
+          
+          <line x1="180" y1="160" x2="180" y2="45" stroke="#38bdf8" stroke-width="4"/>
+          <circle cx="180" cy="45" r="3" fill="#38bdf8"/>
+
+          <!-- 散乱したインコヒーレント折り返し（微小フロア） -->
+          <g stroke="#64748b" stroke-width="1.5">
+            <line x1="30" y1="160" x2="30" y2="148"/><line x1="40" y1="160" x2="40" y2="152"/>
+            <line x1="50" y1="160" x2="50" y2="145"/><line x1="75" y1="160" x2="75" y2="146"/>
+            <line x1="85" y1="160" x2="85" y2="150"/><line x1="95" y1="160" x2="95" y2="144"/>
+            <line x1="105" y1="160" x2="105" y2="152"/><line x1="135" y1="160" x2="135" y2="147"/>
+            <line x1="145" y1="160" x2="145" y2="143"/><line x1="155" y1="160" x2="155" y2="151"/>
+            <line x1="165" y1="160" x2="165" y2="145"/><line x1="195" y1="160" x2="195" y2="148"/>
+            <line x1="205" y1="160" x2="205" y2="144"/><line x1="215" y1="160" x2="215" y2="153"/>
+            <line x1="230" y1="160" x2="230" y2="146"/><line x1="250" y1="160" x2="250" y2="149"/>
+            <line x1="270" y1="160" x2="270" y2="145"/><line x1="290" y1="160" x2="290" y2="147"/>
+            <line x1="310" y1="160" x2="310" y2="149"/>
+          </g>
+
+          <!-- 閾値線 -->
+          <line x1="15" y1="130" x2="325" y2="130" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4,3"/>
+          <text x="325" y="126" font-size="11" fill="#fbbf24" font-weight="bold">閾値 λt</text>
+          
+          <text x="170" y="190" font-size="11" fill="#94a3b8" text-anchor="middle">微小な折り返しノイズフロア（全域に拡散）</text>
+        </g>
+
+        <!-- 矢印 -->
+        <g transform="translate(395, 100)">
+          <path d="M 0 10 L 40 10" stroke="#34d399" stroke-width="3" marker-end="url(#arrow-green)"/>
+          <text x="20" y="-4" font-size="11" font-weight="bold" fill="#34d399" text-anchor="middle">ソフト閾値処理</text>
+          <text x="20" y="32" font-size="10" fill="#94a3b8" text-anchor="middle">(L1近接作用素)</text>
+        </g>
+
+        <!-- 右：閾値処理後 -->
+        <g transform="translate(460, 20)">
+          <text x="160" y="20" font-size="14" font-weight="bold" fill="#34d399" text-anchor="middle">復元後：折り返しのみが完全消去された解</text>
+          <line x1="20" y1="160" x2="320" y2="160" stroke="#475569" stroke-width="1.5"/>
+          <line x1="20" y1="30" x2="20" y2="160" stroke="#475569" stroke-width="1.5"/>
+
+          <!-- 残存真信号 -->
+          <line x1="60" y1="160" x2="60" y2="52" stroke="#34d399" stroke-width="4"/>
+          <circle cx="60" cy="52" r="3" fill="#34d399"/>
+
+          <line x1="120" y1="160" x2="120" y2="72" stroke="#34d399" stroke-width="4"/>
+          <circle cx="120" cy="72" r="3" fill="#34d399"/>
+          
+          <line x1="180" y1="160" x2="180" y2="57" stroke="#34d399" stroke-width="4"/>
+          <circle cx="180" cy="57" r="3" fill="#34d399"/>
+
+          <text x="170" y="110" font-size="12" fill="#34d399" font-weight="bold" text-anchor="middle">散乱した折り返し成分はすべてゼロ！</text>
+          <text x="170" y="190" font-size="11" fill="#94a3b8" text-anchor="middle">逆変換によりアーチファクトのない真の画像が完全再構成</text>
+        </g>
+
+        <defs>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 8 5 L 0 9 z" fill="#34d399"/>
+          </marker>
+        </defs>
+      </svg>
+      <div class="svg-caption">【図2】スパース変換領域におけるインコヒーレント折り返しのソフト閾値切断メカニズム</div>
+    </div>
+  </section>
+
+  <!-- 6. インタラクティブUIシミュレータ -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      インタラクティブ比較シミュレータ（完全オフライン動作）
+    </h2>
+
+    <p class="section-intro">
+      サンプリングモードを切り替え、反復ステップ（ISTA）を実行して、k空間マスク、実空間画像、および非線形復元の挙動の違いを体感してください。
+    </p>
+
+    <div class="simulator-panel">
+      <div class="sim-controls">
+        <span style="font-weight: 700; font-size: 0.9rem; color: #f1f5f9;">間引き様式：</span>
+        <button class="btn btn-outline" id="btnUniform" onclick="setMode('uniform')">規則的間引き（Uniform 1/2）</button>
+        <button class="btn btn-outline active" id="btnRandom" onclick="setMode('random')">ランダム間引き（CS）</button>
+        
+        <span style="font-weight: 700; font-size: 0.9rem; color: #f1f5f9; margin-left: 14px;">反復アルゴリズム：</span>
+        <button class="btn" id="btnStep" onclick="stepIteration()">反復ステップ実行</button>
+        <button class="btn btn-outline" onclick="resetSim()">リセット</button>
+        <span class="sim-status" id="iterStatus">反復回数: 0 (初期像)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-top: 16px;">
+        <!-- Canvas 1: k空間 -->
+        <div style="text-align: center;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #bae6fd; margin-bottom: 8px;">1. k空間サンプリング軌跡</div>
+          <canvas id="cvKspace" width="240" height="240" style="background:#040711; border: 1px solid var(--border-color); border-radius:6px; max-width:100%;"></canvas>
+        </div>
+
+        <!-- Canvas 2: 実空間画像 -->
+        <div style="text-align: center;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #bae6fd; margin-bottom: 8px;">2. 実空間画像（折り返しの形態）</div>
+          <canvas id="cvImage" width="240" height="240" style="background:#040711; border: 1px solid var(--border-color); border-radius:6px; max-width:100%;"></canvas>
+        </div>
+
+        <!-- 説明ボックス -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:16px; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-weight:700; font-size:0.95rem; margin-bottom:8px;" id="descTitle">ランダム間引きモード</div>
+          <div style="font-size:0.86rem; color:var(--text-muted); line-height:1.65;" id="descBody">
+            k空間が不規則に間引かれているため、初期状態（Iteration 0）において折り返しが「微細な背景ノイズ」として全域に散乱しています。<br><br>
+            「反復ステップ実行」をクリックすると、<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>ソフト閾値処理によってこの散乱ノイズが段階的に剪定され、真の血管ファントム構造がシャープに復元されます。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 臨床応用と現場知識（大幅拡充） -->
+  <section class="card">
+    <h2 class="card-title">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+      臨床MRIにおける実践的応用（シーケンス選択・パラメータ最適化・ピットフォール）
+    </h2>
+
+    <p class="section-intro">
+      主要各社（GE社 HyperSense[cite: 59]、Philips社 Compressed SENSE、Siemens社 Compressed Sensing）で広く臨床導入されている圧縮センシングについて、適用疾患ごとのプロトコル設計および現場でのトラブルシューティング指針を解説します。
+    </p>
+
+    <div class="clinical-grid">
+      <!-- 臨床例1: 頭部 3D TOF MRA -->
+      <div class="clinical-item">
+        <h4 style="color: var(--primary);">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          1. 3D TOF MRA（脳動脈瘤・主幹動脈狭窄評価）
+        </h4>
+        <p>
+          <strong>【臨床場面と設定指針】</strong><br>
+          未破裂脳動脈瘤や内頸動脈狭窄のスクリーニングにおいて、微小血管（穿通枝や前交通動脈瘤頸部）の視認性維持と撮像時間短縮（4〜6分から約2分台への半減）を両立します[cite: 12, 59]。<br>
+          <strong>【相乗効果の理由】</strong><br>
+          背景脳実質が抑制され、血管腔のみが高信号となるMRAは、画像ドメイン自体で<strong>極めて高いスパース性</strong>を元来有しています[cite: 12, 59]。このためCSとの親和性が全シーケンス中最も高く、高倍速化しても解剖構造の破綻が起きにくい特徴があります[cite: 59]。
+        </p>
+      </div>
+
+      <!-- 臨床例2: 腹部 3D MRCP -->
+      <div class="clinical-item">
+        <h4 style="color: var(--success);">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          2. 3D MRCP（1回息止め撮像への変革）
+        </h4>
+        <p>
+          <strong>【臨床場面と設定指針】</strong><br>
+          総胆管結石、膵管狭窄、IPMN（膵管内乳頭粘液性腫瘍）の診断。従来は呼吸同期（呼吸変動で撮像時間が5分以上に不安定化）が必須でしたが、CSにより<strong>約15〜18秒の1回息止め（Breath-hold）で等方性3Dボリューム取得</strong>が可能となります[cite: 1, 59]。<br>
+          <strong>【高倍速化の利点】</strong><br>
+          Heavy T2強調によって静止液体系（胆汁・膵液）以外が無信号化するため、MRA同様にスパース性が極めて高くなります[cite: 39, 59]。呼吸不整患者でも体動による位相ボケを完全に排除できます[cite: 21]。
+        </p>
+      </div>
+
+      <!-- 臨床例3: 整形外科 3D CUBE / 3D SPACE -->
+      <div class="clinical-item">
+        <h4 style="color: var(--accent);">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          3. 整形外科領域（膝関節・肩関節 3D等方性評価）
+        </h4>
+        <p>
+          <strong>【臨床場面と設定指針】</strong><br>
+          膝関節半月板断裂、前十字靭帯（ACL）損傷、肩関節唇病変の評価。3D CUBE（GE）やSPACE（Siemens）などの可変フリップ角3D FSE[cite: 39, 63]に適用し、0.5〜0.8 mmのアイソトロピックボクセルを取得[cite: 4]。<br>
+          <strong>【臨床メリット】</strong><br>
+          1回のスキャンから任意方向（任意の斜位断）へパーシャルボリューム効果のない再構成（MPR）が自在に行えるため、複雑に走行する靭帯線維の全貌を単一検査で網羅できます[cite: 14, 39]。
+        </p>
+      </div>
+
+      <!-- 臨床例4: 腹部ダイナミック DISCO / LAVA-Flex -->
+      <div class="clinical-item">
+        <h4 style="color: #38bdf8;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          4. 腹部・骨盤 超時間分解能ダイナミック造影（DISCO等）
+        </h4>
+        <p>
+          <strong>【臨床場面と設定指針】</strong><br>
+          肝細胞癌（HCC）の早期濃染・門脈ウォッシュアウト評価や前立腺癌、乳房ダイナミック[cite: 4, 58]。<br>
+          <strong>【時間軸CS（k-t法）】</strong><br>
+          空間2軸だけでなく「時間軸（時間方向の引き算差分は極めて疎）」方向にも疑似ランダム間引き（Pseudo-random Cartesian）を適用[cite: 58]。1フレームあたり数秒（3〜4秒/相）という超高速かつ高空間分解能の多時相動態撮像を実現し、動脈早期の捉え損ね（ミスディレイ）を根絶します[cite: 12, 58]。
+        </p>
+      </div>
+
+      <!-- 現場のピットフォール1: パッチ状ワックス様アーチファクト -->
+      <div class="clinical-item" style="border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.04);">
+        <h4 style="color: var(--danger);">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          現場の注意点①：加速の上げすぎによるワックス様ブラー
+        </h4>
+        <p>
+          <strong>【画像特徴】</strong><br>
+          加速ファクターを過剰に上げると、高周波成分の欠落と強い<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>L</mi><mn>1</mn></msub></math>ペナルティにより、組織テクスチャが<strong>「蝋細工（ワックス様）」「水彩画様」「パッチ状の過平滑化（Plastic look）」</strong>を呈します。<br>
+          <strong>【対策】</strong><br>
+          軟部組織や実質臓器（脳実質T2強調、肝実質など）は血管に比べてスパース性が低いため、加速倍率は2〜3倍程度に制限し、正則化パラメータ（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x03BB;</mi></math>）を弱めにチューニングします。
+        </p>
+      </div>
+
+      <!-- 現場のピットフォール2: パラレルイメージング（PI）とのハイブリッド設計 -->
+      <div class="clinical-item" style="border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.04);">
+        <h4 style="color: var(--warning);">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          現場の注意点②：PI併用時（HyperSense等）の配分バランス
+        </h4>
+        <p>
+          <strong>【協調動作の最適解】</strong><br>
+          GE HyperSense等の商用機では、コイル感度による展開（ARC）とCS反復復元を組み合わせて使用します[cite: 59]。<br>
+          <strong>【パラメータ設計ルール】</strong><br>
+          ARC等のパラレルイメージング係数を上げすぎると、コイル幾何学的配置（g-factor）に起因する中心部ノイズ爆発が生じます[cite: 2, 7]。そのため、<strong>ARCファクターは2.0以下に抑え、残りの加速（トータル3〜5倍）をランダムサンプリングCSに担わせる</strong>設定が臨床画質を担保する鉄則です[cite: 59]。
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 完全オフラインJavaScript -->
+<script>
+  let mode = 'random';
+  let iter = 0;
+  const maxIter = 4;
+
+  const cvK = document.getElementById('cvKspace');
+  const ctxK = cvK.getContext('2d');
+  const cvI = document.getElementById('cvImage');
+  const ctxI = cvI.getContext('2d');
+
+  function setMode(m) {
+    mode = m;
+    iter = 0;
+    document.getElementById('btnUniform').className = (mode === 'uniform') ? 'btn btn-outline active' : 'btn btn-outline';
+    document.getElementById('btnRandom').className = (mode === 'random') ? 'btn btn-outline active' : 'btn btn-outline';
+    updateSim();
+  }
+
+  function stepIteration() {
+    if (mode === 'uniform') {
+      alert('規則的間引きでは折り返しが構造的（コヒーレント）であるため、L1反復アルゴリズムを実行してもゴーストを真の信号から区別して消去できません！');
+      return;
+    }
+    if (iter < maxIter) {
+      iter++;
+      updateSim();
+    } else {
+      alert('最大反復回数に到達しました。インコヒーレント折り返しは完全に消去され、真の信号が再構成されました。');
+    }
+  }
+
+  function resetSim() {
+    iter = 0;
+    updateSim();
+  }
+
+  function drawKspace() {
+    ctxK.fillStyle = '#040711';
+    ctxK.fillRect(0, 0, 240, 240);
+
+    if (mode === 'uniform') {
+      ctxK.strokeStyle = '#38bdf8';
+      ctxK.lineWidth = 2;
+      for (let y = 12; y < 240; y += 16) {
+        ctxK.beginPath();
+        ctxK.moveTo(10, y);
+        ctxK.lineTo(230, y);
+        ctxK.stroke();
+      }
+    } else {
+      ctxK.strokeStyle = '#34d399';
+      ctxK.lineWidth = 1.5;
+      // 中心高密度
+      for (let y = 102; y <= 138; y += 4) {
+        ctxK.beginPath();
+        ctxK.moveTo(10, y);
+        ctxK.lineTo(230, y);
+        ctxK.stroke();
+      }
+      // 周辺ランダム
+      const randLines = [16, 28, 44, 62, 78, 88, 152, 168, 184, 204, 222];
+      randLines.forEach(y => {
+        ctxK.beginPath();
+        ctxK.moveTo(10, y);
+        ctxK.lineTo(230, y);
+        ctxK.stroke();
+      });
+    }
+  }
+
+  function drawObject(ctx, x, y, alpha, isGhost) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = isGhost ? '#f87171' : '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = isGhost ? 'rgba(248, 113, 113, 0.5)' : 'rgba(56, 189, 248, 0.5)';
+
+    // ファントム同心円と十字構造
+    ctx.beginPath();
+    ctx.arc(x, y, 32, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x - 40, y);
+    ctx.lineTo(x + 40, y);
+    ctx.moveTo(x, y - 40);
+    ctx.lineTo(x, y + 40);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawNoise(ctx, amount) {
+    if (amount <= 0) return;
+    const imgData = ctx.getImageData(0, 0, 240, 240);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (Math.random() < amount) {
+        const val = Math.floor(Math.random() * 85);
+        d[i] = Math.min(255, d[i] + val);
+        d[i + 1] = Math.min(255, d[i + 1] + val);
+        d[i + 2] = Math.min(255, d[i + 2] + val);
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  function drawImage() {
+    ctxI.fillStyle = '#040711';
+    ctxI.fillRect(0, 0, 240, 240);
+
+    if (mode === 'uniform') {
+      // 規則的間引き：中央の真画像＋上下に構造的ゴースト
+      drawObject(ctxI, 120, 120, 1.0, false);
+      drawObject(ctxI, 120, 42, 0.65, true);
+      drawObject(ctxI, 120, 198, 0.65, true);
+    } else {
+      // ランダム間引き：ゴーストなし、反復によってノイズフロアが減衰
+      drawObject(ctxI, 120, 120, 1.0, false);
+      const noiseLevel = Math.max(0, 0.45 - (iter * 0.12));
+      drawNoise(ctxI, noiseLevel);
+    }
+  }
+
+  function updateSim() {
+    drawKspace();
+    drawImage();
+
+    document.getElementById('iterStatus').innerText = `反復回数: ${iter} ${iter === 0 ? '(初期ゼロ充填像)' : iter === maxIter ? '(完全復元)' : '(復元反復中)'}`;
+
+    const titleEl = document.getElementById('descTitle');
+    const bodyEl = document.getElementById('descBody');
+
+    if (mode === 'uniform') {
+      titleEl.innerText = '規則的間引きモード（コヒーレント・エイリアシング）';
+      titleEl.style.color = '#f87171';
+      bodyEl.innerHTML = 'PSFがディラックの櫛となり、実空間で<strong>構造を持った明確な多重ゴースト</strong>が生じています。<br><br>ゴースト自体が真の信号と全く同一のエッジ周波数特性を持っているため、変換領域でも振幅の分離ができず、非線形反復を行っても偽像を除去することは数学的に不可能です。';
+    } else {
+      titleEl.innerText = 'ランダム間引きモード（インコヒーレント・エイリアシング）';
+      titleEl.style.color = '#34d399';
+      if (iter === 0) {
+        bodyEl.innerHTML = '初期状態では折り返しが<strong>背景全域に散乱した微小な砂嵐状ノイズフロア</strong>として現れています。<br><br>「反復ステップ実行」を押して、ウェーブレット変換ドメインでのソフト閾値処理（L1最小化）を進めてください。';
+      } else if (iter < maxIter) {
+        bodyEl.innerHTML = `反復 ${iter} ステップ目：スパース領域で微小な折り返しノイズフロアがソフト閾値処理によってゼロに剪定され、真の信号のエッジがシャープに際立ってきました。`;
+      } else {
+        bodyEl.innerHTML = '<strong style="color:#34d399;">復元完了！</strong><br>全域に散乱していたインコヒーレント折り返し成分がL1正則化によってすべて0に切断され、ナイキスト基準を大幅に下回るデータから欠損のない真の画像が完全に復元されました。';
+      }
+    }
+  }
+
+  // 初期描画
+  updateSim();
+</script>
+
+</body>
+</html>

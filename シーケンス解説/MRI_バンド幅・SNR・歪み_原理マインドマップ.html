@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MRIのバンド幅・SNR・歪みの関係 マインドマップ</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --ink:#1f2937;
+      --muted:#5b6473;
+      --line:#d9e3f0;
+      --blue:#2563eb;
+      --teal:#0f766e;
+      --violet:#7c3aed;
+      --amber:#d97706;
+      --rose:#e11d48;
+      --green:#15803d;
+      --shadow:0 8px 22px rgba(15,23,42,.06);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--ink);
+      background:linear-gradient(180deg,#f8fbff 0%, #f5f7fb 100%);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;
+      line-height:1.8;
+    }
+    .wrap{max-width:1280px;margin:0 auto;padding:28px 18px 90px}
+    h1,h2,h3{line-height:1.35;color:#0f172a}
+    h1{font-size:2rem;margin:0 0 10px}
+    h2{font-size:1.45rem;margin:48px 0 16px;border-left:6px solid var(--blue);padding-left:12px}
+    h3{font-size:1.12rem;margin:0 0 8px}
+    p,li{font-size:1rem}
+    .lead,.card,.branch,.summary,.equation-box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+    .lead{padding:20px 22px;margin-bottom:20px}
+    .lead p{margin:8px 0}
+    .formula{display:block;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0;text-align:center;font-family:"Times New Roman",Georgia,serif;font-size:1.28rem;overflow-x:auto}
+    .note{background:#eef5ff;border-left:5px solid var(--blue);padding:14px 16px;border-radius:12px;color:#1e3a8a;margin:16px 0}
+    .warn{background:#fff7ed;border-left:5px solid #f59e0b;padding:14px 16px;border-radius:12px;color:#92400e;margin:16px 0}
+    .small{color:var(--muted);font-size:.94rem}
+    .overview{padding:18px 18px 12px}
+    .svgbox{background:#fcfdff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px;overflow:auto}
+    .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+    .branch{padding:18px}
+    .tag{display:inline-block;padding:5px 10px;border-radius:999px;font-size:.85rem;font-weight:700;color:white;margin-bottom:10px}
+    .b-blue{background:var(--blue)} .b-teal{background:var(--teal)} .b-violet{background:var(--violet)}
+    .b-amber{background:var(--amber)} .b-rose{background:var(--rose)} .b-green{background:var(--green)}
+    .chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+    .chip{padding:9px 12px;border-radius:12px;background:#f8fbff;border:1px solid var(--line);font-weight:600}
+    .arr{font-weight:800;color:#64748b;font-size:1.15rem}
+    .equation-box{padding:18px;margin-top:18px}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.98rem;border-radius:12px;overflow:hidden}
+    th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top}
+    th{background:#eef4ff}
+    details{background:#fbfdff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:12px 0}
+    summary{cursor:pointer;font-weight:700;color:#0f172a}
+    ul.tight{padding-left:1.2rem;margin:.4rem 0}
+    ul.tight li{margin:.25rem 0}
+    .footer{margin-top:54px;text-align:center;color:var(--muted);font-size:.94rem}
+    @media print{
+      body{background:#fff}.wrap{padding:0}.lead,.card,.branch,.summary,.equation-box{box-shadow:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>MRIのバンド幅・SNR・歪みの関係</h1>
+    <div class="lead">
+      <p><strong>目的：</strong> ラーモアの式と傾斜磁場から出発して、<strong>バンド幅</strong>、<strong>pixel bandwidth</strong>、<strong>readout時間</strong>、<strong>k空間</strong>、<strong>chemical shift</strong>、<strong>off-resonance歪み</strong>、<strong>SNR</strong> までを、<strong>途中の変換式を埋めながら</strong>マインドマップ風に整理したHTMLです。</p>
+      <span class="formula">f = γ̄B → B(x)=B₀+Gx → f(x)=f₀+γ̄Gx → BW=γ̄GFOV → σ²∝BW → SNR∝1/√BW</span>
+      <div class="note">
+        一番大切なのは、<strong>「位置を周波数に変換する仕組み」</strong> と <strong>「熱雑音が受信帯域に応じて増える性質」</strong> を1本の流れとしてつなぐことです。
+      </div>
+    </div>
+
+    <h2>全体マインドマップ</h2>
+    <div class="overview card">
+      <p class="small">中央の「ラーモアの式」から、各枝へ導出が広がっていきます。</p>
+      <div class="svgbox">
+        <svg viewBox="0 0 1400 980" width="100%" aria-label="MRIのバンド幅とSNRに関するマインドマップ">
+          <defs>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#94a3b8" flood-opacity="0.25"/>
+            </filter>
+          </defs>
+
+          <!-- center -->
+          <rect x="520" y="430" width="360" height="120" rx="24" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+          <text x="700" y="473" font-size="28" text-anchor="middle" fill="#1d4ed8" font-weight="700">根っこ：ラーモアの式</text>
+          <text x="700" y="513" font-size="28" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">f = γ̄B</text>
+          <text x="700" y="538" font-size="16" text-anchor="middle" fill="#475569">磁場が変わると周波数が変わる</text>
+
+          <!-- connectors -->
+          <path d="M520,470 C420,430 360,360 300,270" stroke="#94a3b8" stroke-width="4" fill="none"/>
+          <path d="M880,470 C990,430 1060,360 1110,260" stroke="#94a3b8" stroke-width="4" fill="none"/>
+          <path d="M520,510 C390,560 300,630 230,740" stroke="#94a3b8" stroke-width="4" fill="none"/>
+          <path d="M880,510 C1010,560 1100,620 1170,740" stroke="#94a3b8" stroke-width="4" fill="none"/>
+          <path d="M700,430 C700,300 700,220 700,145" stroke="#94a3b8" stroke-width="4" fill="none"/>
+          <path d="M700,550 C700,645 700,705 700,810" stroke="#94a3b8" stroke-width="4" fill="none"/>
+
+          <!-- top middle: position-frequency -->
+          <rect x="500" y="45" width="400" height="120" rx="20" fill="#ecfeff" stroke="#99f6e4" stroke-width="2" filter="url(#shadow)"/>
+          <text x="700" y="83" font-size="24" text-anchor="middle" fill="#0f766e" font-weight="700">① 位置 → 周波数 変換</text>
+          <text x="700" y="113" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">B(x)=B₀+Gx</text>
+          <text x="700" y="139" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">f(x)=γ̄(B₀+Gx)=f₀+γ̄Gx</text>
+
+          <!-- upper left BW -->
+          <rect x="65" y="170" width="440" height="170" rx="20" fill="#eef2ff" stroke="#c7d2fe" stroke-width="2" filter="url(#shadow)"/>
+          <text x="285" y="208" font-size="24" text-anchor="middle" fill="#6d28d9" font-weight="700">② 総バンド幅 BW<tspan baseline-shift="sub">total</tspan></text>
+          <text x="285" y="242" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">f<tspan baseline-shift="sub">left</tspan>=f₀−γ̄G(FOV/2)</text>
+          <text x="285" y="268" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">f<tspan baseline-shift="sub">right</tspan>=f₀+γ̄G(FOV/2)</text>
+          <text x="285" y="302" font-size="24" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">BW = f<tspan baseline-shift="sub">right</tspan>−f<tspan baseline-shift="sub">left</tspan> = γ̄GFOV</text>
+
+          <!-- upper right pixel bw -->
+          <rect x="920" y="160" width="420" height="190" rx="20" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2" filter="url(#shadow)"/>
+          <text x="1130" y="198" font-size="24" text-anchor="middle" fill="#2563eb" font-weight="700">③ pixel bandwidth</text>
+          <text x="1130" y="230" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">Δf = γ̄GΔx</text>
+          <text x="1130" y="260" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">BW<tspan baseline-shift="sub">pixel</tspan>=γ̄GΔx</text>
+          <text x="1130" y="290" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">Δx=FOV/N<tspan baseline-shift="sub">x</tspan></text>
+          <text x="1130" y="320" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">BW<tspan baseline-shift="sub">pixel</tspan>=BW<tspan baseline-shift="sub">total</tspan>/N<tspan baseline-shift="sub">x</tspan></text>
+
+          <!-- lower left k-space -->
+          <rect x="35" y="650" width="470" height="220" rx="20" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="2" filter="url(#shadow)"/>
+          <text x="270" y="690" font-size="24" text-anchor="middle" fill="#15803d" font-weight="700">④ k空間・readout時間</text>
+          <text x="270" y="725" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">k<tspan baseline-shift="sub">x</tspan>(t)=γ̄∫G<tspan baseline-shift="sub">x</tspan>(t)dt</text>
+          <text x="270" y="755" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">dk<tspan baseline-shift="sub">x</tspan>/dt = γ̄G</text>
+          <text x="270" y="785" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">Δk = 1/FOV, k<tspan baseline-shift="sub">max</tspan>=1/(2Δx)</text>
+          <text x="270" y="818" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">T<tspan baseline-shift="sub">read</tspan>=N<tspan baseline-shift="sub">x</tspan>/BW<tspan baseline-shift="sub">total</tspan>=1/BW<tspan baseline-shift="sub">pixel</tspan></text>
+
+          <!-- lower middle noise/snr -->
+          <rect x="500" y="780" width="400" height="160" rx="20" fill="#fff7ed" stroke="#fed7aa" stroke-width="2" filter="url(#shadow)"/>
+          <text x="700" y="820" font-size="24" text-anchor="middle" fill="#d97706" font-weight="700">⑤ ノイズとSNR</text>
+          <text x="700" y="855" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">σ² ∝ BW</text>
+          <text x="700" y="885" font-size="22" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">σ ∝ √BW</text>
+          <text x="700" y="915" font-size="24" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">SNR = S/σ ∝ 1/√BW</text>
+
+          <!-- lower right artifact -->
+          <rect x="930" y="650" width="430" height="230" rx="20" fill="#fff1f2" stroke="#fecdd3" stroke-width="2" filter="url(#shadow)"/>
+          <text x="1145" y="690" font-size="24" text-anchor="middle" fill="#e11d48" font-weight="700">⑥ chemical shift / 歪み</text>
+          <text x="1145" y="725" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">df/dx = γ̄G</text>
+          <text x="1145" y="755" font-size="20" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">Δx<tspan baseline-shift="sub">shift</tspan>=Δf/(γ̄G)</text>
+          <text x="1145" y="790" font-size="21" text-anchor="middle" fill="#0f172a" font-family="Times New Roman, Georgia, serif">shift[pixel]=Δf/BW<tspan baseline-shift="sub">pixel</tspan></text>
+          <text x="1145" y="822" font-size="16" text-anchor="middle" fill="#475569">BWpixel が小さいほどずれが大きい</text>
+          <text x="1145" y="850" font-size="16" text-anchor="middle" fill="#475569">低BW：SNR↑ だが chemical shift / off-resonance歪み↑</text>
+        </svg>
+      </div>
+    </div>
+
+    <h2>枝ごとの導出</h2>
+    <div class="grid2">
+      <div class="branch">
+        <span class="tag b-teal">① 位置 → 周波数</span>
+        <h3>傾斜磁場をかけると、位置が周波数に変換される</h3>
+        <span class="formula">B(x)=B₀+Gx</span>
+        <span class="formula">f(x)=γ̄B(x)=γ̄(B₀+Gx)=γ̄B₀+γ̄Gx</span>
+        <span class="formula">f₀=γ̄B₀ とおけば、f(x)=f₀+γ̄Gx</span>
+        <div class="chain">
+          <div class="chip">位置 x が変わる</div><div class="arr">→</div>
+          <div class="chip">磁場 B(x) が変わる</div><div class="arr">→</div>
+          <div class="chip">周波数 f(x) が変わる</div>
+        </div>
+        <span class="formula">df/dx = γ̄G</span>
+        <p>これは、<strong>1 m あたり何 Hz 周波数が変化するか</strong>を表します。Gが大きいほど、同じ位置差でも周波数差が大きくなります。</p>
+      </div>
+
+      <div class="branch">
+        <span class="tag b-violet">② 総バンド幅</span>
+        <h3>FOV全体を読むために必要な周波数範囲</h3>
+        <span class="formula">x = -FOV/2 のとき fleft = f₀ - γ̄G(FOV/2)</span>
+        <span class="formula">x = +FOV/2 のとき fright = f₀ + γ̄G(FOV/2)</span>
+        <span class="formula">BWtotal = fright - fleft</span>
+        <span class="formula">= [f₀ + γ̄G(FOV/2)] - [f₀ - γ̄G(FOV/2)] = γ̄GFOV</span>
+        <p>したがって、<strong>FOVが広いほど</strong>、また<strong>gradientが強いほど</strong>、必要な受信バンド幅は広がります。</p>
+      </div>
+
+      <div class="branch">
+        <span class="tag b-blue">③ pixel bandwidth</span>
+        <h3>1 pixel 幅に割り当てられる周波数範囲</h3>
+        <span class="formula">位置差 Δx に対する周波数差 Δf=(df/dx)Δx=γ̄GΔx</span>
+        <span class="formula">BWpixel = γ̄GΔx</span>
+        <span class="formula">Δx = FOV/Nx</span>
+        <span class="formula">BWpixel = γ̄G(FOV/Nx) = (γ̄GFOV)/Nx = BWtotal/Nx</span>
+        <p>つまり、<strong>pixel bandwidth は 1 pixel あたり何 Hz か</strong>を表し、chemical shift や歪みの見かけの大きさを決める中心的な量です。</p>
+      </div>
+
+      <div class="branch">
+        <span class="tag b-green">④ k空間・readout時間</span>
+        <h3>gradient は k空間を移動する速さも決める</h3>
+        <span class="formula">kₓ(t)=γ̄∫Gₓ(t)dt</span>
+        <span class="formula">定常 readout gradient なら dkₓ/dt = γ̄G</span>
+        <span class="formula">Δk = 1/FOV, kmax = 1/(2Δx)</span>
+        <span class="formula">2kmax = γ̄G · Tread</span>
+        <span class="formula">Tread = 2kmax/(γ̄G) = [2×1/(2Δx)]/(γ̄G)=1/(γ̄GΔx)</span>
+        <span class="formula">BWpixel = γ̄GΔx より Tread = 1/BWpixel</span>
+        <span class="formula">BWtotal = Nx·BWpixel より Tread = Nx/BWtotal</span>
+        <p>高BWほど短時間でreadoutでき、低BWほどゆっくりreadoutします。</p>
+      </div>
+
+      <div class="branch">
+        <span class="tag b-amber">⑤ ノイズとSNR</span>
+        <h3>熱雑音は帯域が広いほど増える</h3>
+        <span class="formula">noise power ∝ BWtotal</span>
+        <span class="formula">したがって σ² ∝ BWtotal</span>
+        <span class="formula">よって σ ∝ √BWtotal</span>
+        <span class="formula">SNR = S/σ</span>
+        <span class="formula">同一条件で S を一定とみなせば SNR ∝ 1/√BWtotal</span>
+        <div class="chain">
+          <div class="chip">BW↑</div><div class="arr">→</div>
+          <div class="chip">ノイズ σ↑</div><div class="arr">→</div>
+          <div class="chip">SNR↓</div>
+        </div>
+        <p>これがMRIでよく使う有名な関係式です。</p>
+      </div>
+
+      <div class="branch">
+        <span class="tag b-rose">⑥ chemical shift と off-resonance歪み</span>
+        <h3>周波数ずれは位置ずれに変換される</h3>
+        <span class="formula">df/dx = γ̄G</span>
+        <span class="formula">周波数ずれ Δf に対する位置ずれ Δxshift = Δf/(γ̄G)</span>
+        <span class="formula">pixel単位のずれ shift[pixel] = Δxshift/Δx</span>
+        <span class="formula">= [Δf/(γ̄G)]/Δx = Δf/(γ̄GΔx) = Δf/BWpixel</span>
+        <p>chemical shift でも off-resonance でも数式の構造は同じです。したがって、<strong>BWpixel が小さいほどずれが大きい</strong>とわかります。</p>
+      </div>
+    </div>
+
+    <h2>パラメータを変えたときの因果関係</h2>
+    <div class="equation-box">
+      <div class="grid2">
+        <div>
+          <h3>G を上げると</h3>
+          <div class="chain">
+            <div class="chip">G↑</div><div class="arr">→</div>
+            <div class="chip">df/dx = γ̄G ↑</div><div class="arr">→</div>
+            <div class="chip">BWtotal = γ̄GFOV ↑</div>
+          </div>
+          <div class="chain">
+            <div class="chip">BWpixel = γ̄GΔx ↑</div><div class="arr">→</div>
+            <div class="chip">Tread = 1/BWpixel ↓</div><div class="arr">→</div>
+            <div class="chip">歪み↓</div>
+          </div>
+          <div class="chain">
+            <div class="chip">BW↑</div><div class="arr">→</div>
+            <div class="chip">σ↑</div><div class="arr">→</div>
+            <div class="chip">SNR↓</div>
+          </div>
+        </div>
+        <div>
+          <h3>G を下げると</h3>
+          <div class="chain">
+            <div class="chip">G↓</div><div class="arr">→</div>
+            <div class="chip">df/dx ↓</div><div class="arr">→</div>
+            <div class="chip">BWtotal ↓</div>
+          </div>
+          <div class="chain">
+            <div class="chip">BWpixel ↓</div><div class="arr">→</div>
+            <div class="chip">Tread ↑</div><div class="arr">→</div>
+            <div class="chip">歪み↑</div>
+          </div>
+          <div class="chain">
+            <div class="chip">BW↓</div><div class="arr">→</div>
+            <div class="chip">σ↓</div><div class="arr">→</div>
+            <div class="chip">SNR↑</div>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>変化</th>
+            <th>数式的なつながり</th>
+            <th>最終的な意味</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FOV↑（G一定）</td>
+            <td>BWtotal = γ̄GFOV ↑、かつ Δx=FOV/Nx ↑</td>
+            <td>総帯域↑、pixelサイズ↑、分解能は下がりやすい</td>
+          </tr>
+          <tr>
+            <td>Nx↑（FOV一定）</td>
+            <td>Δx=FOV/Nx ↓、BWpixel=BWtotal/Nx ↓、Tread=Nx/BWtotal ↑</td>
+            <td>分解能↑、readout時間↑、chemical shift/pixel は大きく見えやすい</td>
+          </tr>
+          <tr>
+            <td>BWtotal↑</td>
+            <td>σ∝√BW ↑、Tread=Nx/BW ↓</td>
+            <td>SNR↓、歪み↓、chemical shift↓</td>
+          </tr>
+          <tr>
+            <td>BWtotal↓</td>
+            <td>σ↓、Tread↑</td>
+            <td>SNR↑、歪み↑、chemical shift↑</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>SNRの拡張式との接続</h2>
+    <div class="card" style="padding:18px 20px;">
+      <p>BWの議論を、普段使うMRIのSNR式に接続すると次のように整理できます。</p>
+      <span class="formula">SNR ∝ Vvoxel · √NEX / √BW</span>
+      <span class="formula">Vvoxel = ΔxΔyΔz</span>
+      <span class="formula">したがって SNR ∝ (ΔxΔyΔz)√NEX / √BW</span>
+      <div class="chain">
+        <div class="chip">voxelを大きくする</div><div class="arr">→</div>
+        <div class="chip">SNR↑</div>
+      </div>
+      <div class="chain">
+        <div class="chip">NEXを上げる</div><div class="arr">→</div>
+        <div class="chip">SNR↑（√NEX）</div>
+      </div>
+      <div class="chain">
+        <div class="chip">BWを下げる</div><div class="arr">→</div>
+        <div class="chip">SNR↑（1/√BW）</div>
+      </div>
+      <div class="warn">
+        ただし、<strong>BWを下げてSNRを稼ぐ</strong>と、chemical shift や off-resonance歪みは増えます。したがって臨床では、SNR・歪み・分解能・撮像時間のトレードオフとして考えます。
+      </div>
+    </div>
+
+    <h2>超要約</h2>
+    <div class="summary" style="padding:18px 20px;">
+      <details open>
+        <summary>1本の主幹だけを見る</summary>
+        <span class="formula">f = γ̄B</span>
+        <span class="formula">B(x)=B₀+Gx</span>
+        <span class="formula">f(x)=γ̄(B₀+Gx)=f₀+γ̄Gx</span>
+        <span class="formula">BWtotal = γ̄GFOV</span>
+        <span class="formula">σ²∝BW → σ∝√BW</span>
+        <span class="formula">SNR = S/σ ∝ 1/√BW</span>
+      </details>
+      <details>
+        <summary>歪みの主幹だけを見る</summary>
+        <span class="formula">df/dx = γ̄G</span>
+        <span class="formula">Δxshift = Δf/(γ̄G)</span>
+        <span class="formula">shift[pixel] = Δf/BWpixel</span>
+        <p>したがって、<strong>BWpixel が小さいほど、chemical shift や off-resonance によるずれは大きく見える</strong>とわかります。</p>
+      </details>
+      <details>
+        <summary>readout時間の主幹だけを見る</summary>
+        <span class="formula">kₓ(t)=γ̄∫Gₓ(t)dt</span>
+        <span class="formula">dkₓ/dt = γ̄G</span>
+        <span class="formula">Tread = 1/BWpixel = Nx/BWtotal</span>
+        <p>高BWでは短時間readout、低BWでは長時間readoutになります。</p>
+      </details>
+    </div>
+
+    <div class="footer">
+      MRIのバンド幅・SNR・歪みの関係を、ラーモアの式からマインドマップ風に整理したHTML教材
+    </div>
+  </div>
+</body>
+</html>

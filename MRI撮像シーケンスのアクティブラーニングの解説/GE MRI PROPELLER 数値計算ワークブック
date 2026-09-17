@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>GE MRI PROPELLER 体動補正｜数値で体験する計算ワークブック</title>
+<style>
+:root{
+  --ink:#162033;--muted:#5b677a;--line:#d9e2ef;--bg:#f4f7fb;--card:#fff;
+  --blue:#0c78b8;--blue2:#eaf7ff;--purple:#6d3df5;--purple2:#f3efff;
+  --green:#0b8a6a;--green2:#eaf9f4;--orange:#b55a00;--orange2:#fff4e6;
+  --red:#b42318;--red2:#fff0ee;--navy:#0b1730;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;line-height:1.78}
+main{max-width:1080px;margin:auto;padding:24px 18px 80px}.hero{background:linear-gradient(135deg,#0d6ea7,#6841e6);color:#fff;border-radius:24px;padding:34px 32px;box-shadow:0 15px 40px #0b173020}
+.hero h1{font-size:clamp(28px,4vw,46px);line-height:1.25;margin:0 0 12px}.hero p{margin:6px 0;font-size:17px}.badge{display:inline-block;background:#ffffff22;border:1px solid #ffffff55;border-radius:999px;padding:5px 11px;margin:0 6px 7px 0;font-size:13px}
+nav{position:sticky;top:0;z-index:10;margin:16px 0;background:#ffffffed;backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;gap:8px;overflow:auto;box-shadow:0 7px 25px #13203a12}nav a{white-space:nowrap;text-decoration:none;color:#24415f;background:#eef4fb;border-radius:999px;padding:8px 12px;font-weight:700;font-size:13px}
+section{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px;margin:18px 0;box-shadow:0 8px 26px #17233a0b}h2{font-size:27px;line-height:1.35;margin:0 0 18px}h3{font-size:20px;margin:26px 0 10px}.lead{font-size:17px}.callout{border-left:6px solid var(--purple);background:var(--purple2);padding:16px 18px;border-radius:10px;margin:18px 0}.info{border-left-color:var(--blue);background:var(--blue2)}.good{border-left-color:var(--green);background:var(--green2)}.warn{border-left-color:var(--orange);background:var(--orange2)}.danger{border-left-color:var(--red);background:var(--red2)}
+.math{font-family:Georgia,"Times New Roman",serif;font-size:clamp(19px,2.4vw,28px);text-align:center;padding:16px 10px;background:#eff9ff;border:1px solid #a9ddf7;border-radius:14px;margin:14px 0;overflow-x:auto;white-space:nowrap}.math.small{font-size:20px}.math.purple{background:#f4f0ff;border-color:#c9b9ff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fbfdff}.card h3,.card h4{margin-top:0}.kpi{font-size:27px;font-weight:800;color:#0d6ea7}.small{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:separate;border-spacing:0;margin:16px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}th,td{padding:12px 13px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left}th{background:#edf4fb}tr:last-child td{border-bottom:0}th:last-child,td:last-child{border-right:0}
+.steps{counter-reset:s}.step{position:relative;padding-left:50px;margin:21px 0}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0d78b6;color:white;font-weight:800}
+.calc{background:#0b1730;color:#e9f1ff;border-radius:18px;padding:20px}.calc h3{color:white;margin-top:0}.calcgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;font-size:12px;color:#aac1e2;margin-bottom:5px}.field input{width:100%;padding:11px;border-radius:10px;border:1px solid #395070;background:#132542;color:white;font-size:16px}.btn{appearance:none;border:0;border-radius:11px;padding:11px 15px;background:#43b8ff;color:#06213a;font-weight:900;cursor:pointer;margin-top:12px}.out{margin-top:14px;background:#101f39;border:1px solid #344c6d;border-radius:12px;padding:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow:auto;color:#dcf3ff}
+svg{max-width:100%;height:auto;display:block;margin:auto}.caption{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800}.pill.blue{background:#dff3ff;color:#09628e}.pill.purple{background:#ebe4ff;color:#5d2fd3}.pill.green{background:#ddf7ee;color:#05735a}
+details{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0;background:#fbfdff}summary{font-weight:800;cursor:pointer}.answer{margin-top:12px;padding:12px;background:#eefaf5;border-radius:10px}
+.refs li{margin:9px 0}.refs a{color:#0b67a0;word-break:break-all}.footer{color:#607088;font-size:13px;text-align:center;padding:18px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.nowrap{white-space:nowrap}
+@media(max-width:760px){main{padding:12px 10px 50px}.hero{padding:25px 20px;border-radius:18px}section{padding:20px 15px}.grid,.grid3,.calcgrid{grid-template-columns:1fr}table{font-size:13px}th,td{padding:9px}.math{white-space:normal}.step{padding-left:42px}}
+@media print{body{background:#fff}nav,.btn{display:none}main{max-width:none;padding:0}section,.hero{box-shadow:none;break-inside:avoid}.calc{background:#eee;color:#111}.calc h3{color:#111}.field input{color:#111;background:white}.out{color:#111;background:white}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+  <div><span class="badge">GE MRI / PROPELLER</span><span class="badge">数値演習</span><span class="badge">完全オフラインHTML</span></div>
+  <h1>PROPELLERの回転・並進補正を<br>「実際に計算して」理解する</h1>
+  <p>フーリエ回転定理・フーリエ移動定理を、具体的なFOV・行列・k空間座標・体動量に落とし込みます。</p>
+  <p><strong>今回の基準例：</strong>FOV 240 mm、Matrix 256、面内回転 +7°、並進 Δx=+3 mm、Δy=−2 mm</p>
+</header>
+
+<nav>
+<a href="#overview">全体像</a><a href="#setup">0. 数値設定</a><a href="#rotation">1. 回転</a><a href="#translation">2. 並進</a><a href="#combined">3. 合成</a><a href="#calc">計算機</a><a href="#quiz">演習</a><a href="#limits">限界</a><a href="#refs">参考文献</a>
+</nav>
+
+<section id="overview">
+<h2>まず全体像：PROPELLERは「各bladeが自分でナビゲータを持つ」</h2>
+<p class="lead">PROPELLERでは、FSEで得る複数のk空間ラインを1本の<strong>blade（長方形ストリップ）</strong>としてまとめ、そのbladeをk空間中心のまわりに回転させながら収集します。すべてのbladeが中心部を共有するため、中心領域を低分解能の2D navigatorとして比較でき、blade間の面内回転・並進を推定できます。</p>
+<div class="grid">
+<div class="card">
+<svg viewBox="0 0 420 300" aria-label="PROPELLER k-space schematic">
+<rect width="420" height="300" rx="16" fill="#08162e"/>
+<g transform="translate(210 150)" opacity=".92">
+<rect x="-170" y="-24" width="340" height="48" rx="6" fill="#32b8ff" opacity=".35" transform="rotate(0)"/>
+<rect x="-170" y="-24" width="340" height="48" rx="6" fill="#7b57ff" opacity=".30" transform="rotate(30)"/>
+<rect x="-170" y="-24" width="340" height="48" rx="6" fill="#32e0ba" opacity=".28" transform="rotate(60)"/>
+<rect x="-170" y="-24" width="340" height="48" rx="6" fill="#ffb84d" opacity=".25" transform="rotate(90)"/>
+<rect x="-170" y="-24" width="340" height="48" rx="6" fill="#ff78b6" opacity=".25" transform="rotate(120)"/>
+<circle r="35" fill="#fff" opacity=".9"/><circle r="26" fill="#30a9ef" opacity=".9"/>
+<line x1="-190" x2="190" y1="0" y2="0" stroke="#d9e9ff" opacity=".5"/><line y1="-130" y2="130" x1="0" x2="0" stroke="#d9e9ff" opacity=".5"/>
+<text x="45" y="-10" fill="#fff" font-size="14">全bladeが共有</text><text x="45" y="10" fill="#fff" font-size="14">する中心領域</text>
+</g></svg>
+<div class="caption">概念図：中心部の反復サンプリングがself-navigationを可能にする</div>
+</div>
+<div class="card">
+<h3>補正の考え方</h3>
+<div class="steps">
+<div class="step"><strong>回転を推定</strong><br>並進が作る複素位相の影響を避けるため、中心k空間の<strong>絶対値（magnitude）</strong>を比較する。</div>
+<div class="step"><strong>回転を逆向きに戻す</strong><br>推定した角度の逆変換をblade座標へ適用する。</div>
+<div class="step"><strong>並進を推定</strong><br>中心データから作った低分解能画像の相互相関、または等価なk空間相関から Δx, Δy を得る。</div>
+<div class="step"><strong>位相ランプを逆掛け</strong><br>全bladeに exp(+i2πk·Δr) を掛け、位置ズレが作った線形位相を打ち消す。</div>
+</div>
+</div>
+</div>
+<div class="callout info"><strong>文献との対応：</strong>Pipeの原法は、k空間中心を各bladeで共有することにより位置・回転・位相の不整合を補正する考え方です。後続研究では、面内剛体運動を「回転 + 並進」に分け、回転は中心k空間のmagnitude、並進は相互相関で推定する形が整理されています。GEの公開説明も、radial k-space filling と motion-correction post-processing を組み合わせることを説明しています。</div>
+<div class="callout warn"><strong>重要：</strong>以下は公開論文で説明されているPROPELLERの原理を数式で追う教材です。現在のGE装置内部の実装・重み付け・補間・blade rejection等はソフトウェア世代で異なり得るため、「GEの非公開アルゴリズムを完全再現したもの」ではありません。</div>
+</section>
+
+<section id="setup">
+<h2>STEP 0｜まず「1 pixel」と「k空間1目盛り」を数値化する</h2>
+<div class="grid3">
+<div class="card"><div class="small">FOV</div><div class="kpi">240 mm</div><div>今回の例</div></div>
+<div class="card"><div class="small">Matrix</div><div class="kpi">256</div><div>readout方向を想定</div></div>
+<div class="card"><div class="small">体動</div><div class="kpi">+7°</div><div>Δx=+3 mm, Δy=−2 mm</div></div>
+</div>
+<h3>① 画像1 pixelの大きさ</h3>
+<div class="math">Δx<sub>pixel</sub> = FOV / N = 240 / 256 = <strong>0.9375 mm/pixel</strong></div>
+<p>したがって、+3 mmの並進は <strong>3 / 0.9375 = 3.20 pixel</strong>、−2 mmは <strong>−2.13 pixel</strong> に相当します。</p>
+<h3>② k空間の1目盛り</h3>
+<div class="math">Δk = 1 / FOV = 1 / 240 = <strong>0.0041667 mm<sup>−1</sup></strong></div>
+<p>離散フーリエ変換では、k空間のサンプル番号 n と物理座標 k の間に <span class="mono">k = n/FOV</span> の対応があります。</p>
+<h3>③ k空間端のおおよその座標</h3>
+<div class="math">k<sub>max</sub> ≈ (N/2)·Δk = 128 × 0.0041667 = <strong>0.5333 mm<sup>−1</sup></strong></div>
+<div class="callout good"><strong>ここが大切：</strong>実空間の「mm」とk空間の「mm<sup>−1</sup>」を掛けると無次元の「cycle数」になります。そこへ 2π を掛けると位相 [rad] になります。つまり <strong>k × 位置ズレ → 位相ズレ</strong> です。</div>
+</section>
+
+<section id="rotation">
+<h2>STEP 1｜面内回転：+7°を実際に回転行列で計算する</h2>
+<p>あなたの資料にあるフーリエ回転定理の核は、<strong>実空間で回転するとk空間も幾何学的に回転する</strong>ことです。符号規約は式の書き方で変わりますが、補正の本質は「推定した回転の逆変換を掛ける」です。</p>
+<div class="math purple">R(θ) = [ cosθ &nbsp; −sinθ ; &nbsp; sinθ &nbsp; cosθ ]</div>
+<p>例として、基準blade上のある点を <strong>k=(0.300, 0.100) mm<sup>−1</sup></strong> とします。患者が +7° 回転したと考えます。</p>
+<div class="steps">
+<div class="step"><strong>三角関数を数値化</strong><br>cos7° = 0.992546、sin7° = 0.121869</div>
+<div class="step"><strong>x成分</strong><div class="math small">k′<sub>x</sub> = 0.300×0.992546 − 0.100×0.121869 = <strong>0.285577</strong></div></div>
+<div class="step"><strong>y成分</strong><div class="math small">k′<sub>y</sub> = 0.300×0.121869 + 0.100×0.992546 = <strong>0.135815</strong></div></div>
+</div>
+<table><thead><tr><th></th><th>k<sub>x</sub> [mm<sup>−1</sup>]</th><th>k<sub>y</sub> [mm<sup>−1</sup>]</th></tr></thead><tbody><tr><td>回転前</td><td>0.300000</td><td>0.100000</td></tr><tr><td>+7° 回転後</td><td>0.285577</td><td>0.135815</td></tr><tr><td>−7°で補正後</td><td>≈0.300000</td><td>≈0.100000</td></tr></tbody></table>
+
+<h3>なぜ回転推定には「絶対値」を使いやすいのか</h3>
+<p>並進 Δr はk空間に複素位相因子を掛けます。</p>
+<div class="math">F<sub>shift</sub>(k) = F(k) · exp(−i2π k·Δr)</div>
+<p>しかし複素指数の絶対値は常に1です。</p>
+<div class="math">|exp(−iφ)| = 1　→　|F<sub>shift</sub>(k)| = |F(k)|</div>
+<p>具体例として F(k)=120+50i とします。元の絶対値は √(120²+50²)=<strong>130</strong> です。後で計算する並進例では位相因子が <span class="mono">exp(−i255°)</span> となり、Fはおよそ <strong>−79.35 + 102.97i</strong> に変化します。それでも絶対値は <strong>130のまま</strong>です。</p>
+<div class="callout"><strong>数式のお気持ち：</strong>並進は「複素ベクトルを回す」だけで長さを変えません。だからmagnitudeにすると並進の邪魔が消え、blade同士の<strong>角度だけ</strong>を比べやすくなります。</div>
+<h3>polar座標でみると回転は「横ズレ」になる</h3>
+<div class="math small">|B(k<sub>r</sub>,k<sub>θ</sub>)| = |A(k<sub>r</sub>, k<sub>θ</sub> − λ<sub>θ</sub>)|</div>
+<p>k空間を (k<sub>r</sub>, k<sub>θ</sub>) の極座標で表すと、中心まわりの回転は角度方向のシフトです。相互相関のピークが +7°に出たなら、そのbladeは基準bladeに対して +7°回転していると推定し、座標を −7°戻します。</p>
+</section>
+
+<section id="translation">
+<h2>STEP 2｜並進：Δx=+3 mm、Δy=−2 mm が作る位相ランプを計算する</h2>
+<p>フーリエ移動定理を今回の値へ代入します。</p>
+<div class="math">f(r−Δr) ⇔ F(k)·exp{−i2π(k<sub>x</sub>Δx+k<sub>y</sub>Δy)}</div>
+<h3>まず「k空間1サンプル進むごとの位相変化」を出す</h3>
+<div class="grid">
+<div class="card"><h4>x方向</h4><div class="math small">Δφ<sub>x,1step</sub> = −2π·Δx/FOV</div><p>= −2π×3/240 = −0.07854 rad = <strong>−4.5° / index</strong></p></div>
+<div class="card"><h4>y方向</h4><div class="math small">Δφ<sub>y,1step</sub> = −2π·Δy/FOV</div><p>= −2π×(−2)/240 = +0.05236 rad = <strong>+3.0° / index</strong></p></div>
+</div>
+<div class="callout good"><strong>直感：</strong>+xへ3 mmズレた画像は、k<sub>x</sub>方向へ1点進むごとに位相が−4.5°ずつ傾きます。これが「位相ランプ」です。位置ズレが大きいほど坂が急になります。</div>
+
+<h3>具体的なk空間点 n<sub>x</sub>=40, n<sub>y</sub>=−25 で計算</h3>
+<div class="steps">
+<div class="step"><strong>サンプル番号を物理k座標へ</strong><div class="math small">k<sub>x</sub>=40/240=0.166667 mm<sup>−1</sup><br>k<sub>y</sub>=−25/240=−0.104167 mm<sup>−1</sup></div></div>
+<div class="step"><strong>内積 k·Δr</strong><div class="math small">0.166667×3 + (−0.104167)×(−2)<br>= 0.500000 + 0.208333 = <strong>0.708333 cycle</strong></div></div>
+<div class="step"><strong>位相へ変換</strong><div class="math small">φ = −2π×0.708333 = −4.45059 rad = <strong>−255°</strong></div></div>
+<div class="step"><strong>補正は逆位相</strong><div class="math small">F<sub>corrected</sub> = F<sub>shift</sub> · exp(+i255°)</div></div>
+</div>
+<p>−255°は、複素平面では +105°と同じ向きです（360°周期）。しかし「位相ランプの傾き」を扱う際は、途中でwrapせず連続量として考える方が分かりやすいです。</p>
+
+<h3>同じ計算を「1 indexあたりの傾き」で検算</h3>
+<div class="math small">x寄与：40×(−4.5°)=−180°　　y寄与：(−25)×(+3.0°)=−75°</div>
+<div class="math"><strong>合計 = −180°−75° = −255°</strong></div>
+<p>直接式と完全に一致します。</p>
+
+<h3>並進量はどう推定するのか</h3>
+<p>各bladeの中心領域から低分解能画像 a(x,y), b(x,y) を作り、相互相関</p>
+<div class="math small">cc(Δx,Δy)=∬ a*(x,y) b(x+Δx,y+Δy) dxdy</div>
+<p>が最大になる位置を探します。k空間では、Parseval/相関定理を使って <span class="mono">FT<sup>−1</sup>{A*(k)B(k)}</span> のピークとして同じシフトを求められます。今回の理想例ではピークが (+3 mm, −2 mm) に対応し、全bladeへ逆位相ランプを掛けて補正します。</p>
+</section>
+
+<section id="combined">
+<h2>STEP 3｜回転 + 並進を1つの症例として通し計算</h2>
+<table><thead><tr><th>時点</th><th>何が起こるか</th><th>計算・処理</th></tr></thead><tbody>
+<tr><td>基準</td><td>Reference blade</td><td>θ=0°, Δr=(0,0)</td></tr>
+<tr><td>体動</td><td>頭部が +7°、右へ3 mm、下へ2 mm</td><td>θ=+7°, Δr=(+3,−2) mm</td></tr>
+<tr><td>k空間幾何</td><td>blade中心データが回転</td><td>例 (0.300,0.100) → (0.285577,0.135815)</td></tr>
+<tr><td>k空間位相</td><td>並進により線形位相ランプ</td><td>n=(40,−25) なら −255°</td></tr>
+<tr><td>回転推定</td><td>magnitudeを比較</td><td>相互相関ピーク → 約 +7°</td></tr>
+<tr><td>回転補正</td><td>座標を元へ</td><td>R(−7°)を適用</td></tr>
+<tr><td>並進推定</td><td>中心低分解能画像を相関</td><td>ピーク → (+3,−2) mm</td></tr>
+<tr><td>並進補正</td><td>位相ランプを逆掛け</td><td>exp{+i2π(kx·3 + ky·(−2))}</td></tr>
+<tr><td>再構成</td><td>blade間の整合性を高めて統合</td><td>gridding / weighting 等へ</td></tr>
+</tbody></table>
+<div class="callout info"><strong>重要な順序：</strong>「回転をmagnitudeで推定 → 座標を戻す → 並進を推定 → 位相を戻す」と考えると、2種類の体動が数式上きれいに分離できます。</div>
+</section>
+
+<section id="calc">
+<h2>自分で動かす計算機</h2>
+<p>値を変えて、k空間の位相勾配や回転座標がどう変わるか確認してください。外部ライブラリは使っていないため、このHTMLだけでオフライン動作します。</p>
+<div class="grid">
+<div class="calc">
+<h3>A｜並進 → 位相ランプ</h3>
+<div class="calcgrid">
+<div class="field"><label>FOV [mm]</label><input id="fov" type="number" value="240" step="1"></div>
+<div class="field"><label>Δx [mm]</label><input id="dx" type="number" value="3" step="0.1"></div>
+<div class="field"><label>Δy [mm]</label><input id="dy" type="number" value="-2" step="0.1"></div>
+<div class="field"><label>nₓ [index]</label><input id="nx" type="number" value="40" step="1"></div>
+<div class="field"><label>nᵧ [index]</label><input id="ny" type="number" value="-25" step="1"></div>
+</div>
+<button class="btn" onclick="calcPhase()">計算する</button>
+<div class="out" id="phaseOut"></div>
+</div>
+<div class="calc">
+<h3>B｜回転行列</h3>
+<div class="calcgrid">
+<div class="field"><label>θ [deg]</label><input id="theta" type="number" value="7" step="0.1"></div>
+<div class="field"><label>kₓ [mm⁻¹]</label><input id="rkx" type="number" value="0.3" step="0.01"></div>
+<div class="field"><label>kᵧ [mm⁻¹]</label><input id="rky" type="number" value="0.1" step="0.01"></div>
+</div>
+<button class="btn" onclick="calcRot()">計算する</button>
+<div class="out" id="rotOut"></div>
+</div>
+</div>
+</section>
+
+<section id="quiz">
+<h2>手計算トレーニング</h2>
+<details><summary>問題1｜FOV 240 mmで +x方向に 1 pixel（0.9375 mm）動いた。k-space の nₓ=128 では位相は何度？</summary><div class="answer">Δφ = −2π·nₓ·Δx/FOV = −2π×128×0.9375/240。0.9375/240=1/256なので、−2π×128/256 = −π rad = <strong>−180°</strong>。つまり1 pixelの移動はNyquist端で180°の位相差になります。</div></details>
+<details><summary>問題2｜今回の Δx=+3 mm のとき、nₓ=20だけ見れば位相寄与は何度？</summary><div class="answer">1 indexあたり −4.5°なので、20×(−4.5°)=<strong>−90°</strong>。</div></details>
+<details><summary>問題3｜Δy=−2 mm のとき、nᵧ=+30の位相寄与は？</summary><div class="answer">1 indexあたり +3.0°なので、30×3°=<strong>+90°</strong>。</div></details>
+<details><summary>問題4｜+7°回転したbladeを補正する行列の角度は？</summary><div class="answer">逆変換なので <strong>−7°</strong>。R(−7°)=R(+7°)<sup>−1</sup>=R(+7°)<sup>T</sup>（回転行列は直交行列）です。</div></details>
+<details><summary>問題5｜なぜF(k)の絶対値なら並進に影響されない？</summary><div class="answer">並進は F(k) に exp(−iφ) を掛けますが、|exp(−iφ)|=1。したがって |F(k)exp(−iφ)|=|F(k)|×1=|F(k)|。変わるのは位相だけで、複素ベクトルの長さは変わりません。</div></details>
+</section>
+
+<section id="limits">
+<h2>どこまで補正でき、どこから難しくなるか</h2>
+<div class="grid">
+<div class="card"><span class="pill green">得意</span><h3>面内の剛体運動</h3><p>頭部のように形が大きく変わらず、主に回転 + 並進として記述できる動きは、PROPELLERのself-navigationと相性がよい領域です。</p></div>
+<div class="card"><span class="pill purple">難しい</span><h3>through-plane motion</h3><p>撮像面の外へ出入りする動きは、単純な2D回転・並進では元に戻せません。公開研究では、こうしたbladeを品質指標で低重み化・除外する考え方が説明されています。</p></div>
+<div class="card"><span class="pill purple">難しい</span><h3>非剛体変形</h3><p>腹部のような呼吸変形、蠕動などは「物体全体が同じ角度・同じ距離だけ移動する」というモデルから外れます。アーチファクト低減は期待できますが完全補正とは別問題です。</p></div>
+<div class="card"><span class="pill blue">設計上の強み</span><h3>中心k-spaceの反復</h3><p>各bladeが中心を通ることで、低空間周波数を何度も取得します。これがnavigator情報と、低周波成分の平均化効果につながります。</p></div>
+</div>
+<div class="callout danger"><strong>臨床上の注意：</strong>「PROPELLERを使えば体動が全部消える」わけではありません。GEも公開説明では“reduces the effect”と表現しており、体動の種類・大きさ・blade内で起こる動き・through-plane成分などで残存アーチファクトは変わります。</div>
+</section>
+
+<section id="refs">
+<h2>参考文献・検索根拠</h2>
+<ol class="refs">
+<li>Pipe JG. <em>Motion Correction With PROPELLER MRI: Application to Head Motion and Free-Breathing Cardiac Imaging.</em> Magnetic Resonance in Medicine. 1999;42(5):963–969. DOI: 10.1002/(SICI)1522-2594(199911)42:5&lt;963::AID-MRM17&gt;3.0.CO;2-L<br><a href="https://pubmed.ncbi.nlm.nih.gov/10542356/">PubMed</a></li>
+<li>Arfanakis K, et al. <em>Motion Correction in PROPELLER and Turboprop-MRI.</em> Magn Reson Imaging. 2009. PMCID: PMC2731563. 回転をmagnitude中心データから、並進を相互相関から推定する理論整理に使用。<br><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2731563/">PMC</a></li>
+<li>GE HealthCare. <em>PROPELLER</em>. radial k-space filling、motion correction、中心k-space oversamplingに関する製品説明。<br><a href="https://www.gehealthcare.com/en/products/magnetic-resonance-imaging/applications/propeller">GE HealthCare</a></li>
+</ol>
+<div class="small">作成日: 2026-09-17 ｜ 教育用途。数式の符号はフーリエ変換の定義・座標変換の表記により反転し得ます。本資料では「実空間の +Δr 並進 → k空間に exp(−i2πk·Δr)」の規約で統一しています。</div>
+</section>
+
+<div class="footer">GE MRI PROPELLER｜数値で体験する体動補正ワークブック</div>
+</main>
+<script>
+function fnum(x,n=6){return Number(x).toFixed(n)}
+function wrapDeg(d){let w=((d+180)%360+360)%360-180; return w===-180?180:w}
+function calcPhase(){
+  const fov=+document.getElementById('fov').value, dx=+document.getElementById('dx').value, dy=+document.getElementById('dy').value;
+  const nx=+document.getElementById('nx').value, ny=+document.getElementById('ny').value;
+  const kx=nx/fov, ky=ny/fov;
+  const cycles=kx*dx+ky*dy;
+  const phiRad=-2*Math.PI*cycles;
+  const phiDeg=phiRad*180/Math.PI;
+  const sx=-360*dx/fov, sy=-360*dy/fov;
+  const corr=-phiDeg;
+  document.getElementById('phaseOut').textContent =
+`Δk = 1/FOV = ${fnum(1/fov,7)} mm^-1\n`+
+`kx = nx/FOV = ${fnum(kx)} mm^-1\nky = ny/FOV = ${fnum(ky)} mm^-1\n\n`+
+`k·Δr = kx·Δx + ky·Δy\n       = ${fnum(cycles)} cycle\n\n`+
+`移動が作る位相 = -2π(k·Δr)\n  = ${fnum(phiRad)} rad\n  = ${fnum(phiDeg,3)}°\n  = wrapすると ${fnum(wrapDeg(phiDeg),3)}°\n\n`+
+`1 indexあたりの傾き:\n  x: ${fnum(sx,3)}°/index\n  y: ${fnum(sy,3)}°/index\n\n`+
+`補正で掛ける位相 = ${fnum(corr,3)}° (符号を逆にする)`;
+}
+function calcRot(){
+  const th=+document.getElementById('theta').value, kx=+document.getElementById('rkx').value, ky=+document.getElementById('rky').value;
+  const r=th*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+  const x2=kx*c-ky*s, y2=kx*s+ky*c;
+  const x3=x2*c+y2*s, y3=-x2*s+y2*c; // R(-θ)
+  document.getElementById('rotOut').textContent =
+`cosθ = ${fnum(c)}\nsinθ = ${fnum(s)}\n\n`+
+`R(+θ) · [kx, ky]^T\n`+
+`kx' = ${fnum(x2)} mm^-1\nky' = ${fnum(y2)} mm^-1\n\n`+
+`逆回転 R(-θ) を適用:\n`+
+`kx'' = ${fnum(x3)} mm^-1\nky'' = ${fnum(y3)} mm^-1\n\n`+
+`→ 元の (${fnum(kx)}, ${fnum(ky)}) に戻る`;
+}
+calcPhase();calcRot();
+</script>
+</body>
+</html>

@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q028 復習教材：SENSEにおけるg-factorノイズ増幅の数理と臨床</title>
+<style>
+  :root {
+    --bg-primary: #0b1329;
+    --bg-secondary: #131f37;
+    --bg-card: #1c2b4a;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-bright: #ffffff;
+    --border-color: #2e4369;
+    --accent-teal: #06b6d4;
+    --accent-teal-light: #22d3ee;
+    --accent-blue: #3b82f6;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --purple: #a855f7;
+    --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    font-family: var(--font-stack);
+    line-height: 1.7;
+    padding: 1.5rem 1rem;
+  }
+
+  .container {
+    max-width: 1020px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-title-group h1 {
+    font-size: 1.4rem;
+    color: var(--text-bright);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+  }
+
+  .badge-tag {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    background-color: rgba(6, 182, 212, 0.15);
+    color: var(--accent-teal-light);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+  }
+
+  /* Card */
+  .card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .card-header h2 {
+    font-size: 1.2rem;
+    color: var(--text-bright);
+  }
+
+  .card-header .icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: var(--accent-teal);
+    flex-shrink: 0;
+  }
+
+  /* Score Summary Grid */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .score-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+  }
+
+  .score-item .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .score-item .value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-top: 0.25rem;
+  }
+
+  .value-score { color: var(--warning); }
+  .value-grade { color: var(--warning); }
+  .value-priority { color: var(--danger); }
+
+  /* Q&A / Feedback Panels */
+  .qa-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .qa-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-teal);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .user-answer {
+    background: rgba(11, 19, 41, 0.7);
+    border-left: 3px solid var(--border-color);
+    padding: 0.8rem;
+    font-style: italic;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .model-answer {
+    background: rgba(6, 182, 212, 0.08);
+    border-left: 3px solid var(--accent-teal);
+    padding: 0.85rem;
+    color: var(--text-bright);
+    font-size: 0.92rem;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .feedback-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .feedback-box { grid-template-columns: 1fr; }
+  }
+
+  .fb-panel {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid var(--border-color);
+  }
+
+  .fb-good { border-left-color: var(--success); }
+  .fb-fix { border-left-color: var(--warning); }
+  .fb-error { border-left-color: var(--danger); }
+
+  .fb-panel h3 {
+    font-size: 0.92rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .fb-good h3 { color: var(--success); }
+  .fb-fix h3 { color: var(--warning); }
+  .fb-error h3 { color: var(--danger); }
+
+  .fb-panel p {
+    font-size: 0.87rem;
+    color: var(--text-main);
+  }
+
+  /* Math Containers */
+  .math-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .math-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent-teal-light);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .math-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 0;
+    color: #f8fafc;
+  }
+
+  math {
+    font-family: "Latin Modern Math", "Cambria Math", STIXGeneral, serif;
+    font-size: 1.08rem;
+  }
+
+  .step-block {
+    background: rgba(11, 19, 41, 0.45);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-teal);
+    margin-bottom: 0.5rem;
+  }
+
+  .step-badge {
+    background: var(--accent-teal);
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* Interactive Simulator */
+  .sim-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .sim-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    background: var(--bg-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+  }
+
+  .sim-control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+  }
+
+  .sim-slider {
+    cursor: pointer;
+    accent-color: var(--accent-teal);
+  }
+
+  .sim-btn {
+    background: var(--bg-secondary);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 0.45rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sim-btn:hover {
+    background: var(--border-color);
+    color: var(--text-bright);
+  }
+
+  .sim-btn.active {
+    background: var(--accent-teal);
+    color: #000;
+    border-color: var(--accent-teal);
+  }
+
+  .sim-canvas-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Data Table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+  }
+
+  .data-table th, .data-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    text-align: left;
+  }
+
+  .data-table th {
+    background: var(--bg-card);
+    color: var(--accent-teal-light);
+    font-weight: 700;
+  }
+
+  .data-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Callout */
+  .callout {
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1.25rem 0;
+    font-size: 0.88rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .callout-info {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    color: #bfdbfe;
+  }
+
+  .callout-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fecaca;
+  }
+
+  .custom-list {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .custom-list li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .custom-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent-teal);
+    font-weight: bold;
+  }
+
+  /* Print Styles */
+  @media print {
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 0;
+    }
+    .container { max-width: 100%; }
+    .card, .header, .qa-block, .math-card, .sim-container, .fb-panel, .step-block {
+      background: #ffffff !important;
+      border: 1px solid #cccccc !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .header-title-group h1, .card-header h2, .math-title, .qa-title, .step-header {
+      color: #000000 !important;
+    }
+    .user-answer, .model-answer {
+      background: #f8fafc !important;
+      color: #000000 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+    .sim-controls { display: none !important; }
+    .badge-tag {
+      border: 1px solid #000000;
+      color: #000000;
+      background: transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title-group">
+      <h1>
+        <span>Q028</span>
+        <span>復習教材：SENSEにおけるg-factorノイズ増幅の数理と臨床</span>
+      </h1>
+      <div class="header-meta">
+        分野：MRI物理・工学 ＞ パラレルイメージング（SENSE） ＞ 逆問題と幾何学的配置因子
+      </div>
+    </div>
+    <div>
+      <span class="badge-tag">完全オフライン準拠</span>
+      <span class="badge-tag">途中式・代数導出完全収録</span>
+    </div>
+  </header>
+
+  <!-- 1. 採点サマリー -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+      <h2>採点サマリー</h2>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="label">得点</div>
+        <div class="value value-score">65 / 100</div>
+      </div>
+      <div class="score-item">
+        <div class="label">判定</div>
+        <div class="value value-grade">B（部分正解）</div>
+      </div>
+      <div class="score-item">
+        <div class="label">学習優先度</div>
+        <div class="value value-priority">高（重要原理）</div>
+      </div>
+      <div class="score-item">
+        <div class="label">連立方程式の着眼</div>
+        <div class="value" style="color: var(--accent-teal-light);">極めて優秀</div>
+      </div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-title">出題（問題文原文）</div>
+      <div><strong>SENSEでコイル感度プロファイルが互いに似すぎていると、なぜg-factorノイズが増えるのですか。</strong></div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">予測メモ：連立方程式が解きにくくなる。</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-title">ユーザー解答</div>
+      <div class="user-answer">
+        「SENSEはパラレルイメージングの間引いた信号を実空間上で補正して信号を埋めるための技術である。コイル感度プロファイルが互いに似すぎていると、実空間上で隣同士の信号が似ているため補正が上手く働かなくなる。結果、幾何学配置因子gが大きくなる。」
+      </div>
+    </div>
+
+    <div class="feedback-box">
+      <div class="fb-panel fb-good">
+        <h3>
+          <svg style="width:1rem;height:1rem;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          正しく理解できた点
+        </h3>
+        <p>SENSEが実空間（画像領域）においてコイル感度を用いてエイリアシング（折り返し）を分離する技術であること、および感度の不良が「幾何学的配置因子（g-factor）」の増大をもたらす帰結を捉えています。何より、予測メモにあった「連立方程式が解きにくくなる」という発想は、数学的本質を100%射抜いています。</p>
+      </div>
+
+      <div class="fb-panel fb-fix">
+        <h3>
+          <svg style="width:1rem;height:1rem;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          最大の修正点
+        </h3>
+        <p>「実空間上で隣同士の信号が似ているため」という表現は物理的に誤りです。似通っているのは「隣り合う生体組織の信号（コントラスト）」ではなく、重なり合った画素位置における<strong>「各コイル素子の空間的感度（方程式の係数比）」</strong>です。被写体の信号値自体が似ているかどうかは無関係です。</p>
+      </div>
+    </div>
+
+    <div class="fb-panel fb-error" style="margin-top: 1rem;">
+      <h3>
+        <svg style="width:1rem;height:1rem;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.48 2 12s4.47 10 10 10 10-4.48 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+        根本的誤概念（克服すべきポイント）
+      </h3>
+      <p>「被写体の信号同士が似ていて見分けがつかない」と考えてしまう落とし穴です。SENSEは折り重なった位置ごとに異なる「コイル感度の勾配（独立性）」を係数として連立方程式を解きます。コイル感度同士が似通うと、感度行列の列ベクトルが平行（線形従属）に近づき、<strong>行列式（連立方程式の分母）が 0 に近づきます</strong>。その結果、逆行列を計算する際に微小な測定ノイズが「0で割り算」されるような状態になり、画素値のノイズが天文学的に跳ね上がります。</p>
+    </div>
+
+    <div class="qa-block" style="margin-top: 1rem;">
+      <div class="qa-title">模範解答</div>
+      <div class="model-answer">
+        SENSEでは位相エンコード間引きにより同一画素に折り重なった複数の信号を、各コイル素子の「感度プロファイルの違い」を係数とする連立一次方程式を解いて分離する。コイル感度プロファイルが互いに似すぎていると、感度行列の列ベクトル同士が線形従属に近づき、行列式がゼロ近傍となる（悪条件問題）。この連立方程式を解く逆演算を行う際、各コイルに含まれる微小な熱雑音が「ほぼゼロの分母」で割られるように爆発的に増幅されて画素値へ伝播する。このノイズ増幅率を表す幾何学的配置因子（g-factor ≥ 1）が極端に大きくなるため、画像上に激しいノイズが発生する。
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 初等代数から解く：中高数学でわかるg-factorの正体 -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+      <h2>【超初級解説】中学・高校の連立方程式で完全にわかるg-factorの正体</h2>
+    </div>
+
+    <p style="font-size: 0.9rem;">
+      「行列やテンソルが出てくると頭が痛くなる…」という方のために、まずは<strong>中学数学の「2元1次連立方程式」</strong>だけで、なぜ感度が似るとノイズが爆発するのかを完全に紐解きます。
+    </p>
+
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">ステップ 1</span>
+        SENSEを身近な連立方程式で表す
+      </div>
+      <p style="font-size: 0.88rem;">
+        加速係数 R = 2（撮像時間を半分にして視野を半分に間引いた状態）を考えます。このとき、実空間のある1つの画素には、本来離れた場所にある<strong>「位置1の信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub></math>」</strong>と<strong>「位置2の信号 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>2</mn></msub></math>」</strong>が重なり合って届きます。
+      </p>
+      <p style="font-size: 0.88rem; margin-top: 0.5rem;">
+        いま、受信コイルが2個（コイルA、コイルB）あるとします。各コイルが受信する信号（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>s</mi><mi>A</mi></msub><mo>,</mo><msub><mi>s</mi><mi>B</mi></msub></math>）は、それぞれの位置でのコイルの感度（感度を <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>C</mi></math> とします）で重み付けされた合計値になります：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mo>{</mo>
+              <mtable columnalign="left">
+                <mtr>
+                  <mtd><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>m</mi><mn>2</mn></msub><mo>=</mo><msub><mi>s</mi><mi>A</mi></msub><mo>+</mo><msub><mi>n</mi><mi>A</mi></msub><mspace width="1.5em"/><mtext>（コイルAの受信信号）</mtext></mtd>
+                </mtr>
+                <mtr>
+                  <mtd><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>m</mi><mn>2</mn></msub><mo>=</mo><msub><mi>s</mi><mi>B</mi></msub><mo>+</mo><msub><mi>n</mi><mi>B</mi></msub><mspace width="1.5em"/><mtext>（コイルBの受信信号）</mtext></mtd>
+                </mtr>
+              </mtable>
+            </mrow>
+          </math>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+          ※ <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>n</mi><mi>A</mi></msub><mo>,</mo><msub><mi>n</mi><mi>B</mi></msub></math> は受信回路や人体から混入する避けられない微小な熱雑音（ノイズ）。
+        </p>
+      </div>
+    </div>
+
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">ステップ 2</span>
+        中学数学（加減法）で未知数 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub></math> を解く（途中式を一切省かない計算）
+      </div>
+      <p style="font-size: 0.88rem;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>2</mn></msub></math> を消去するために、上の式に <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub></math> を掛け、下の式に <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub></math> を掛けて引き算します：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mtable columnalign="right center left">
+                <mtr>
+                  <mtd><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mrow><mo>(</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>m</mi><mn>2</mn></msub><mo>)</mo></mrow></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mrow><mo>(</mo><msub><mi>s</mi><mi>A</mi></msub><mo>+</mo><msub><mi>n</mi><mi>A</mi></msub><mo>)</mo></mrow></mtd>
+                </mtr>
+                <mtr>
+                  <mtd><mo>-</mo><mo>)</mo><mspace width="0.8em"/><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><mrow><mo>(</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>m</mi><mn>2</mn></msub><mo>)</mo></mrow></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><mrow><mo>(</mo><msub><mi>s</mi><mi>B</mi></msub><mo>+</mo><msub><mi>n</mi><mi>B</mi></msub><mo>)</mo></mrow></mtd>
+                </mtr>
+                <mtr>
+                  <mtd columnalign="center" colspan="3"><mo>&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;</mtd>
+                </mtr>
+                <mtr>
+                  <mtd><mrow><mo>(</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub><mo>)</mo></mrow><msub><mi>m</mi><mn>1</mn></msub></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><mrow><mo>(</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>s</mi><mi>A</mi></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>s</mi><mi>B</mi></msub><mo>)</mo></mrow><mo>+</mo><mrow><mo>(</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>n</mi><mi>A</mi></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>n</mi><mi>B</mi></msub><mo>)</mo></mrow></mtd>
+                </mtr>
+              </mtable>
+            </mrow>
+          </math>
+        </div>
+
+        <p style="font-size: 0.88rem; margin-top: 0.75rem;">
+          両辺を <math xmlns="http://www.w3.org/1998/Math/MathML"><mo>(</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub><mo>)</mo></math> で割ると、求めたい真の画素値 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub></math> の解が得られます：
+        </p>
+
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <msub><mi>m</mi><mn>1</mn></msub>
+              <mo>=</mo>
+              <munder><mrow><mfrac><mrow><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>s</mi><mi>A</mi></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>s</mi><mi>B</mi></msub></mrow><mrow><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub></mrow></mfrac></mrow><mrow><mo>&#x25B2;</mo><mspace width="0.2em"/><mtext>本来の復元信号成分</mtext></mrow></munder>
+              <mo>+</mo>
+              <munder><mrow><mfrac><mrow><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><msub><mi>n</mi><mi>A</mi></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>n</mi><mi>B</mi></msub></mrow><mrow><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub></mrow></mfrac></mrow><mrow><mo>&#x25B2;</mo><mspace width="0.2em"/><mi mathvariant="bold">画像上に現れるノイズ成分！</mi></mrow></munder>
+            </mrow>
+          </math>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">ステップ 3</span>
+        「感度プロファイルが似る」と何が起きるか？
+      </div>
+      <p style="font-size: 0.88rem;">
+        上式の<strong>分母 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>-</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub></math></strong> に全神経を集中してください。
+      </p>
+      <ul class="custom-list" style="margin-top: 0.5rem;">
+        <li>
+          <strong>コイル感度が大きく異なる場合（理想状態）：</strong><br>
+          例えばコイルAは位置1に極めて近く（感度1.0）、位置2からは遠い（感度0.1）。コイルBは逆に位置1から遠く（感度0.1）、位置2に近い（感度1.0）とします。<br>
+          分母は <math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1.0</mn><mo>&#xD7;</mo><mn>1.0</mn><mo>-</mo><mn>0.1</mn><mo>&#xD7;</mo><mn>0.1</mn><mo>=</mo><mn>0.99</mn></math> となり、分母がしっかり大きな値を持つため、ノイズ成分は増幅されません。
+        </li>
+        <li style="margin-top: 0.5rem;">
+          <strong>コイル感度プロファイルが似すぎている場合（問題の状態）：</strong><br>
+          深部臓器やコイル配列の向きが悪く、コイルAもコイルBも位置1と位置2に対する感度変化がほとんど同じ（例えば <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mrow><mi>A</mi><mn>1</mn></mrow></msub><mo>=</mo><mn>0.50</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>A</mi><mn>2</mn></mrow></msub><mo>=</mo><mn>0.49</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>1</mn></mrow></msub><mo>=</mo><mn>0.50</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>B</mi><mn>2</mn></mrow></msub><mo>=</mo><mn>0.49</mn></math>）だとします。<br>
+          すると分母は：
+          <div style="text-align:center; padding: 0.3rem 0; font-weight: bold; color: var(--danger);">
+            分母 ＝ 0.50 × 0.49 − 0.49 × 0.50 ＝ 0.0000… （ほぼゼロ！）
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout callout-danger" style="margin-top: 0.75rem;">
+        <div style="font-weight: bold; font-size: 1.2rem; line-height: 1;">!</div>
+        <div>
+          <strong>ノイズ爆発のメカニズム：</strong><br>
+          分母が「ほぼゼロ（0.001など）」になると、ノイズ項の計算は <strong>「微小な雑音 ÷ 0.001 ＝ 雑音が1000倍に巨大化！」</strong> されることになります。受信機が拾ったわずかな熱雑音（<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>n</mi><mi>A</mi></msub><mo>,</mo><msub><mi>n</mi><mi>B</mi></msub></math>）が数千倍に跳ね上がって画素値 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>m</mi><mn>1</mn></msub></math> に上乗せされてしまうのです。このノイズの拡大係数こそが <strong>g-factor（幾何学的配置因子）</strong> です。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 線形代数による厳密導出（方程式系2の完全攻略） -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M7 2v2h1v14H7v2h10v-2h-1V4h1V2H7zm4 4h2v2h-2V6zm0 4h2v6h-2v-6z"/></svg>
+      <h2>【数理厳密解説】方程式系２の完全導出：逆行列演算からg-factorの定義まで</h2>
+    </div>
+
+    <p style="font-size: 0.88rem;">
+      前の章で直感的に掴んだ「分母がゼロに近づいてノイズが爆発する」という現象を、任意のコイル数・加速率に対応できるよう<strong>行列代数（線形代数）と統計学（誤差伝播）</strong>を用いて1つの省略もなく完全に導出します。
+    </p>
+
+    <!-- Step A: モデル化 -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">導出 A</span>
+        観測方程式（フォワードモデル）の行列表現
+      </div>
+      <p style="font-size: 0.88rem;">
+        コイル素子数を <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>N</mi><mi>c</mi></msub></math>、加速率（重なり合う画素数）を <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> とします（ただし解が存在するために <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>N</mi><mi>c</mi></msub><mo>&#x2265;</mo><mi>R</mi></math>）。あるエイリアスした画素における観測方程式は次のように書けます：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mi mathvariant="bold">s</mi><mo>=</mo><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi><mo>+</mo><mi mathvariant="bold-italic">&#x3B7;</mi>
+            </mrow>
+          </math>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+          ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">s</mi><mo>&#x2208;</mo><msup><mi mathvariant="double-struck">C</mi><mrow><msub><mi>N</mi><mi>c</mi></msub><mo>&#xD7;</mo><mn>1</mn></mrow></msup></math>：各コイルが受信した重なり画像の値（既知の測定値ベクトル）<br>
+          ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">C</mi><mo>&#x2208;</mo><msup><mi mathvariant="double-struck">C</mi><mrow><msub><mi>N</mi><mi>c</mi></msub><mo>&#xD7;</mo><mi>R</mi></mrow></msup></math>：事前計測されたコイル感度行列（既知の係数行列）。<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>C</mi><mrow><mi>&#x3B3;</mi><mi>&#x3C1;</mi></mrow></msub></math> は位置 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3C1;</mi></math> に対するコイル <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>&#x3B3;</mi></math> の複素感度<br>
+          ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">m</mi><mo>&#x2208;</mo><msup><mi mathvariant="double-struck">C</mi><mrow><mi>R</mi><mo>&#xD7;</mo><mn>1</mn></mrow></msup></math>：分離したい真の画素値ベクトル（未知数）<br>
+          ・<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold-italic">&#x3B7;</mi><mo>&#x2208;</mo><msup><mi mathvariant="double-struck">C</mi><mrow><msub><mi>N</mi><mi>c</mi></msub><mo>&#xD7;</mo><mn>1</mn></mrow></msup></math>：受信熱雑音。平均ゼロ、共分散行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">&#x3A8;</mi><mo>=</mo><mi mathvariant="double-struck">E</mi><mo>[</mo><mi mathvariant="bold-italic">&#x3B7;</mi><msup><mi mathvariant="bold-italic">&#x3B7;</mi><mi mathvariant="normal">H</mi></msup><mo>]</mo></math> に従うガウス雑音
+        </div>
+      </div>
+    </div>
+
+    <!-- Step B: 最適解の導出 -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">導出 B</span>
+        アンフォールディング逆行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi></math> の決定（重み付き一般化逆行列）
+      </div>
+      <p style="font-size: 0.88rem;">
+        重なりを解く再構成画像 <math xmlns="http://www.w3.org/1998/Math/MathML"><mover><mi mathvariant="bold">m</mi><mo>^</mo></mover></math> を、観測ベクトル <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">s</mi></math> に対する線形フィルタ行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi><mo>&#x2208;</mo><msup><mi mathvariant="double-struck">C</mi><mrow><mi>R</mi><mo>&#xD7;</mo><msub><mi>N</mi><mi>c</mi></msub></mrow></msup></math> を用いて次のように作るとします：
+      </p>
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mover><mi mathvariant="bold">m</mi><mo>^</mo></mover><mo>=</mo><mi mathvariant="bold">W</mi><mi mathvariant="bold">s</mi>
+            </mrow>
+          </math>
+        </div>
+      </div>
+
+      <p style="font-size: 0.88rem;">
+        ここで、次の2つの絶対条件を課します：
+      </p>
+      <ol style="font-size: 0.85rem; padding-left: 1.5rem; margin-top: 0.25rem;">
+        <li><strong>不偏性（折り返し信号を完全除去すること）：</strong> ノイズがないとき <math xmlns="http://www.w3.org/1998/Math/MathML"><mover><mi mathvariant="bold">m</mi><mo>^</mo></mover><mo>=</mo><mi mathvariant="bold">W</mi><mo>(</mo><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi><mo>)</mo><mo>=</mo><mi mathvariant="bold">m</mi></math> となる必要があるため、<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi><mi mathvariant="bold">C</mi><mo>=</mo><mi mathvariant="bold">I</mi></math>（単位行列）でなければならない。</li>
+        <li><strong>最小分散（画像ノイズを最小化すること）：</strong> コイル間のノイズ相関 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">&#x3A8;</mi></math> を考慮した重み付き二乗誤差を最小にする。</li>
+      </ol>
+
+      <p style="font-size: 0.88rem; margin-top: 0.75rem;">
+        ガウス・マルコフの定理（Gauss-Markov Theorem）より、この条件を満たす最良線形不偏推定量（BLUE: Best Linear Unbiased Estimator）の再構成行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi></math> は一意に定まります：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mi mathvariant="bold">W</mi>
+              <mo>=</mo>
+              <msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup>
+              <msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup>
+              <msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup>
+            </mrow>
+          </math>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+          検算：<math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi><mi mathvariant="bold">C</mi><mo>=</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mo>=</mo><mi mathvariant="bold">I</mi></math> となり、確かに折り返しは完全に消去されます。
+        </p>
+      </div>
+    </div>
+
+    <!-- Step C: ノイズ共分散の伝播 -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">導出 C</span>
+        復元画素 <math xmlns="http://www.w3.org/1998/Math/MathML"><mover><mi mathvariant="bold">m</mi><mo>^</mo></mover></math> のノイズ共分散行列の計算（ノイズの伝播）
+      </div>
+      <p style="font-size: 0.88rem;">
+        推定解 <math xmlns="http://www.w3.org/1998/Math/MathML"><mover><mi mathvariant="bold">m</mi><mo>^</mo></mover></math> に観測式 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">s</mi><mo>=</mo><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi><mo>+</mo><mi mathvariant="bold-italic">&#x3B7;</mi></math> を代入します：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mover><mi mathvariant="bold">m</mi><mo>^</mo></mover>
+              <mo>=</mo>
+              <mi mathvariant="bold">W</mi><mrow><mo>(</mo><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi><mo>+</mo><mi mathvariant="bold-italic">&#x3B7;</mi><mo>)</mo></mrow>
+              <mo>=</mo>
+              <munder><mrow><mi mathvariant="bold">W</mi><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi></mrow><mrow><mo>=</mo><mi mathvariant="bold">m</mi></mrow></munder>
+              <mo>+</mo>
+              <mi mathvariant="bold">W</mi><mi mathvariant="bold-italic">&#x3B7;</mi>
+              <mo>=</mo>
+              <mi mathvariant="bold">m</mi><mo>+</mo><mi mathvariant="bold">W</mi><mi mathvariant="bold-italic">&#x3B7;</mi>
+            </mrow>
+          </math>
+        </div>
+        <p style="font-size: 0.88rem;">
+          この第2項 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi><mi mathvariant="bold-italic">&#x3B7;</mi></math> が、再構成画像に混入する誤差（ノイズ）です。このノイズの共分散行列 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="bold">X</mi><mi>m</mi></msub></math> を計算します：
+        </p>
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <msub><mi mathvariant="bold">X</mi><mi>m</mi></msub>
+              <mo>=</mo>
+              <mi mathvariant="double-struck">E</mi><mrow><mo>[</mo><mrow><mo>(</mo><mi mathvariant="bold">W</mi><mi mathvariant="bold-italic">&#x3B7;</mi><mo>)</mo></mrow><msup><mrow><mo>(</mo><mi mathvariant="bold">W</mi><mi mathvariant="bold-italic">&#x3B7;</mi><mo>)</mo></mrow><mi mathvariant="normal">H</mi></msup><mo>]</mo></mrow>
+              <mo>=</mo>
+              <mi mathvariant="bold">W</mi><mspace width="0.2em"/><mi mathvariant="double-struck">E</mi><mo>[</mo><mi mathvariant="bold-italic">&#x3B7;</mi><msup><mi mathvariant="bold-italic">&#x3B7;</mi><mi mathvariant="normal">H</mi></msup><mo>]</mo><mspace width="0.2em"/><msup><mi mathvariant="bold">W</mi><mi mathvariant="normal">H</mi></msup>
+              <mo>=</mo>
+              <mi mathvariant="bold">W</mi><mi mathvariant="bold">&#x3A8;</mi><msup><mi mathvariant="bold">W</mi><mi mathvariant="normal">H</mi></msup>
+            </mrow>
+          </math>
+        </div>
+
+        <p style="font-size: 0.88rem; margin-top: 0.5rem;">
+          ここに先ほど求めた <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">W</mi><mo>=</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup></math> を代入して展開します：
+        </p>
+
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mtable columnalign="right center left">
+                <mtr>
+                  <mtd><msub><mi mathvariant="bold">X</mi><mi>m</mi></msub></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><mrow><mo>[</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mo>]</mo></mrow><mi mathvariant="bold">&#x3A8;</mi><msup><mrow><mo>[</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mo>]</mo></mrow><mi mathvariant="normal">H</mi></msup></mtd>
+                </mtr>
+                <mtr>
+                  <mtd></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><munder><mrow><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">&#x3A8;</mi><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup></mrow><mrow><mo>=</mo><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup></mrow></munder><mi mathvariant="bold">C</mi><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup></mtd>
+                </mtr>
+                <mtr>
+                  <mtd></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><munder><mrow><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow></mrow><mrow><mo>=</mo><mi mathvariant="bold">I</mi></mrow></munder><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup></mtd>
+                </mtr>
+                <mtr>
+                  <mtd></mtd>
+                  <mtd><mo>=</mo></mtd>
+                  <mtd><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup></mtd>
+                </mtr>
+              </mtable>
+            </mrow>
+          </math>
+        </div>
+
+        <p style="font-size: 0.88rem; margin-top: 0.75rem;">
+          驚くほど美しい結果が得られました。復元された各画素のノイズ分散（標準偏差の二乗 <math xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mi>&#x3C3;</mi><mrow><mi>SENSE</mi><mo>,</mo><mi>&#x3C1;</mi></mrow><mn>2</mn></msubsup></math>）は、この行列の<strong>対角成分</strong>そのものになります：
+        </p>
+
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <msubsup><mi>&#x3C3;</mi><mrow><mi>SENSE</mi><mo>,</mo><mi>&#x3C1;</mi></mrow><mn>2</mn></msubsup>
+              <mo>=</mo>
+              <msub><mrow><mo>[</mo><msub><mi mathvariant="bold">X</mi><mi>m</mi></msub><mo>]</mo></mrow><mrow><mi>&#x3C1;</mi><mi>&#x3C1;</mi></mrow></msub>
+              <mo>=</mo>
+              <msub><mrow><mo>[</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><mo>]</mo></mrow><mrow><mi>&#x3C1;</mi><mi>&#x3C1;</mi></mrow></msub>
+            </mrow>
+          </math>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step D: SNRとg-factorの定義 -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-badge">導出 D</span>
+        フルサンプリングSNRとの比較と g-factor の定義
+      </div>
+      <p style="font-size: 0.88rem;">
+        一方、パラレルイメージングを使わずに全位相エンコードを収集した通常画像（Full Fourier）を、最適合成法（Roemer合成）で結合したときの画素分散は次のようになります（サンプリング点数が <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> 倍多いため）：
+      </p>
+
+      <div class="math-card">
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <msubsup><mi>&#x3C3;</mi><mrow><mi>full</mi><mo>,</mo><mi>&#x3C1;</mi></mrow><mn>2</mn></msubsup>
+              <mo>=</mo>
+              <mfrac><mn>1</mn><mrow><mi>R</mi><mo>&#x22C5;</mo><msub><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mi>&#x3C1;</mi><mi>&#x3C1;</mi></mrow></msub></mrow></mfrac>
+            </mrow>
+          </math>
+        </div>
+
+        <p style="font-size: 0.88rem; margin-top: 0.75rem;">
+          両者の標準偏差の比（ノイズが何倍に悪化したか）を計算します：
+        </p>
+
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <mfrac><msub><mi>&#x3C3;</mi><mrow><mi>SENSE</mi><mo>,</mo><mi>&#x3C1;</mi></mrow></msub><msub><mi>&#x3C3;</mi><mrow><mi>full</mi><mo>,</mo><mi>&#x3C1;</mi></mrow></msub></mfrac>
+              <mo>=</mo>
+              <msqrt><mfrac><msubsup><mi>&#x3C3;</mi><mrow><mi>SENSE</mi><mo>,</mo><mi>&#x3C1;</mi></mrow><mn>2</mn></msubsup><msubsup><mi>&#x3C3;</mi><mrow><mi>full</mi><mo>,</mo><mi>&#x3C1;</mi></mrow><mn>2</mn></msubsup></mfrac></msqrt>
+              <mo>=</mo>
+              <msqrt><mi>R</mi></msqrt>
+              <mo>&#x22C5;</mo>
+              <munder><mrow><msqrt><msub><mrow><mo>[</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup><mo>]</mo></mrow><mrow><mi>&#x3C1;</mi><mi>&#x3C1;</mi></mrow></msub><mo>&#x22C5;</mo><msub><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mi>&#x3C1;</mi><mi>&#x3C1;</mi></mrow></msub></msqrt></mrow><mrow><mo>&#x25B2;</mo><mspace width="0.2em"/><mtext>これこそが幾何学的配置因子</mtext><mspace width="0.3em"/><msub><mi>g</mi><mi>&#x3C1;</mi></msub><mspace width="0.3em"/><mtext>の厳密な定義！</mtext></mrow></munder>
+            </mrow>
+          </math>
+        </div>
+
+        <p style="font-size: 0.88rem; margin-top: 0.75rem;">
+          <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>SNR</mi><mo>=</mo><mtext>信号</mtext><mo>/</mo><mi>&#x3C3;</mi></math> であるため、SENSEにおけるSNR低下の基本公式が完全に証明されました：
+        </p>
+
+        <div class="math-display">
+          <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+            <mrow>
+              <msub><mi>SNR</mi><mrow><mi>SENSE</mi><mo>,</mo><mi>&#x3C1;</mi></mrow></msub>
+              <mo>=</mo>
+              <mfrac><msub><mi>SNR</mi><mrow><mi>full</mi><mo>,</mo><mi>&#x3C1;</mi></mrow></msub><mrow><msqrt><mi>R</mi></msqrt><mo>&#x22C5;</mo><msub><mi>g</mi><mi>&#x3C1;</mi></msub></mrow></mfrac>
+            </mrow>
+          </math>
+        </div>
+      </div>
+
+      <div class="callout callout-info" style="margin-top: 0.75rem;">
+        <div style="font-weight: bold; font-size: 1.1rem; line-height: 1;">&#x2139;</div>
+        <div>
+          <strong>初学者が絶対に知っておくべきSNR低下の2重構造：</strong><br>
+          ① <strong><math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><mi>R</mi></msqrt></math> の損失（物理的限界）：</strong> 計測時間を <math xmlns="http://www.w3.org/1998/Math/MathML"><mn>1</mn><mo>/</mo><mi>R</mi></math> に短縮したため、収集データ点数が減少し、統計的な平均化効果が失われることによる必然の低下。<br>
+          ② <strong><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math>-factor の損失（数学的ペナルティ）：</strong> 連立方程式の逆行列を解く際に、コイル感度の似通い（平行性）によってノイズが増幅されるペナルティ。<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>&#x2265;</mo><mn>1</mn></math> であり、感度が完全に直交しているときのみ理想の <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi><mo>=</mo><mn>1</mn></math> となります。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. インタラクティブ・シミュレーター -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+      <h2>視覚化シミュレーター：感度交角 &theta; とノイズ増幅の挙動</h2>
+    </div>
+
+    <p style="font-size: 0.85rem; color: var(--text-muted);">
+      コイル感度ベクトル間の角度 &theta;（感度の独立性）を変化させると、連立方程式の2直線が重なり合い、誤差楕円（ノイズ）がどれほど劇的に拡大するかを体感できます。
+    </p>
+
+    <div class="sim-container">
+      <div class="sim-controls">
+        <div class="sim-control-group">
+          <label for="thetaSlider">感度直交角 &theta;：</label>
+          <input type="range" id="thetaSlider" class="sim-slider" min="5" max="90" value="45" step="1">
+          <span id="thetaVal" style="font-weight: bold; color: var(--accent-teal-light); min-width: 45px;">45°</span>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btnPlay" class="sim-btn">再生</button>
+          <button id="btnStep" class="sim-btn">ステップ</button>
+          <button id="btnReset" class="sim-btn">リセット</button>
+        </div>
+
+        <div style="margin-left: auto; font-size: 0.88rem;">
+          算出 g-factor: <span id="gFactorVal" style="font-size: 1.15rem; font-weight: 800; color: var(--warning);">1.41</span>
+        </div>
+      </div>
+
+      <div class="sim-canvas-wrap">
+        <svg id="simSvg" viewBox="0 0 760 320" width="760" height="320">
+          <rect x="0" y="0" width="760" height="320" fill="#0b1329" rx="8"/>
+
+          <!-- Panel 1: Sensitivity Vectors -->
+          <g transform="translate(160, 160)">
+            <circle cx="0" cy="0" r="110" fill="none" stroke="#1e293b" stroke-dasharray="3,3"/>
+            <line x1="-120" y1="0" x2="120" y2="0" stroke="#334155" stroke-width="1"/>
+            <line x1="0" y1="-120" x2="0" y2="120" stroke="#334155" stroke-width="1"/>
+            <text x="125" y="4" fill="#64748b" font-size="10">Ch1</text>
+            <text x="-4" y="-125" fill="#64748b" font-size="10">Ch2</text>
+
+            <line x1="0" y1="0" x2="100" y2="0" stroke="#06b6d4" stroke-width="3" marker-end="url(#arrowCyan)"/>
+            <text x="105" y="-6" fill="#06b6d4" font-size="11" font-weight="bold">c₁ (位置1)</text>
+
+            <line id="vecC2" x1="0" y1="0" x2="70.7" y2="-70.7" stroke="#3b82f6" stroke-width="3"/>
+            <text id="textC2" x="75" y="-75" fill="#3b82f6" font-size="11" font-weight="bold">c₂ (位置2)</text>
+
+            <path id="arcTheta" d="M 40 0 A 40 40 0 0 0 28.2 -28.2" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <text id="textThetaAngle" x="42" y="-14" fill="#f59e0b" font-size="10">θ</text>
+            <text x="-140" y="-135" fill="#94a3b8" font-size="11" font-weight="bold">【感度ベクトル空間】</text>
+          </g>
+
+          <line x1="330" y1="20" x2="330" y2="300" stroke="#1e293b" stroke-width="2"/>
+
+          <!-- Panel 2: Equation space / Noise Ellipse -->
+          <g transform="translate(540, 160)">
+            <line x1="-150" y1="0" x2="150" y2="0" stroke="#334155" stroke-width="1"/>
+            <line x1="0" y1="-140" x2="0" y2="140" stroke="#334155" stroke-width="1"/>
+            <text x="140" y="14" fill="#64748b" font-size="10">m₁</text>
+            <text x="6" y="-130" fill="#64748b" font-size="10">m₂</text>
+
+            <circle cx="0" cy="0" r="4" fill="#10b981"/>
+            <text x="6" y="15" fill="#10b981" font-size="10">真の解 (m₁, m₂)</text>
+
+            <ellipse id="noiseEllipse" cx="0" cy="0" rx="35" ry="35" fill="rgba(239, 68, 68, 0.25)" stroke="#ef4444" stroke-width="2"/>
+
+            <line id="eqLine1" x1="-120" y1="-50" x2="120" y2="50" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,2"/>
+            <line id="eqLine2" x1="-120" y1="50" x2="120" y2="-50" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+            <text x="-160" y="-135" fill="#94a3b8" font-size="11" font-weight="bold">【逆行列によるノイズ増幅楕円】</text>
+            <text id="statusLabel" x="-160" y="130" fill="#cbd5e1" font-size="11">解の安定度：良好（ノイズ小）</text>
+          </g>
+
+          <defs>
+            <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#06b6d4" />
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+        ※ スライダーを動かして角度 &theta; を小さくする（感度が似る）と、右図の2本の連立方程式直線がほぼ平行に重なります。交点の位置決めが極めて曖昧になり、赤色のノイズ誤差楕円が直線に沿って急激に引き伸ばされて g-factor が爆発します。
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 臨床現場での具体的シナリオ -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4zm4-4h-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4z"/></svg>
+      <h2>臨床現場で「感度が似てg-factorノイズが爆発する」具体的場面</h2>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 20%;">臨床シチュエーション</th>
+          <th style="width: 32%;">なぜコイル感度が似てしまうのか</th>
+          <th style="width: 25%;">画像上の現象・アーチファクト</th>
+          <th style="width: 23%;">現場での最適化・回避プロトコル</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>① 位相エンコード（PE）方向のミスマッチ</strong><br>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">例：腹部や頭部での方向選択誤り</span>
+          </td>
+          <td>
+            コイル素子は通常「左右（R-L）」に並んでいる。ここでPE方向を「前後（A-P）」に設定すると、<strong>折り重なる2点（前と後）から各コイル素子までの距離が左右対称でほぼ等しく</strong>なり、素子間の感度プロファイル差がつかなくなる。
+          </td>
+          <td>
+            画像の中央帯（位相折り返し中心線上）に、<strong>ザラザラとした激しい帯状ノイズ（Noise Band）</strong>が吹き出す。
+          </td>
+          <td>
+            <strong>PE方向をコイル素子が並んでいる方向（左右方向）に変更する。</strong>アレイ素子の幾何学的配置とPE軸を一致させる。
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>② 体深部・中心部臓器の撮像</strong><br>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">例：前立腺、膵臓、腹部大動脈、胸腰椎深部</span>
+          </td>
+          <td>
+            表面アレイコイルは体表直下では感度差が急峻（直下は強く隣は弱い）だが、<strong>深部中心部へ進むほど全素子から等しく遠ざかり、どの素子でも感度が平坦化（フラット）して差が消滅する。</strong>
+          </td>
+          <td>
+            体表の皮下脂肪は高画質なのに、<strong>観察したい体深部・脊椎・前立腺実質のみが激しい砂嵐状ノイズに埋没する。</strong>
+          </td>
+          <td>
+            深部撮像時は<strong>SENSE加速率を下げる（R=2 &rarr; 1.5や1.3）</strong>。またはk空間中央を自己較正するARC/GRAPPAやCompressed Sensing（HyperSense等）を併用する。
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>③ 過大な加速係数（R倍速の壁）</strong><br>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">例：息止め短縮を狙ったR=3〜4設定</span>
+          </td>
+          <td>
+            間引き率 R を 3 や 4 に上げると、<strong>実空間で近接した狭いピッチの点同士が重なり合う</strong>。近接画素間ではコイル感度の勾配（変化率）が極めてわずかしかないため、感度行列の列ベクトル同士が強烈に相関する。
+          </td>
+          <td>
+            g-factor が局所的に 3〜5 以上に跳ね上がり、<strong>SNRが 1/( &radic;R &middot; g ) に従って 1/6〜1/10 以下へ劇的に崩壊</strong>する。
+          </td>
+          <td>
+            2D撮像では実用限界（多くはR=2まで）を守る。3D撮像において<strong>2軸方向（位相方向 &times; スライス方向）に加速を分散（2D SENSE：例 1.5 &times; 1.5）</strong>させる。
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>④ プリスキャン時と本スキャンの体動ズレ</strong><br>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">例：呼吸停止レベルの不一致</span>
+          </td>
+          <td>
+            SENSEはスキャン前の「低分解能キャリブレーション（感度マップ取得）」に完全依存する。<strong>息止め位置がズレたり体動が入ると、方程式を解くための感度係数 C と実際の被写体位置が乖離</strong>し、解が破綻する。
+          </td>
+          <td>
+            不自然なエッジのゴースト、折り返し信号の消し残り、特定スライス全体に広がる雪嵐状のノイズ。
+          </td>
+          <td>
+            <strong>Calibration in PreScan</strong>の設定を確認し、自由呼吸と息止めスキャンが混在するプロトコルではキャリブレーションの引き継ぎを切り離す（息止めシリーズ単独で再計測）。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. 復習チェックリスト -->
+  <section class="card">
+    <div class="card-header">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <h2>復習完了チェックリスト</h2>
+    </div>
+
+    <ul class="custom-list">
+      <li><strong>概念の整理：</strong>SENSEにおいて重なりを解く鍵は「被写体の組織信号」ではなく「受信用コイル素子の感度プロファイル差」であると明瞭に説明できる。</li>
+      <li><strong>初等代数での理解：</strong>連立方程式を解いたときの分母（行列式）が、感度が似ることで 0 に近づき、ノイズ項が「0での割り算」のように激増する機序を理解した。</li>
+      <li><strong>方程式系2の導出：</strong>観測式 <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="bold">s</mi><mo>=</mo><mi mathvariant="bold">C</mi><mi mathvariant="bold">m</mi><mo>+</mo><mi mathvariant="bold-italic">&#x3B7;</mi></math> に対する重み付き最小二乗推定量から、ノイズ共分散 <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="bold">X</mi><mi>m</mi></msub><mo>=</mo><msup><mrow><mo>(</mo><msup><mi mathvariant="bold">C</mi><mi mathvariant="normal">H</mi></msup><msup><mi mathvariant="bold">&#x3A8;</mi><mrow><mo>-</mo><mn>1</mn></mrow></msup><mi mathvariant="bold">C</mi><mo>)</mo></mrow><mrow><mo>-</mo><mn>1</mn></mrow></msup></math> が導かれる流れを1行ずつ追うことができた。</li>
+      <li><strong>SNRの2大損失：</strong>パラレルイメージングのSNR低下が、「計測時間短縮損（<math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><mi>R</mi></msqrt></math>）」と「逆行列演算ペナルティ（<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>g</mi></math>-factor）」の積である理由を説明できる。</li>
+      <li><strong>臨床対処：</strong>アレイコイルの物理的素子配列に対して位相エンコード方向を直交させてはいけない理由を、幾何学的配置（角度 &theta;）から論理的に説明できる。</li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+  (function() {
+    const slider = document.getElementById('thetaSlider');
+    const thetaVal = document.getElementById('thetaVal');
+    const gFactorVal = document.getElementById('gFactorVal');
+    const vecC2 = document.getElementById('vecC2');
+    const textC2 = document.getElementById('textC2');
+    const arcTheta = document.getElementById('arcTheta');
+    const textThetaAngle = document.getElementById('textThetaAngle');
+    const noiseEllipse = document.getElementById('noiseEllipse');
+    const eqLine1 = document.getElementById('eqLine1');
+    const eqLine2 = document.getElementById('eqLine2');
+    const statusLabel = document.getElementById('statusLabel');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnStep = document.getElementById('btnStep');
+    const btnReset = document.getElementById('btnReset');
+
+    let isPlaying = false;
+    let animId = null;
+    let direction = -1;
+
+    function updateSim(angleDeg) {
+      const rad = (angleDeg * Math.PI) / 180;
+      thetaVal.textContent = angleDeg + '°';
+
+      // 1. Update Vector C2
+      const len = 100;
+      const x2 = len * Math.cos(rad);
+      const y2 = -len * Math.sin(rad);
+      vecC2.setAttribute('x2', x2.toFixed(1));
+      vecC2.setAttribute('y2', y2.toFixed(1));
+      textC2.setAttribute('x', (x2 + 8).toFixed(1));
+      textC2.setAttribute('y', (y2 - 5).toFixed(1));
+
+      // 2. Update Arc
+      const arcR = 35;
+      const arcX = arcR * Math.cos(rad);
+      const arcY = -arcR * Math.sin(rad);
+      arcTheta.setAttribute('d', `M ${arcR} 0 A ${arcR} ${arcR} 0 0 0 ${arcX.toFixed(1)} ${arcY.toFixed(1)}`);
+      textThetaAngle.setAttribute('x', (arcR * Math.cos(rad / 2) + 6).toFixed(1));
+      textThetaAngle.setAttribute('y', (-arcR * Math.sin(rad / 2) - 4).toFixed(1));
+
+      // 3. Calculate g-factor (g = 1 / sin(theta))
+      const sinVal = Math.sin(rad);
+      const g = 1 / Math.max(sinVal, 0.01);
+      gFactorVal.textContent = g.toFixed(2);
+
+      if (g < 1.3) {
+        gFactorVal.style.color = 'var(--success)';
+        statusLabel.textContent = '解の安定度：極めて良好（理想的直交）';
+        statusLabel.setAttribute('fill', '#10b981');
+      } else if (g < 2.0) {
+        gFactorVal.style.color = 'var(--warning)';
+        statusLabel.textContent = '解の安定度：許容範囲（中等度ノイズ）';
+        statusLabel.setAttribute('fill', '#f59e0b');
+      } else {
+        gFactorVal.style.color = 'var(--danger)';
+        statusLabel.textContent = '解の安定度：破綻寸前（強烈なノイズ増幅！）';
+        statusLabel.setAttribute('fill', '#ef4444');
+      }
+
+      // 4. Update Noise Error Ellipse
+      const rx = 25 * g;
+      const ry = 25;
+      noiseEllipse.setAttribute('rx', Math.min(rx, 140).toFixed(1));
+      noiseEllipse.setAttribute('ry', ry.toFixed(1));
+      noiseEllipse.setAttribute('transform', `rotate(${-angleDeg / 2}, 0, 0)`);
+
+      // 5. Update Equation Lines
+      const slope = Math.tan(rad / 2);
+      const span = 120;
+      eqLine1.setAttribute('x1', -span);
+      eqLine1.setAttribute('y1', (-span * slope).toFixed(1));
+      eqLine1.setAttribute('x2', span);
+      eqLine1.setAttribute('y2', (span * slope).toFixed(1));
+
+      eqLine2.setAttribute('x1', -span);
+      eqLine2.setAttribute('y1', (span * slope).toFixed(1));
+      eqLine2.setAttribute('x2', span);
+      eqLine2.setAttribute('y2', (-span * slope).toFixed(1));
+    }
+
+    slider.addEventListener('input', function() {
+      updateSim(parseFloat(this.value));
+    });
+
+    btnReset.addEventListener('click', function() {
+      stopAnim();
+      slider.value = 45;
+      updateSim(45);
+    });
+
+    btnStep.addEventListener('click', function() {
+      stopAnim();
+      let current = parseFloat(slider.value);
+      current -= 5;
+      if (current < 5) current = 90;
+      slider.value = current;
+      updateSim(current);
+    });
+
+    function playLoop() {
+      let current = parseFloat(slider.value);
+      current += direction * 0.5;
+      if (current <= 6) {
+        current = 6;
+        direction = 1;
+      } else if (current >= 90) {
+        current = 90;
+        direction = -1;
+      }
+      slider.value = current;
+      updateSim(current);
+      animId = requestAnimationFrame(playLoop);
+    }
+
+    function stopAnim() {
+      if (isPlaying) {
+        isPlaying = false;
+        cancelAnimationFrame(animId);
+        btnPlay.textContent = '再生';
+        btnPlay.classList.remove('active');
+      }
+    }
+
+    btnPlay.addEventListener('click', function() {
+      if (isPlaying) {
+        stopAnim();
+      } else {
+        isPlaying = true;
+        btnPlay.textContent = '一時停止';
+        btnPlay.classList.add('active');
+        playLoop();
+      }
+    });
+
+    // Initial render
+    updateSim(45);
+  })();
+</script>
+
+</body>
+</html>
