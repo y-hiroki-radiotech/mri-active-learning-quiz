@@ -1,0 +1,1452 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GE SIGNA Artist 1.5T 部位別トラブルシューティング実践ガイド</title>
+<style>
+:root {
+  --navy:#16345f; --blue:#2563eb; --sky:#eaf4ff; --ink:#172033; --muted:#667085;
+  --line:#d0d9e6; --bg:#edf2f7; --good:#0f766e; --warn:#b45309; --bad:#b42318;
+  --purple:#6d28d9; --purple-bg:#f2edff; --green-bg:#ecfdf5; --amber-bg:#fff7ed;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","BIZ UDPGothic",Meiryo,sans-serif;line-height:1.58}
+header{background:linear-gradient(135deg,#0d2850,#1f5ca4);color:white;padding:48px max(24px,calc((100vw - 1280px)/2));box-shadow:0 6px 24px #173b6633}
+header h1{margin:0 0 12px;font-size:clamp(28px,4vw,48px);line-height:1.15}
+header p{max-width:1000px;margin:0;color:#e9f2ff;font-size:16px}
+.header-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.header-tags span{border:1px solid #ffffff66;border-radius:999px;padding:5px 10px;font-size:12px;background:#ffffff14}
+.wrapper{max-width:1420px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px;padding:24px}
+nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;background:white;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 4px 14px #1f35551c}
+nav strong{display:block;color:var(--navy);margin-bottom:8px}
+nav a{display:block;text-decoration:none;color:#34445a;padding:7px 8px;border-radius:7px;font-size:13px}
+nav a:hover{background:#eef5ff;color:#174f96}
+main{min-width:0}
+.sheet{background:white;border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:22px;box-shadow:0 5px 18px #243a5613}
+h2{color:var(--navy);font-size:26px;margin:0 0 12px;border-bottom:2px solid #cfe1f6;padding-bottom:7px}
+h3{font-size:18px;margin:0 0 8px;color:#162a46}
+h4{margin:0 0 6px;color:#1f3f69}
+p{margin:8px 0}
+.lead{font-size:16px}
+.callout{border-left:4px solid var(--blue);background:var(--sky);padding:13px 15px;border-radius:7px;margin:14px 0}
+.warn{border-left-color:var(--warn);background:var(--amber-bg)}
+.purple{border-left-color:var(--purple);background:var(--purple-bg)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.flow .step{background:#eff6ff;border:1px solid #bad5f5;color:#153e6c;padding:9px 11px;border-radius:8px;font-weight:700}
+.flow .arrow{color:#7891af;font-size:20px}
+.ref-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pgroup{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fbfdff}
+.pgroup h3{font-size:14px;color:#31557b}
+.pgroup span{display:inline-block;margin:3px 3px 0 0;padding:3px 7px;border-radius:999px;background:#eef4fb;border:1px solid #d5e2f1;font-size:11px}
+.region-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.region-head h2{flex:1;margin-bottom:0}
+.source-tag{font-size:11px;color:#244d7a;background:#edf6ff;border:1px solid #c4dcf5;padding:4px 8px;border-radius:999px}
+.source-note{color:var(--muted);font-size:13px;margin:9px 0 12px}
+.baseline{background:#f8fafc;border:1px solid var(--line);padding:10px 12px;border-radius:8px;margin-bottom:14px}
+.case{border:1px solid #cad8e8;border-radius:12px;margin:14px 0 18px;overflow:hidden;background:#fff}
+.case h3{background:linear-gradient(90deg,#edf5ff,#f9fbfe);padding:12px 14px;border-bottom:1px solid #d8e5f1;margin:0;color:#153b66}
+.first{padding:10px 14px;background:#fffaf0;border-bottom:1px solid #f0dfbe;color:#573b0d}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:870px;font-size:13px}
+th{background:#f5f8fc;color:#2b4564;text-align:left;padding:9px;border-bottom:1px solid var(--line)}
+td{padding:9px;border-bottom:1px solid #e7edf4;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+.param{font-weight:800;color:#1d4f91}
+.seq{padding:9px 14px;background:var(--purple-bg);border-top:1px solid #ded2ff;color:#4e3580;font-size:13px}
+.check{padding:9px 14px;background:var(--green-bg);color:#145c4f;font-size:13px}
+.quick-table{width:100%;min-width:760px}
+.quick-table td:first-child{font-weight:700;color:#183d69;white-space:nowrap}
+.searchbox{position:sticky;top:0;z-index:5;background:#ffffffea;backdrop-filter:blur(8px);padding:10px 0;display:flex;gap:10px}
+.searchbox input,.searchbox select{border:1px solid #b9c9db;border-radius:9px;padding:11px 12px;font-size:14px;background:white}
+.searchbox input{flex:1}
+.badge{display:inline-block;font-size:11px;border-radius:999px;padding:2px 7px;margin-left:4px}
+.badge.screen{background:#e7f4ff;color:#0c4a6e}
+.badge.seq{background:#f3e8ff;color:#6b21a8}
+.algorithm{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.alg{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fbfdff}
+.alg b{color:var(--navy)}
+.footer-note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
+@media(max-width:1000px){
+  .wrapper{grid-template-columns:1fr} nav{display:none} .ref-grid,.algorithm{grid-template-columns:1fr}
+}
+@page{size:A4 portrait;margin:10mm}
+@media print{
+  body{background:white;font-size:9pt} header,nav,.searchbox{display:none!important}
+  .wrapper{display:block;padding:0} .sheet{box-shadow:none;border:0;border-radius:0;padding:0;margin:0 0 8mm;break-inside:auto}
+  .case{break-inside:avoid} table{font-size:8pt;min-width:0} th,td{padding:5px}
+  h2{font-size:15pt} h3{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>GE SIGNA Artist 1.5T<br>部位別トラブルシューティング実践ガイド</h1>
+  <p>部位ごとの「よく困る場面」から逆算して、GEコンソールのどのパラメータを、どの方向へ、なぜ動かすのかを整理した実務教材です。シーケンス名を覚えることではなく、<strong>臨床画像を見て問題を分類し、コンソールのつまみへ戻れる</strong>ことを目的にしています。</p>
+  <div class="header-tags">
+    <span>基礎：前回のコンソール徹底解説</span>
+    <span>臨床：添付「部位別・MRI標準撮像シーケンス一覧」</span>
+    <span>問題 → パラメータ → 効果 → 代償 → 再評価</span>
+    <span>1.5T SIGNA Artistを想定</span>
+  </div>
+</header>
+
+<div class="wrapper">
+<nav>
+  <strong>目次</strong>
+  <a href="#purpose">0. 使い方</a>
+  <a href="#universal">1. 共通アルゴリズム</a>
+  <a href="#console-ref">2. コンソール早見表</a>
+  <a href="#brain">頭部</a>
+  <a href="#neck">頸部・頸椎</a>
+  <a href="#spine">胸椎・腰椎</a>
+  <a href="#cardiac">心臓</a>
+  <a href="#breast">乳房</a>
+  <a href="#abdomen">腹部</a>
+  <a href="#pelvis">骨盤</a>
+  <a href="#msk">四肢関節</a>
+  <a href="#wholebody">全身MRI</a>
+  <a href="#special">内耳・下垂体</a>
+  <a href="#summary">最後の1分チェック</a>
+</nav>
+
+<main>
+<section class="sheet" id="purpose">
+<h2>0. このHTMLの位置づけ</h2>
+<p class="lead">添付資料は「部位ごとに何を撮るか」を整理した実務表です。本HTMLではそこから一段進み、<strong>撮った画像がうまくいかなかった時、コンソール上でどこを見るか</strong>に焦点を当てます。</p>
+<div class="callout">
+<strong>二層構造で考えます。</strong><br>
+① <strong>患者・positioning・呼吸・嚥下・coil</strong>で直すべき問題<br>
+② <strong>FOV / Matrix / BW / NEX / ETL / Shim / Encode方向 / GE補正</strong>で直すべき問題
+</div>
+<div class="warn callout">
+<strong>大原則：</strong>positioning不良や呼吸失敗を、Recon DLやNEXで「数値だけ」補おうとしない。まず原因を患者側・geometry側・B0側・acquisition側に分類してから1〜2項目ずつ動かします。
+</div>
+</section>
+
+<section class="sheet" id="universal">
+<h2>1. どの部位でも共通のトラブル解決アルゴリズム</h2>
+<div class="flow">
+  <span class="step">① Coverage/断面</span><span class="arrow">→</span>
+  <span class="step">② Motion方向</span><span class="arrow">→</span>
+  <span class="step">③ B0/Calibration</span><span class="arrow">→</span>
+  <span class="step">④ Voxel/SNR</span><span class="arrow">→</span>
+  <span class="step">⑤ 時間</span><span class="arrow">→</span>
+  <span class="step">⑥ Safety</span>
+</div>
+<div class="algorithm">
+  <div class="alg"><b>Coverageが悪い</b><br>FOV / Phase FOV / Slice数 / Scan Plane / NPW</div>
+  <div class="alg"><b>ghost・wrap</b><br>Freq Dir → phase方向推定 → Phase FOV / NPW / Flow Comp</div>
+  <div class="alg"><b>歪み・脂肪抑制</b><br>Shim → Prescan → BW → Freq Dir → sequence変更</div>
+  <div class="alg"><b>SNR不足</b><br>coil → voxel → BW → Recon DL → NEX</div>
+  <div class="alg"><b>ぼやける</b><br>ETL / Echo Spacing / motion / voxel</div>
+  <div class="alg"><b>時間が長い</b><br>#Acqs → NEX → Phase matrix → Phase FOV → ETL</div>
+  <div class="alg"><b>金属</b><br>BW↑ → voxel小 → thin slice → metal reduction</div>
+  <div class="alg"><b>RF制限</b><br>SAR / B1+rms → TR / refocus / slice構成</div>
+</div>
+</section>
+
+<section class="sheet" id="console-ref">
+<h2>2. コンソール早見表</h2>
+<div class="ref-grid"><div class="pgroup"><h3>Coverage / Geometry</h3><span>Freq. FOV</span><span>Phase FOV</span><span>No Phase Wrap</span><span>Slice Thickness</span><span>Spacing</span><span>Scan Plane</span></div><div class="pgroup"><h3>Artifact direction</h3><span>Freq. Encode Direction</span><span>Fat Shift Direction</span><span>Flow Compensation</span></div><div class="pgroup"><h3>Timing / FSE</h3><span>TR / Auto TR</span><span>TE / Min / Min Full</span><span>ETL</span><span>Echo Spacing</span><span>Auto Refocus Angle</span></div><div class="pgroup"><h3>Resolution / SNR</h3><span>Frequency / Phase Matrix</span><span>NEX</span><span>Bandwidth</span><span>Acq Pixel / Voxel</span><span>Relative SNR</span></div><div class="pgroup"><h3>GE processing</h3><span>Recon DL</span><span>PURE</span><span>Prescan Calibration</span><span>Shim</span><span>3D Geometry Correction</span></div><div class="pgroup"><h3>Safety</h3><span>SAR</span><span>B1+rms</span><span>dB/dt</span></div></div>
+<div class="callout purple">
+<span class="badge screen">基本画面で見る</span> は、前回のArtistコンソール4画面に表示されていた項目を中心にしています。<br>
+<span class="badge seq">sequence-specific</span> はEPI factor、parallel imaging、navigator、TI、VENCなど、選択シーケンス側で別画面・別項目になるものです。
+</div>
+<div class="table-wrap">
+<table class="quick-table">
+<thead><tr><th>パラメータ</th><th>上げる/広げると</th><th>下げる/狭めると</th><th>臨床で触る代表場面</th></tr></thead>
+<tbody>
+<tr><td>FOV</td><td>coverage↑ / pixel↑ / SNR↑</td><td>分解能↑ / SNR↓ / wrap↑</td><td>小関節、脊髄、病変がFOV外</td></tr>
+<tr><td>Phase FOV</td><td>wrap↓ / 時間↑方向</td><td>時間↓ / wrap↑</td><td>息止め短縮、小FOV</td></tr>
+<tr><td>Matrix</td><td>分解能↑ / SNR↓ / phaseは時間↑</td><td>SNR↑ / 時間↓ / 分解能↓</td><td>小構造、時間短縮</td></tr>
+<tr><td>Slice厚</td><td>SNR↑ / partial volume↑</td><td>z分解能↑ / SNR↓</td><td>小病変、SNR不足</td></tr>
+<tr><td>Bandwidth</td><td>歪み・chemical shift↓ / ESP短縮 / SNR↓</td><td>SNR↑ / 歪み↑</td><td>DWI歪み、金属、FSE blur</td></tr>
+<tr><td>NEX</td><td>SNR↑(√NEX) / 時間↑</td><td>時間↓ / SNR↓</td><td>最後のSNR調整</td></tr>
+<tr><td>ETL</td><td>時間↓ / blur↑</td><td>blur↓ / 時間↑</td><td>FSE長時間、T2 blur</td></tr>
+<tr><td>Freq Dir</td><td colspan="2">変更するとphase方向・ghost方向が変わる</td><td>嚥下、心拍、腸管motion</td></tr>
+<tr><td>Shim</td><td colspan="2">B0均一性を調整</td><td>脂肪抑制、EPI、bSSFP banding</td></tr>
+<tr><td>Recon DL</td><td>noise/ringing低減を強める方向</td><td>処理効果を弱める</td><td>SNR余裕を分解能/時間へ再配分</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<div class="searchbox">
+  <input id="search" placeholder="困りごとを検索：例）脂肪抑制、DWI、金属、ghost、SNR、息止め..." oninput="filterCases()">
+  <select id="regionSelect" onchange="jumpRegion(this.value)">
+    <option value="">部位へ移動</option>
+    <option value="brain">1. 頭部（脳）</option><option value="neck">2. 頸部軟部組織・頸椎</option><option value="spine">3. 胸椎・腰椎</option><option value="cardiac">4. 心臓（CMR）</option><option value="breast">5. 乳房MRI</option><option value="abdomen">6. 腹部（肝・膵胆道・腎副腎）</option><option value="pelvis">7. 骨盤（婦人科・前立腺）</option><option value="msk">8. 四肢関節（肩・肘・手・股・膝・足）</option><option value="wholebody">9. 全身MRI</option><option value="special">10. 内耳・下垂体など小構造</option>
+  </select>
+</div>
+
+
+    <section class="sheet region" id="brain" data-region="1. 頭部（脳）">
+      <div class="region-head">
+        <h2>1. 頭部（脳）</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、後頭蓋窩DWIの歪み、FLAIRのCSF抑制・拍動、SWI/SWANのsusceptibilityと体動が主な再撮像ポイント。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>全脳coverage、左右対称、DWI/ADCの位置対応を最初に確認。</div>
+      
+    <article class="case">
+      <h3>後頭蓋窩DWIが歪む／ADCとT2の解剖位置が合わない</h3>
+      <div class="first"><strong>まず確認：</strong>患者固定 → Shim/Prescan → EPIの歪み方向とBWを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto / Prescan Calibration</span></td>
+          <td>再shim・prescanをやり直す。特に頭位置変更後。</td>
+          <td>off-resonanceを減らしてEPIの幾何学歪みを抑える</td>
+          <td>再調整時間が増える</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>可能なら広げる</td>
+          <td>1 pixel当たりの周波数幅が広がりoff-resonanceによる位置ずれが減る</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向が病変へ歪みを重ねる場合は方向変更を検討</td>
+          <td>EPIの歪み・ghostが展開する方向を病変から逃がせる</td>
+          <td>別方向に歪みが移る。wrap条件も変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Phase FOV</span></td>
+          <td>小さすぎるFOVを見直す</td>
+          <td>位相方向のaliasingと局所的な歪みの見かけを軽減</td>
+          <td>分解能↓または時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>parallel imaging / segmented EPIが使える場合は併用候補。これはシーケンス固有設定で、今回の4枚の基本コンソール画面外。</div>
+      <div class="check"><strong>再撮像の判定：</strong>ADCで病変位置がT2/FLAIRと解剖学的に一致するか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>FLAIRで脳室周囲や後頭蓋窩にCSF拍動ghostが重なる</h3>
+      <div class="first"><strong>まず確認：</strong>ghostの方向を確認し、phase方向を推定する</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>frequency方向を90°変更してphase方向を変える</td>
+          <td>ghostを診断対象から逃がす</td>
+          <td>wrap・chemical shiftの方向も変わる</td>
+        </tr>
+        <tr>
+          <td><span class="param">Flow Compensation</span></td>
+          <td>使用可能ならflow補正方向を検討</td>
+          <td>一定速度成分の位相分散を軽減</td>
+          <td>minimum TE延長・gradient負荷</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>SNRに余裕があり時間が許せば増やす</td>
+          <td>ランダム成分の平均化</td>
+          <td>時間↑。周期性ghostは完全には消えない</td>
+        </tr>
+        <tr>
+          <td><span class="param">ETL / Echo Spacing</span></td>
+          <td>blurや時間も問題ならETL/ESPを併せて再評価</td>
+          <td>FSEの時間とPSFを調整</td>
+          <td>ETL↑でblur↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>必要に応じSAT bandや専用flow対策を追加。</div>
+      <div class="check"><strong>再撮像の判定：</strong>別断面でも同じ髄内/脳実質高信号が再現するか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>体動が強く、長いFSE系が成立しない</h3>
+      <div class="first"><strong>まず確認：</strong>固定・説明・短時間化を優先。パラメータはその次。</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>必要最小限へ下げる</td>
+          <td>phase encode数を減らして短時間化</td>
+          <td>in-plane分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>過剰なら下げる</td>
+          <td>撮像時間短縮</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">ETL</span></td>
+          <td>許容範囲で増やす</td>
+          <td>1TRあたり多くのlineを取得</td>
+          <td>T2 blur↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL strength</span></td>
+          <td>使用可能なら強度を上げ、SNR余裕を短時間化へ回す</td>
+          <td>NEX↓やmatrix調整のSNR損失を補いやすい</td>
+          <td>質感変化。施設評価が必要</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>必要に応じPROPELLER等のmotion-robust acquisitionへ変更。</div>
+      <div class="check"><strong>再撮像の判定：</strong>短時間化した結果、病変検出に必要なvoxelサイズを失っていないか。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="neck" data-region="2. 頸部軟部組織・頸椎">
+      <div class="region-head">
+        <h2>2. 頸部軟部組織・頸椎</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、嚥下・呼吸・拍動・歯科金属・空気境界、下頸部の脂肪抑制ムラ、頸髄CSF pulsationが主要課題。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>鎖骨上窩までのcoverage、頸椎では大後頭孔〜T1と椎間板に沿う断面を確認。</div>
+      
+    <article class="case">
+      <h3>嚥下ghostが咽頭・喉頭病変に重なる</h3>
+      <div class="first"><strong>まず確認：</strong>嚥下指示と撮像時間を見直し、そのうえでghost方向を変える</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を病変から外す向きへ変更</td>
+          <td>嚥下ghostの走行方向を移す</td>
+          <td>wrap方向も変わる</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV / No Phase Wrap</span></td>
+          <td>方向変更後に必要なphase coverageを再設定</td>
+          <td>不要なphase FOVを減らして時間短縮</td>
+          <td>小さすぎるとwrap</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>必要なら少し下げる</td>
+          <td>撮像時間短縮</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">ETL</span></td>
+          <td>FSEで許容範囲内に増やす</td>
+          <td>短時間化</td>
+          <td>blur↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>長いFSEで成立しない場合はPROPELLERなどを検討。</div>
+      <div class="check"><strong>再撮像の判定：</strong>ghostを消すより『病変から逃がせたか』を確認。</div>
+    </article>
+    
+    <article class="case">
+      <h3>下頸部・肩近傍で脂肪抑制が片側だけ効かない</h3>
+      <div class="first"><strong>まず確認：</strong>B0不均一を疑う。CHESSの強さだけを触らない。</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto</span></td>
+          <td>shim volumeと中心位置を見直して再shim</td>
+          <td>fat-water周波数選択の前提となるB0均一性を改善</td>
+          <td>広い頸部では完全均一化は困難</td>
+        </tr>
+        <tr>
+          <td><span class="param">Prescan Calibration</span></td>
+          <td>coil/landmark変更後なら再取得</td>
+          <td>center frequency・RF関連の再調整</td>
+          <td>追加時間</td>
+        </tr>
+        <tr>
+          <td><span class="param">PURE</span></td>
+          <td>濃淡むらならcalibrationとcoil位置を確認</td>
+          <td>受信感度むらを補正</td>
+          <td>脂肪抑制そのものは直さない</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>必要に応じ広げる</td>
+          <td>off-resonance影響を小さくする</td>
+          <td>SNR↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>B0不均一が強い場合はDixon/STIRへ切替える方が安定することがある。</div>
+      <div class="check"><strong>再撮像の判定：</strong>脂肪抑制の均一性と病変コントラストを別々に評価。</div>
+    </article>
+    
+    <article class="case">
+      <h3>頸髄T2でCSF拍動が髄内高信号のように見える</h3>
+      <div class="first"><strong>まず確認：</strong>SagittalとAxialで再現性を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase ghostを脊髄から外す方向へ</td>
+          <td>拍動ghostの位置を変更</td>
+          <td>他のartifact方向も変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">Flow Compensation</span></td>
+          <td>利用可能ならslice/readout方向を検討</td>
+          <td>flow-related phase dispersionを軽減</td>
+          <td>TE延長</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Matrix</span></td>
+          <td>脊髄のvoxelサイズを再確認</td>
+          <td>大きすぎるvoxelによるpartial volumeを回避</td>
+          <td>高分解能化でSNR↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>必要に応じSAT band。1断面だけの高信号はartifactを強く疑う。</div>
+      <div class="check"><strong>再撮像の判定：</strong>髄内病変なら別断面でも位置整合性があるか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>C7/T1だけSNRが落ちる</h3>
+      <div class="first"><strong>まず確認：</strong>coil位置・肩の位置・患者中心を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>診断上許容できれば少し厚く</td>
+          <td>voxel volume↑でSNR改善</td>
+          <td>through-plane分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix</span></td>
+          <td>過剰高matrixなら下げる</td>
+          <td>voxel↑でSNR改善</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>artifactに余裕があれば少し狭める</td>
+          <td>SNR↑</td>
+          <td>chemical shift / distortion↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL / NEX</span></td>
+          <td>Recon DLを活用、必要ならNEX↑</td>
+          <td>SNR補償</td>
+          <td>NEX↑で時間増</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>まずコイル感度域に頸胸移行部が入っていることが前提。</div>
+      <div class="check"><strong>再撮像の判定：</strong>Relative SNRだけでなく実画像のC7/T1 cord-to-CSF contrastを確認。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="spine" data-region="3. 胸椎・腰椎">
+      <div class="region-head">
+        <h2>3. 胸椎・腰椎</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、胸椎は心拍・呼吸・大動脈ghost、腰椎は腸管motion・大動脈ghost、術後金属artifactが重要。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>椎体番号、必要範囲、Axialが椎間板に平行かを先に確認。</div>
+      
+    <article class="case">
+      <h3>胸椎で大動脈/心拍ghostが脊髄に重なる</h3>
+      <div class="first"><strong>まず確認：</strong>ghostの方向を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を脊髄から外す</td>
+          <td>ghostの走行方向を変える</td>
+          <td>wrap方向変更</td>
+        </tr>
+        <tr>
+          <td><span class="param">Flow Compensation</span></td>
+          <td>flow影響が強い場合に検討</td>
+          <td>一定速度成分の位相分散を補正</td>
+          <td>TE延長</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV / NPW</span></td>
+          <td>方向変更後のcoverageを再設定</td>
+          <td>必要最小限のoversamplingにできる</td>
+          <td>不足するとwrap</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>必要時のみ増やす</td>
+          <td>ランダムmotion成分の平均化</td>
+          <td>時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>anterior SATが使える場合は併用候補。</div>
+      <div class="check"><strong>再撮像の判定：</strong>脊髄内疑似高信号が別断面で消えるか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>胸髄が細く、FOVを広げたら病変がぼやける</h3>
+      <div class="first"><strong>まず確認：</strong>Acquisition voxelを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">FOV</span></td>
+          <td>必要coverageを保つ範囲で小さく</td>
+          <td>in-plane pixel↓</td>
+          <td>SNR↓、wrapリスク↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix</span></td>
+          <td>必要な方向のみ増やす</td>
+          <td>in-plane分解能↑</td>
+          <td>SNR↓、phaseなら時間↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>薄くする</td>
+          <td>partial volume↓</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL / NEX</span></td>
+          <td>失ったSNRを補う</td>
+          <td>高分解能を維持しやすい</td>
+          <td>NEXは時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>大FOVでSNRを稼ぐだけではなく、cord用小FOVの追加も考える。</div>
+      <div class="check"><strong>再撮像の判定：</strong>voxelサイズとcord径の関係を確認。</div>
+    </article>
+    
+    <article class="case">
+      <h3>腰椎で腹部motion ghostが脊柱管に入る</h3>
+      <div class="first"><strong>まず確認：</strong>phase方向と前方臓器の位置関係を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を左右/前後で入替える</td>
+          <td>ghostを脊柱管から逃がす</td>
+          <td>foldover方向も変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV / NPW</span></td>
+          <td>新しい方向に合わせて再設定</td>
+          <td>時間とwrapを最適化</td>
+          <td>過小FOVはwrap</td>
+        </tr>
+        <tr>
+          <td><span class="param">ETL</span></td>
+          <td>FSE時間が長ければ増加を検討</td>
+          <td>短時間化</td>
+          <td>blur↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>anterior saturationも有効なことがある。</div>
+      <div class="check"><strong>再撮像の判定：</strong>神経根周囲のghostが診断を妨げていないか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>術後腰椎で金属周囲が広くsignal loss / distortion</h3>
+      <div class="first"><strong>まず確認：</strong>通常FSEか、金属低減sequenceが必要かを判断</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>広げる</td>
+          <td>off-resonanceによる位置ずれ・chemical shiftを縮小</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>薄くする</td>
+          <td>through-plane dephasing / partial volumeを軽減</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix / FOV</span></td>
+          <td>小さめvoxelを確保</td>
+          <td>局所歪みの見かけを減らす</td>
+          <td>SNR↓・時間↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL</span></td>
+          <td>SNR低下の補償に活用</td>
+          <td>高BW・薄切を成立させやすい</td>
+          <td>施設評価が必要</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>対応装置ならSEMAC/MAVRIC系、脂肪抑制はSTIR/Dixonを検討。</div>
+      <div class="check"><strong>再撮像の判定：</strong>artifactが減っただけでなく神経根・脊柱管が評価可能になったか。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="cardiac" data-region="4. 心臓（CMR）">
+      <div class="region-head">
+        <h2>4. 心臓（CMR）</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、ECG同期、呼吸位相、bSSFP、LGEのTI、不整脈が主要な実務ポイント。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>心臓は『患者生理・同期』の影響がコンソールパラメータより優先される場面が多い。</div>
+      
+    <article class="case">
+      <h3>bSSFP cineでbandingが心筋にかかる</h3>
+      <div class="first"><strong>まず確認：</strong>B0 off-resonanceを疑う</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto</span></td>
+          <td>心臓中心のshimへ再調整</td>
+          <td>B0不均一を軽減</td>
+          <td>呼吸・広いFOVで完全均一化は困難</td>
+        </tr>
+        <tr>
+          <td><span class="param">Prescan Calibration / center frequency</span></td>
+          <td>再prescanし中心周波数を確認</td>
+          <td>banding位置を改善し得る</td>
+          <td>再調整時間</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth / TRに関係する設定</span></td>
+          <td>sequence上可能なら短TR側へ</td>
+          <td>bSSFPのoff-resonance band間隔を広げる方向</td>
+          <td>SNR・gradient負荷とのtradeoff</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>frequency scout / phase-cyclingなどCMR固有の対策が利用可能なら優先。</div>
+      <div class="check"><strong>再撮像の判定：</strong>心筋全周でbandingが診断領域から外れたか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>息止めが続かずcine / perfusionがずれる</h3>
+      <div class="first"><strong>まず確認：</strong>患者に再現性の高い呼気位息止めを説明</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>必要最小限へ</td>
+          <td>短時間化</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV</span></td>
+          <td>身体幅が許せば縮小</td>
+          <td>phase encodeを節約</td>
+          <td>wrap↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>1以上なら減らせるか確認</td>
+          <td>短時間化</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL</span></td>
+          <td>対応sequenceでSNR余裕を短時間化に使う</td>
+          <td>画質維持に寄与</td>
+          <td>適用可否はsequence依存</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>parallel acceleration、compressed sensing、real-time cineは画面外のsequence-specific設定。</div>
+      <div class="check"><strong>再撮像の判定：</strong>時間短縮後もtemporal resolutionとendocardial borderが十分か。</div>
+    </article>
+    
+    <article class="case">
+      <h3>SAR / B1+rmsが上限に近い</h3>
+      <div class="first"><strong>まず確認：</strong>implant条件の制限値か、一般的system limitかを区別</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">TR</span></td>
+          <td>長くする方向</td>
+          <td>RF dutyを下げやすい</td>
+          <td>時間/contrast変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">Auto Refocus Angle</span></td>
+          <td>FSE系なら下げる方向を検討</td>
+          <td>RF power・B1+rms・SAR低減</td>
+          <td>signal evolution/contrast変化</td>
+        </tr>
+        <tr>
+          <td><span class="param"># Slices / acquisition構成</span></td>
+          <td>1TR内のRF pulse数を見直す</td>
+          <td>RF負荷を下げる</td>
+          <td>coverageや時間に影響</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>GRE/bSSFP系では別のflip angle/sequence-specific調整が必要。</div>
+      <div class="check"><strong>再撮像の判定：</strong>MR Conditional条件はSARとB1+rmsを混同せず、指定値そのものを確認。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="breast" data-region="5. 乳房MRI">
+      <div class="region-head">
+        <h2>5. 乳房MRI</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、DWIのEPI歪み・脂肪抑制不良、DCEの高空間分解能と時間分解能、subtractionの体動が主要課題。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>両側乳房・腋窩尾部・乳房下溝のcoverageと専用coil内の左右対称性を最初に確認。</div>
+      
+    <article class="case">
+      <h3>乳房DWIが歪む／脂肪抑制が斑状</h3>
+      <div class="first"><strong>まず確認：</strong>coil内位置とshimを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto</span></td>
+          <td>乳房volumeに合わせて再shim</td>
+          <td>B0不均一低減</td>
+          <td>広い両側FOVでは限界</td>
+        </tr>
+        <tr>
+          <td><span class="param">Prescan Calibration</span></td>
+          <td>position変更後なら再取得</td>
+          <td>center/RF条件を再最適化</td>
+          <td>追加時間</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>広げる</td>
+          <td>EPI distortion↓</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を診断領域から逃がす</td>
+          <td>歪み/ghost方向を変更</td>
+          <td>wrap方向変更</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>Dixon系脂肪水分離やparallel imagingが有用な場合あり。</div>
+      <div class="check"><strong>再撮像の判定：</strong>ADCの腫瘤位置がDCE/T2と一致しているか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>Dynamic T1が高分解能すぎて1 phaseが長い</h3>
+      <div class="first"><strong>まず確認：</strong>『時間分解能』と『空間分解能』のどちらが不足しているか決める</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>必要最小限へ</td>
+          <td>phase timeを短縮</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV</span></td>
+          <td>身体幅が許せば縮小</td>
+          <td>phase encode数を減らせる</td>
+          <td>wrap↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness / slab partitions</span></td>
+          <td>過剰薄切なら緩和</td>
+          <td>voxel↑でSNRと時間余裕</td>
+          <td>z分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>平均回数が過剰なら減らす</td>
+          <td>時間短縮</td>
+          <td>SNR↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>parallel imaging/CSは時間分解能確保に重要。Pre/PostはFOV・slice位置を一致。</div>
+      <div class="check"><strong>再撮像の判定：</strong>初期増強の時間情報と形態評価の両方が成立しているか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>Subtractionに広範な偽増強が出る</h3>
+      <div class="first"><strong>まず確認：</strong>造影前後の体動・乳房位置変化を最優先で確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Scan timeを決めるMatrix/NEX</span></td>
+          <td>長すぎるなら短時間化</td>
+          <td>動く機会を減らす</td>
+          <td>分解能/SNRとのtradeoff</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Slice prescription</span></td>
+          <td>Pre/Postで完全一致</td>
+          <td>pixel-wise subtractionの前提</td>
+          <td>途中で条件を変えると差分不能</td>
+        </tr>
+        <tr>
+          <td><span class="param">PURE / Calibration</span></td>
+          <td>左右濃淡が不自然なら確認</td>
+          <td>受信感度むらを安定化</td>
+          <td>motionそのものは直さない</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>post-processing registrationがあっても、撮像中の大きな形状変化は救えない。</div>
+      <div class="check"><strong>再撮像の判定：</strong>source imageで真の増強とmisregistrationを区別。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="abdomen" data-region="6. 腹部（肝・膵胆道・腎副腎）">
+      <div class="region-head">
+        <h2>6. 腹部（肝・膵胆道・腎副腎）</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、呼気位息止め、肝左葉の心拍動、EOB arterial phase、MRCP呼吸不安定、subtractionの呼吸位相ずれが重要。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>呼吸位相をそろえることが最優先。撮像範囲は肝全体・両腎副腎など目的臓器を欠落させない。</div>
+      
+    <article class="case">
+      <h3>肝Dynamicの1 phaseが長く、息止めできない</h3>
+      <div class="first"><strong>まず確認：</strong>患者の実際の息止め可能時間を測る</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>下げる</td>
+          <td>時間短縮</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV</span></td>
+          <td>左右/前後の身体幅が許せば縮小</td>
+          <td>phase encode削減</td>
+          <td>wrap↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>不要なaveragingを削る</td>
+          <td>時間短縮</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>少し厚くしてSNR余裕を作る</td>
+          <td>より強いacceleration/短時間化を許容</td>
+          <td>小病変のpartial volume↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>parallel acceleration、multi-arterial phase、view-sharingはsequence-specific。</div>
+      <div class="check"><strong>再撮像の判定：</strong>動脈相のtimingと病変形態の両方が成立したか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>肝左葉に心拍動ghostが重なる</h3>
+      <div class="first"><strong>まず確認：</strong>ghostの走行方向を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を左葉から外す</td>
+          <td>心拍ghostの方向を移す</td>
+          <td>wrap方向変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV / NPW</span></td>
+          <td>方向変更後のcoverageを再調整</td>
+          <td>wrapを防ぎつつ最短化</td>
+          <td>oversampling↑で時間増の可能性</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>必要時のみ</td>
+          <td>ランダム成分平均化</td>
+          <td>時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>sequenceによってはcardiac motion suppression、SAT band等。</div>
+      <div class="check"><strong>再撮像の判定：</strong>左葉病変周囲に周期的ghostが残っていないか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>3D MRCPが呼吸不規則で階段状・ぼやける</h3>
+      <div class="first"><strong>まず確認：</strong>呼吸波形/triggerの安定性を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">FOV / Matrix</span></td>
+          <td>過剰分解能を見直す</td>
+          <td>1 respiratory window当たりの収集負担を軽減</td>
+          <td>細い胆管の分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>過剰なら減らす</td>
+          <td>総時間短縮</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL</span></td>
+          <td>対応ならSNR余裕を作る</td>
+          <td>matrix/NEXを軽くしやすい</td>
+          <td>適用可否はsequence依存</td>
+        </tr>
+        <tr>
+          <td><span class="param">Shim</span></td>
+          <td>脂肪抑制・off-resonanceが不安定なら再調整</td>
+          <td>背景抑制の安定化</td>
+          <td>呼吸motion自体は直さない</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>navigator window / respiratory acceptanceはsequence-specificで重要。</div>
+      <div class="check"><strong>再撮像の判定：</strong>MIPだけでなくsource imageで偽狭窄を確認。</div>
+    </article>
+    
+    <article class="case">
+      <h3>副腎/腎Dynamicのsubtractionが呼吸位相ずれで破綻</h3>
+      <div class="first"><strong>まず確認：</strong>Pre/Postを同じ呼気位で撮れているか</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Scan time related parameters</span></td>
+          <td>Phase matrix/NEX/Phase FOVを見直して短時間化</td>
+          <td>呼吸位相の再現性を上げる</td>
+          <td>分解能/SNR低下</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / slice prescription</span></td>
+          <td>Pre/Postで固定</td>
+          <td>位置対応を担保</td>
+          <td>途中変更禁止</td>
+        </tr>
+        <tr>
+          <td><span class="param">PURE / Prescan</span></td>
+          <td>受信濃淡が不自然なら確認</td>
+          <td>均一性を安定化</td>
+          <td>motion補正ではない</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>breath-hold coachingが最優先。</div>
+      <div class="check"><strong>再撮像の判定：</strong>subtractionではなくsource imageで真の増強を確認。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="pelvis" data-region="7. 骨盤（婦人科・前立腺）">
+      <div class="region-head">
+        <h2>7. 骨盤（婦人科・前立腺）</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、直腸ガスによるDWI歪み、腸管蠕動、臓器軸に沿う高分解能T2、DWI/T2/DCEの位置合わせが重要。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>臓器軸に合わせたoblique断面と、T2/DWI/DCE間の位置整合を確認。</div>
+      
+    <article class="case">
+      <h3>前立腺DWIが直腸ガスで強く歪む</h3>
+      <div class="first"><strong>まず確認：</strong>直腸ガス・患者準備を確認。その後B0対策。</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto</span></td>
+          <td>前立腺中心のshimへ</td>
+          <td>局所off-resonanceを低減</td>
+          <td>ガスが多いと限界</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>広げる</td>
+          <td>EPI distortion↓</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>歪み方向を前立腺の重要領域から逃がす</td>
+          <td>artifact方向を変更</td>
+          <td>wrap方向変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Phase FOV</span></td>
+          <td>小さすぎるphase FOVを見直す</td>
+          <td>aliasingと歪みの重なりを軽減</td>
+          <td>分解能/時間tradeoff</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>parallel imaging、reduced-FOV DWIなどが使える場合あり。</div>
+      <div class="check"><strong>再撮像の判定：</strong>高b値とADCの病変位置がT2と一致するか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>子宮頸部/前立腺T2を薄切・高matrixにしたらSNR不足</h3>
+      <div class="first"><strong>まず確認：</strong>Acq voxelとRelative SNRを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">FOV</span></td>
+          <td>必要最小限にする</td>
+          <td>同matrixならpixel↓</td>
+          <td>さらにSNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix</span></td>
+          <td>過剰であれば少し戻す</td>
+          <td>SNR改善</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>許容範囲で微増</td>
+          <td>voxel↑でSNR改善</td>
+          <td>z分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>artifactに余裕があれば狭める</td>
+          <td>SNR↑</td>
+          <td>chemical shift/distortion↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL / NEX</span></td>
+          <td>最後に補償</td>
+          <td>高分解能維持</td>
+          <td>NEXは時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>「小FOV・薄切・高matrix」を同時に最大化しない。</div>
+      <div class="check"><strong>再撮像の判定：</strong>被膜/筋層/parametriumなど診断対象の境界が見えるか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>腸管motion ghostが子宮/前立腺に重なる</h3>
+      <div class="first"><strong>まず確認：</strong>蠕動対策・鎮痙薬適応を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>phase方向を病変から外す</td>
+          <td>ghost方向変更</td>
+          <td>wrap方向変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV / NPW</span></td>
+          <td>新方向の身体幅に合わせる</td>
+          <td>時間/aliasing最適化</td>
+          <td>設定不足でwrap</td>
+        </tr>
+        <tr>
+          <td><span class="param">ETL / Phase Matrix</span></td>
+          <td>FSEなら短時間化を検討</td>
+          <td>motion中の収集時間短縮</td>
+          <td>ETL↑でblur、matrix↓で分解能↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>患者準備で改善できるmotionは、画質パラメータより先に対処。</div>
+      <div class="check"><strong>再撮像の判定：</strong>artifactを『消す』より臓器から逃がせたか。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="msk" data-region="8. 四肢関節（肩・肘・手・股・膝・足）">
+      <div class="region-head">
+        <h2>8. 四肢関節（肩・肘・手・股・膝・足）</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、小FOV・専用coil・解剖走行に合わせた断面、肩のmagic angle、人工関節金属が主要実務ポイント。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>専用coil中心に関節を置き、身体軸ではなく腱・靱帯・関節面へ断面を合わせる。</div>
+      
+    <article class="case">
+      <h3>手関節/肩で小FOV高matrixにしたらSNRが足りない</h3>
+      <div class="first"><strong>まず確認：</strong>coil中心・Acq voxel・Relative SNRを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>少し厚くできるか検討</td>
+          <td>voxel↑でSNR↑</td>
+          <td>partial volume↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix</span></td>
+          <td>本当に必要な方向だけ高matrix</td>
+          <td>不要なSNR消費を削る</td>
+          <td>分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>distortionに余裕があれば狭める</td>
+          <td>SNR↑</td>
+          <td>chemical shift↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL</span></td>
+          <td>高分解能を維持したままSNR補償</td>
+          <td>NEX/voxel変更を抑えられる</td>
+          <td>強度依存の見え方変化</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>最後の手段として増加</td>
+          <td>SNR↑</td>
+          <td>時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>小関節はcoil choiceの影響が大きく、parameterより先にcoil placementを疑う。</div>
+      <div class="check"><strong>再撮像の判定：</strong>SNRだけでなく腱・靱帯・TFCC等の描出を評価。</div>
+    </article>
+    
+    <article class="case">
+      <h3>肩の脂肪抑制が不均一</h3>
+      <div class="first"><strong>まず確認：</strong>肩はB0不均一が起きやすい部位と認識</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim = Auto</span></td>
+          <td>肩中心にshim</td>
+          <td>B0均一性改善</td>
+          <td>解剖形状上の限界</td>
+        </tr>
+        <tr>
+          <td><span class="param">Prescan Calibration</span></td>
+          <td>coil位置変更後は再取得</td>
+          <td>frequency/RF調整</td>
+          <td>時間</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>必要に応じ広げる</td>
+          <td>off-resonance影響を抑える</td>
+          <td>SNR↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>CHESSが不安定ならSTIR/Dixonへ変更。</div>
+      <div class="check"><strong>再撮像の判定：</strong>腱板付着部周囲の脂肪抑制が均一か。</div>
+    </article>
+    
+    <article class="case">
+      <h3>肩腱がmagic angleで高信号になり断裂と紛らわしい</h3>
+      <div class="first"><strong>まず確認：</strong>腱のB0に対する角度とTEを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">TE</span></td>
+          <td>必要に応じ長めのT2-weighted像と比較</td>
+          <td>magic angle効果は短TEで目立ちやすい</td>
+          <td>contrastが変わる</td>
+        </tr>
+        <tr>
+          <td><span class="param">Scan Plane</span></td>
+          <td>腱走行に沿う断面へ</td>
+          <td>partial volumeと角度依存性を評価しやすい</td>
+          <td>撮像追加</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>これは『コンソール補正で消すartifact』というより、物理を理解して別contrast/断面で確認する問題。</div>
+      <div class="check"><strong>再撮像の判定：</strong>長TE像で信号が持続するか、形態的断裂があるか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>人工股関節/術後金属で周囲が見えない</h3>
+      <div class="first"><strong>まず確認：</strong>1.5T・専用metal reductionの適用可否を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>広げる</td>
+          <td>金属周囲の周波数ずれをpixel内に収める</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>薄く</td>
+          <td>through-plane dephasingを抑える</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Matrix</span></td>
+          <td>小voxel化</td>
+          <td>partial volume低減</td>
+          <td>SNR↓/時間↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL</span></td>
+          <td>高BW・薄切のSNR補償</td>
+          <td>metal対策を成立させやすい</td>
+          <td>適用可否確認</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>SEMAC/MAVRIC等があれば使用を検討。</div>
+      <div class="check"><strong>再撮像の判定：</strong>金属artifact縮小だけでなく臨床対象（腱、骨髄、神経）が見えるか。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="wholebody" data-region="9. 全身MRI">
+      <div class="region-head">
+        <h2>9. 全身MRI</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、station間overlap、脂肪抑制ムラ、DWI歪み、ADCスケールの一貫性が重要。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>stationごとの『同じ見え方』を作るため、coil・FOV・matrix・shim・calibrationを一貫させる。</div>
+      
+    <article class="case">
+      <h3>stationごとに濃淡が大きく違う</h3>
+      <div class="first"><strong>まず確認：</strong>coil element / table position / calibrationを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">PURE</span></td>
+          <td>感度補正が適切か確認</td>
+          <td>coil sensitivity biasを均一化</td>
+          <td>物理SNRは増えない</td>
+        </tr>
+        <tr>
+          <td><span class="param">Prescan Calibration</span></td>
+          <td>stationごとに適切に取得</td>
+          <td>center/RF/coil条件を更新</td>
+          <td>station時間増</td>
+        </tr>
+        <tr>
+          <td><span class="param">Shim</span></td>
+          <td>各stationで再shim</td>
+          <td>B0条件をそろえる</td>
+          <td>完全一致は困難</td>
+        </tr>
+        <tr>
+          <td><span class="param">FOV / Matrix / BW</span></td>
+          <td>station間で標準化</td>
+          <td>voxel・noise textureの一貫性</td>
+          <td>部位ごとの最適化余地↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>DWIBS等のMIPは俯瞰用。原画像/ADCで評価。</div>
+      <div class="check"><strong>再撮像の判定：</strong>station境界で急なsignal stepや脂肪抑制の破綻がないか。</div>
+    </article>
+    
+    <article class="case">
+      <h3>全身DWIの一部stationだけ歪みが強い</h3>
+      <div class="first"><strong>まず確認：</strong>そのstationのB0、空気境界、金属を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Shim</span></td>
+          <td>局所stationに合わせる</td>
+          <td>off-resonance↓</td>
+          <td>時間</td>
+        </tr>
+        <tr>
+          <td><span class="param">Bandwidth</span></td>
+          <td>広げる</td>
+          <td>distortion↓</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Freq. Encode Direction</span></td>
+          <td>診断領域から歪みを外せるか検討</td>
+          <td>方向変更</td>
+          <td>station間方向統一とのtradeoff</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>ADC比較ではb値・recon・geometryをstation間でそろえる。</div>
+      <div class="check"><strong>再撮像の判定：</strong>MIPだけで病変判定しない。</div>
+    </article>
+    
+    </section>
+    
+    <section class="sheet region" id="special" data-region="10. 内耳・下垂体など小構造">
+      <div class="region-head">
+        <h2>10. 内耳・下垂体など小構造</h2>
+        <span class="source-tag">添付「部位別MRI」から課題を抽出</span>
+      </div>
+      <p class="source-note">添付資料では、内耳は2 mm以下・gapなしの高分解能、下垂体は薄切とdynamic timingが重要。</p>
+      <div class="baseline"><strong>撮像開始前の基準：</strong>小構造はFOV・matrix・slice厚を攻めるほどSNRを失うため、voxelとSNRを同時に見る。</div>
+      
+    <article class="case">
+      <h3>内耳/IACを小FOV・薄切にしたらザラつく</h3>
+      <div class="first"><strong>まず確認：</strong>Acq voxelとcoil中心を確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">FOV</span></td>
+          <td>必要範囲だけに小さく</td>
+          <td>空間分解能↑</td>
+          <td>SNR↓/wrap↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Matrix</span></td>
+          <td>必要なin-plane分解能だけ確保</td>
+          <td>細い神経描出↑</td>
+          <td>SNR↓/時間↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness / 3D partition</span></td>
+          <td>薄く/等方化</td>
+          <td>MPRに有利</td>
+          <td>SNR↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Recon DL / NEX</span></td>
+          <td>SNR補償</td>
+          <td>高分解能を維持</td>
+          <td>NEXは時間↑</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>3D heavily T2ではsequence固有のvariable flip angleやaccelerationも関与。</div>
+      <div class="check"><strong>再撮像の判定：</strong>CN VII/VIIIが分離して見えるかを画質指標にする。</div>
+    </article>
+    
+    <article class="case">
+      <h3>下垂体dynamicが遅く、microadenomaの初期差が取りにくい</h3>
+      <div class="first"><strong>まず確認：</strong>1 phaseの時間とcoverageを確認</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>動かす/確認するパラメータ</th><th>操作の方向</th><th>なぜ効くか</th><th>代償・注意</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><span class="param">Phase Matrix</span></td>
+          <td>必要最小限へ</td>
+          <td>temporal resolution↑</td>
+          <td>in-plane分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">Phase FOV</span></td>
+          <td>左右幅が許せば縮小</td>
+          <td>phase encode削減</td>
+          <td>wrap↑</td>
+        </tr>
+        <tr>
+          <td><span class="param">Slice Thickness</span></td>
+          <td>必要coverage内で調整</td>
+          <td>SNR/phase time余裕</td>
+          <td>z分解能↓</td>
+        </tr>
+        <tr>
+          <td><span class="param">NEX</span></td>
+          <td>余分なaverageを削る</td>
+          <td>時間短縮</td>
+          <td>SNR↓</td>
+        </tr></tbody>
+      </table>
+      </div>
+      <div class="seq"><strong>シーケンス固有の追加策：</strong>造影timing・注入開始同期はparameter以前に重要。</div>
+      <div class="check"><strong>再撮像の判定：</strong>初期phaseで腺体と病変の造影差が評価できるか。</div>
+    </article>
+    
+    </section>
+    
+
+<section class="sheet" id="summary">
+<h2>11. 撮像後「最後の1分」チェック</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>見る順番</th><th>質問</th><th>YESで次へ / NOなら戻る場所</th></tr></thead>
+<tbody>
+<tr><td>1. Coverage</td><td>病変・必要解剖がFOV/stackに全部入ったか？</td><td>NO → FOV / Slice / Scan Plane</td></tr>
+<tr><td>2. Geometry</td><td>断面は臓器・椎間板・腱の解剖軸に合っているか？</td><td>NO → prescriptionを修正</td></tr>
+<tr><td>3. Motion</td><td>ghostはどの方向に走っているか？</td><td>Freq Dirからphase方向を考える</td></tr>
+<tr><td>4. B0</td><td>脂肪抑制・EPI・bSSFPに局所的破綻がないか？</td><td>Shim / Prescan / BW</td></tr>
+<tr><td>5. Resolution</td><td>Acq voxelは診断対象に十分小さいか？</td><td>FOV / Matrix / Slice厚</td></tr>
+<tr><td>6. SNR</td><td>ノイズの原因は小voxel・高BW・coil・accelerationのどれか？</td><td>原因ごとに補償。NEXは最後。</td></tr>
+<tr><td>7. Time</td><td>撮像が長い理由は#Acqs・NEX・Phase matrix・NPWのどれか？</td><td>一番効率の悪い項目から減らす</td></tr>
+<tr><td>8. Safety</td><td>SAR/B1+rms/dBdtとimplant条件は満たすか？</td><td>NO → 撮像せず条件を再設計</td></tr>
+</tbody>
+</table>
+</div>
+<div class="footer-note">
+<strong>作成基盤：</strong>ユーザー提供「部位別・MRI標準撮像シーケンス一覧 ― 診療放射線技師向け実務版」の各部位に記載された注意点・再撮像ポイントを抽出し、前回作成したGE SIGNA Artist 1.5Tコンソールパラメータ解説の考え方へ接続しました。装置ソフトウェア世代やPSDにより利用可能項目・内部実装は異なります。施設protocol、GE Operator Manual、放射線科医の指示を優先してください。
+</div>
+</section>
+</main>
+</div>
+
+<script>
+function filterCases(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  document.querySelectorAll('.case').forEach(el => {
+    el.style.display = !q || el.innerText.toLowerCase().includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.region').forEach(reg => {
+    const visible = [...reg.querySelectorAll('.case')].some(c => c.style.display !== 'none');
+    reg.style.display = !q || visible ? '' : 'none';
+  });
+}
+function jumpRegion(id){
+  if(!id) return;
+  const el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>

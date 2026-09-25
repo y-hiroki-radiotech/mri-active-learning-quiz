@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>GE SIGNA Hero 3T 臨床部位別コンソール・トラブルシューティング実践ガイド</title>
+<style>
+:root{--navy:#0f2747;--blue:#165d9c;--cyan:#0ea5b7;--ink:#182433;--muted:#607086;--line:#d6e0ea;--soft:#f4f8fb;--warn:#fff6db;--good:#eaf8f0;--bad:#fff0f0;--purple:#f4efff;--orange:#fff4e8}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Kaku Gothic ProN','BIZ UDPGothic',Meiryo,sans-serif;color:var(--ink);background:#eef3f7;line-height:1.72}
+a{color:#0b66b2}
+.hero{background:linear-gradient(135deg,#081a2f,#0f3d68 55%,#0a6876);color:white;padding:44px 24px 34px;position:relative;overflow:hidden}
+.hero:after{content:'';position:absolute;width:360px;height:360px;border:1px solid #ffffff30;border-radius:50%;right:-90px;top:-180px;box-shadow:0 0 0 55px #ffffff08,0 0 0 110px #ffffff06}
+.hero-inner{max-width:1180px;margin:auto;position:relative;z-index:1}
+.kicker{font-weight:700;letter-spacing:.14em;color:#a5f3fc;font-size:12px}
+h1{font-size:clamp(28px,4vw,48px);line-height:1.15;margin:8px 0 12px}
+.hero p{max-width:900px;color:#dbeafe;font-size:16px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.hero-tags span{border:1px solid #ffffff40;background:#ffffff10;padding:5px 10px;border-radius:999px;font-size:12px}
+.topbar{position:sticky;top:0;z-index:50;background:#ffffffed;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1180px;margin:auto;display:flex;gap:8px;align-items:center;padding:8px 14px;overflow-x:auto}
+.topbar a{white-space:nowrap;text-decoration:none;color:#29435d;font-size:12px;padding:6px 9px;border-radius:8px}
+.topbar a:hover{background:#eaf2f8}
+.printbtn{margin-left:auto;border:0;background:var(--navy);color:white;border-radius:8px;padding:7px 10px;white-space:nowrap;cursor:pointer}
+main{max-width:1180px;margin:24px auto 70px;padding:0 18px}
+.section-card{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;margin:18px 0;box-shadow:0 6px 22px #26384d0d}
+h2{color:var(--navy);font-size:26px;margin:0 0 6px}
+h3{color:#173b5f}
+.lead{font-size:16px;color:#34495e}
+.notice{border-left:4px solid #e39a1b;background:var(--warn);padding:12px 14px;border-radius:8px;margin:14px 0;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.workflow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0}
+.step{background:linear-gradient(180deg,#f8fbfd,#eef5fa);border:1px solid var(--line);padding:13px;border-radius:12px;position:relative;min-height:126px}
+.step .n{font-size:11px;font-weight:800;color:var(--cyan)} .step b{display:block;margin:3px 0} .step p{font-size:12px;color:var(--muted);margin:0}
+.step:not(:last-child):after{content:'→';position:absolute;right:-12px;top:45%;z-index:2;background:white;border-radius:99px;color:var(--blue);font-weight:800}
+.problem-pills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.problem-pills span{padding:6px 10px;background:#eef7fb;border:1px solid #cce5ef;border-radius:999px;font-size:12px}
+.quickbox{background:linear-gradient(135deg,#f5fbff,#f9f7ff);border:1px solid #cddfec;border-radius:16px;padding:18px}
+.quick-controls{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+select{width:100%;padding:10px;border:1px solid #bfcddb;border-radius:10px;background:white;font-size:14px}
+.quick-result{margin-top:12px;padding:14px;background:white;border:1px solid var(--line);border-radius:12px;min-height:90px}
+.qaction{font-weight:800;color:#064e72;font-size:16px}
+.region-title{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:2px solid #d9e8f3;padding-bottom:12px;margin-bottom:12px}
+.region-title p{margin:0;color:var(--muted)}
+.region-badge{font-size:11px;background:#e9f7f8;color:#08616c;border-radius:999px;padding:5px 9px;white-space:nowrap}
+.source-note{font-size:12px;color:#415466;background:#f6f8fa;border:1px solid #e2e8ef;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.case-card{border:1px solid var(--line);border-radius:13px;margin:10px 0;overflow:hidden;background:#fff}
+.case-head{width:100%;display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center;border:0;background:#fbfdff;padding:13px 14px;text-align:left;cursor:pointer;color:var(--ink)}
+.case-head:hover{background:#f1f7fb}
+.case-num{font-size:10px;font-weight:800;color:#0a7790;letter-spacing:.06em}
+.case-title{font-weight:800;font-size:15px}
+.chev{font-size:20px;color:#47708f;text-align:center;transition:.2s}
+.case-head[aria-expanded='true'] .chev{transform:rotate(45deg)}
+.case-body{display:none;padding:0 14px 15px}
+.case-head[aria-expanded='true'] + .case-body{display:block}
+.topgrid{margin-top:4px}
+.mini{border-radius:10px;padding:10px 12px;font-size:13px}
+.mini p,.theory p,.ge-tip p{margin:3px 0 0}
+.symptom{background:#fff7ed;border:1px solid #fed7aa} .cause{background:#f8f3ff;border:1px solid #ddd0ff}
+.firstlook{margin:11px 0 7px;font-size:12px} .firstlook b{display:block;margin-bottom:5px}
+.chip{display:inline-block;margin:2px 4px 2px 0;background:#eff6ff;color:#204e78;border:1px solid #c7def2;border-radius:999px;padding:3px 8px;font-size:11px}
+.action-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 12px}
+.action-table th,.action-table td{border:1px solid #dce5ec;padding:7px;vertical-align:top} .action-table th{background:#eef4f8;text-align:left}
+.param{display:inline-block;padding:3px 7px;border-radius:7px;font-weight:700;white-space:nowrap}
+.param.up{background:#e8f8ef;color:#116c3c} .param.down{background:#fff1ed;color:#a13d26} .param.check{background:#eef3ff;color:#394e8a}
+.trade{color:#8a4b2a}
+.theory,.ge-tip{border-radius:10px;padding:10px 12px;font-size:12px}
+.theory{background:#eff8ff;border-left:4px solid #2c8ec4} .ge-tip{background:#effbf5;border-left:4px solid #21a46d}
+.dont{margin-top:10px;background:#fff3f3;border:1px solid #f4cccc;border-radius:9px;padding:8px 10px;font-size:12px;color:#7e3030}
+.console-map{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.console-map .block{padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfdfe}
+.console-map b{color:#123d61} .console-map p{font-size:12px;color:var(--muted);margin:3px 0}
+.lab{background:#081a2f;color:white;border-radius:16px;padding:18px}
+.lab h3{color:#dff7ff}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.control{background:#ffffff0c;border:1px solid #ffffff22;border-radius:12px;padding:10px}
+.control label{display:flex;justify-content:space-between;font-size:12px}
+.control input{width:100%}
+.lab-out{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.metric{background:#ffffff0c;border:1px solid #ffffff22;border-radius:10px;padding:10px;text-align:center}
+.metric .v{font-size:22px;font-weight:800;color:#a5f3fc} .metric small{color:#bcd1e3}
+.lab-note{font-size:11px;color:#aabfd0;margin-top:9px}
+.anim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.animbox{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fbfdff}
+.phase-stage{height:170px;position:relative;overflow:hidden;border-radius:10px;background:radial-gradient(circle at center,#345b70 0 18%,#203c50 19% 28%,#0f2435 29%);margin-top:8px}
+.organ{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70px;height:100px;border-radius:50%;background:#dfe9ef;box-shadow:inset 0 0 20px #91a6b4}
+.ghost{position:absolute;left:50%;top:50%;width:70px;height:100px;border-radius:50%;border:3px solid #ffcf70;opacity:.35;animation:ghostY 2.4s infinite ease-in-out}
+.ghost.g2{animation-delay:-1.2s}
+.phase-stage.x .ghost{animation-name:ghostX}
+@keyframes ghostY{0%,100%{transform:translate(-50%,-115px);opacity:.12}50%{transform:translate(-50%,15px);opacity:.55}}
+@keyframes ghostX{0%,100%{transform:translate(-150px,-50%);opacity:.12}50%{transform:translate(80px,-50%);opacity:.55}}
+.shim-stage{height:170px;border-radius:10px;background:linear-gradient(90deg,#e8a54a,#d7e6ef 42%,#8cb7cf);position:relative;overflow:hidden;margin-top:8px}
+.shim-stage:after{content:'fat-sat / signal uniformity';position:absolute;inset:0;display:grid;place-items:center;font-weight:800;color:#16384d;text-shadow:0 1px white}
+.refbar{height:14px;background:#e4edf3;border-radius:99px;overflow:hidden} .refbar span{display:block;height:100%;background:linear-gradient(90deg,#0f7f9b,#46b67a);width:50%;transition:.2s}
+.footerrefs{font-size:12px;color:#44576a}
+.footerrefs li{margin-bottom:6px}
+@media(max-width:820px){.grid2,.grid3,.workflow,.console-map,.controls,.lab-out,.anim-grid,.quick-controls{grid-template-columns:1fr}.step:not(:last-child):after{display:none}.case-head{grid-template-columns:64px 1fr 24px}.hero{padding-top:30px}}
+@media print{body{background:white}.topbar,.printbtn{display:none}main{max-width:none;margin:0;padding:0}.section-card{box-shadow:none;border-radius:0;page-break-inside:auto}.case-body{display:block!important}.case-head{background:white}.chev{display:none}a{color:black;text-decoration:none}}
+</style>
+</head>
+<body>
+<header class='hero'>
+ <div class='hero-inner'>
+  <div class='kicker'>SIGNA™ HERO 3.0T / CLINICAL TROUBLESHOOTING</div>
+  <h1>臨床部位別<br>コンソール・トラブルシューティング実践ガイド</h1>
+  <p>「シーケンス名を覚える」のではなく、<b>実際の画像が困ったときに、どのコンソール項目を見て、何を上げ下げし、何を代償として受け入れるか</b>を、頭部から四肢・全身まで臨床場面で学ぶ教材です。</p>
+  <div class='hero-tags'><span>FOV / Matrix / Voxel</span><span>BW / Echo spacing</span><span>ETL / Refocus angle</span><span>ARC / HyperSense</span><span>AIR Recon DL</span><span>Shim / PURE / RF Drive</span><span>Motion / Flow / FatSat</span><span>SAR / B1+rms</span></div>
+ </div>
+</header>
+<nav class='topbar'><div class='topbar-inner'>
+ <a href='#start'>使い方</a><a href='#finder'>逆引き</a><a href='#lab'>パラメータ実験室</a>
+ <a href='#brain'>頭部</a><a href='#neck'>頸部軟部・頸椎</a><a href='#spine'>胸椎・腰椎</a><a href='#cardiac'>心臓</a><a href='#breast'>乳房MRI</a><a href='#abdomen'>腹部</a><a href='#pelvis'>骨盤</a><a href='#msk'>四肢関節</a><a href='#special'>全身MRI・内耳・下垂体</a>
+ <button class='printbtn' onclick='window.print()'>印刷 / PDF</button>
+</div></nav>
+<main>
+<section id='start' class='section-card'>
+ <h2>0. この資料の使い方</h2>
+ <p class='lead'>撮像で問題が起きたときは、いきなりパラメータを触るのではなく、<b>原因の層を分けてから最小限の変更</b>をします。</p>
+ <div class='workflow'>
+  <div class='step'><span class='n'>STEP 1</span><b>患者・体位</b><p>動き、息止め、嚥下、コイル位置、isocenter、断面角度。ここが悪いと後処理で救えない。</p></div>
+  <div class='step'><span class='n'>STEP 2</span><b>Geometry</b><p>FOV、Phase FOV、Matrix、Slice、ZRes。coverageと分解能を確認。</p></div>
+  <div class='step'><span class='n'>STEP 3</span><b>時間・動き</b><p>NEX、ETL、加速、PROPELLER、navigator。患者が耐えられる時間へ。</p></div>
+  <div class='step'><span class='n'>STEP 4</span><b>周波数・位相</b><p>BW、Echo spacing、Shim、Flow compensation。歪み・ghost・金属に直結。</p></div>
+  <div class='step'><span class='n'>STEP 5</span><b>再構成・安全</b><p>AIR Recon DL、PURE、RF Drive、SAR/B1+rms。補正の役割を混同しない。</p></div>
+ </div>
+ <div class='notice'><b>重要：</b>添付の部位別標準撮像資料が示す「目的・断面・注意点」を臨床側の土台にし、そこへMRI物理とGEコンソールの操作ロジックを追加しています。実際の患者では院内プロトコル、放射線科医の指示、装置のソフトウェア世代、安全条件を優先してください。</div>
+ <h3>症状から原因層を分類する</h3>
+ <div class='problem-pills'><span>ザラザラ → SNR / voxel / BW / NEX</span><span>ぼやける → ETL / Echo spacing / motion</span><span>歪む → B0 / BW / EPI train</span><span>ghost → Phase方向 / motion / flow</span><span>脂肪抑制ムラ → B0/B1 / Shim / Dixon</span><span>wrap → Phase FOV / NPW</span><span>長い → Phase matrix / ZRes / 加速</span><span>SAR → FA / Refocus / TR</span></div>
+</section>
+
+<section id='finder' class='section-card'>
+ <h2>クイック逆引き：部位 × 困りごと</h2>
+ <div class='quickbox'>
+  <div class='quick-controls'><select id='qRegion'></select><select id='qProblem'></select></div>
+  <div id='qResult' class='quick-result'>部位と困りごとを選ぶと、最初に触る候補を表示します。</div>
+ </div>
+</section>
+
+<section class='section-card'>
+ <h2>コンソール項目を「何の問題に効くか」で覚える</h2>
+ <div class='console-map'>
+  <div class='block'><b>Geometry</b><p>FOV / Phase FOV / Matrix / Slice / ZRes / NSW<br>→ coverage・分解能・wrap・3D時間</p></div>
+  <div class='block'><b>Readout</b><p>BW / TE / Echo spacing<br>→ SNR・chemical shift・EPI歪み・metal</p></div>
+  <div class='block'><b>FSE train</b><p>ETL / Refocus angle<br>→ 時間・T2 blur・SAR</p></div>
+  <div class='block'><b>Acceleration</b><p>ARC/ASSET / HyperSense / NEX<br>→ 時間・SNR・residual artifact</p></div>
+  <div class='block'><b>Uniformity</b><p>Shim / center frequency / RF Drive / Prescan<br>→ B0/B1・FatSat・3T shading</p></div>
+  <div class='block'><b>Receive correction</b><p>PURE<br>→ coil sensitivityによる明るさむら</p></div>
+  <div class='block'><b>Motion / Flow</b><p>Phase direction / PROPELLER / Flow compensation / Sat band<br>→ ghost・拍動</p></div>
+  <div class='block'><b>Reconstruction</b><p>AIR Recon DL<br>→ noise/ringingを低減し、SNR余裕を分解能/時間へ再配分</p></div>
+ </div>
+</section>
+
+<section id='lab' class='section-card'>
+ <h2>パラメータ実験室：動かすと何が起こる？</h2>
+ <div class='lab'>
+  <h3>教育用「相対」シミュレータ</h3>
+  <p style='color:#cbddec;font-size:12px'>実機の正確なscan time/SNR計算ではありません。FOV・matrix・slice・BW・NEX・accelerationの方向感をつかむための単純化モデルです。</p>
+  <div class='controls'>
+   <div class='control'><label>FOV <b id='fovV'>240 mm</b></label><input id='fov' type='range' min='160' max='400' value='240' step='10'></div>
+   <div class='control'><label>Frequency Matrix <b id='matV'>320</b></label><input id='mat' type='range' min='160' max='512' value='320' step='32'></div>
+   <div class='control'><label>Phase FOV <b id='pfovV'>0.80</b></label><input id='pfov' type='range' min='0.50' max='1.00' value='0.80' step='0.05'></div>
+   <div class='control'><label>Slice <b id='slV'>3.0 mm</b></label><input id='sl' type='range' min='1' max='8' value='3' step='0.5'></div>
+   <div class='control'><label>BW <b id='bwV'>31.25 kHz</b></label><input id='bw' type='range' min='15.6' max='125' value='31.25' step='7.8'></div>
+   <div class='control'><label>NEX <b id='nexV'>1.0</b></label><input id='nex' type='range' min='0.5' max='4' value='1' step='0.5'></div>
+   <div class='control'><label>Acceleration <b id='accV'>2.0</b></label><input id='acc' type='range' min='1' max='4' value='2' step='0.25'></div>
+  </div>
+  <div class='lab-out'>
+   <div class='metric'><small>Pixel size</small><div class='v' id='pixOut'>0.75 mm</div></div>
+   <div class='metric'><small>Voxel volume proxy</small><div class='v' id='voxOut'>1.69</div></div>
+   <div class='metric'><small>Relative SNR proxy</small><div class='v' id='snrOut'>1.00</div></div>
+   <div class='metric'><small>Relative time proxy</small><div class='v' id='timeOut'>1.00</div></div>
+  </div>
+  <div class='lab-note'>SNR proxy ≈ voxel volume × √NEX ÷ √(BW ratio × acceleration)。Time proxy ≈ phase encoding burden × NEX ÷ acceleration。実際はsequence、partial Fourier、ETL、TR、ACS、CS reconstruction、3D partition等が加わります。</div>
+ </div>
+</section>
+
+<section class='section-card'>
+ <h2>図解：動きとShimを「見た目」で理解</h2>
+ <div class='anim-grid'>
+  <div class='animbox'><h3 style='margin-top:0'>Motion ghostはPhase方向へ</h3><p style='font-size:12px;color:var(--muted)'>ボタンで位相方向を変えると、ghostの逃がし方の感覚が分かります。</p><button id='phaseBtn'>Phase: 縦 → 横へ変更</button><div id='phaseStage' class='phase-stage'><div class='organ'></div><div class='ghost'></div><div class='ghost g2'></div></div></div>
+  <div class='animbox'><h3 style='margin-top:0'>Shim：B0均一性とFatSatの前提</h3><p style='font-size:12px;color:var(--muted)'>教育用イメージ。右へ動かすほど「均一化した」状態を模擬します。</p><input id='shim' type='range' min='0' max='100' value='35' style='width:100%'><div class='shim-stage' id='shimStage'></div><p style='font-size:12px'>均一性 <b id='shimV'>35%</b></p></div>
+ </div>
+</section>
+
+
+    <section id='brain' class='region section-card'>
+      <div class='region-title'><div><h2>1. 頭部（脳）</h2><p>後頭蓋窩EPI歪み、FLAIRのCSF抑制、拍動、3D高分解能化を「どのつまみで直すか」</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、DWI後頭蓋窩の歪み、FLAIRのCSF抑制、SWI/SWANの金属・副鼻腔周囲のsignal loss、3Tでのsusceptibility増大が重要な注意点として整理されています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 01</span><span class='case-title'>DWIで後頭蓋窩が歪む／橋・延髄の形がT2と合わない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>EPIの位相方向歪み、局所signal loss、ADCとの位置ずれ。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>空気―骨―組織境界によるB0不均一に対して、EPIの長いreadoutが敏感。3Tでは周波数ずれが大きくなりやすい。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim範囲・中心周波数</span><span class='chip'>BW / Hz per pixel</span><span class='chip'>Parallel imaging / ARC</span><span class='chip'>Phase direction</span><span class='chip'>Echo spacing</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>BW <b>↑</b></span></td><td>pixelあたりの周波数幅を広げ、同じΔfが占めるpixel数を減らす</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>ARC / parallel imaging <b>↑</b></span></td><td>phase encode lineを減らしEPI trainを短縮</td><td class='trade'>SNR↓・g-factor</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>位相誤差が積算される時間を短くする</td><td class='trade'>gradient/BW条件に制約</td></tr><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>歪みを病変から逃がす</td><td class='trade'>別方向へ歪み移動</td></tr><tr><td><span class='param check'>Shim <b>最適化</b></span></td><td>ΔB0そのものを小さくする</td><td class='trade'>局所最適化で他領域に影響</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>EPIでは位相エンコード方向の位置ずれは概ね「局所周波数ずれ ÷ phase方向pixel bandwidth」に比例します。BWを上げ、echo spacingを短くし、加速でEPI trainを短くするほど歪みは減ります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>HeroではAIR Recon DLをSNR余裕の再配分に使えるため、BW↑や加速↑で失った見かけの画質を補いながら歪み低減側へ条件を振りやすい、という使い方が実務的です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>Matrixをただ上げて「細かく」するだけでは、歪みの根本原因であるB0不均一は直りません。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 02</span><span class='case-title'>FLAIRで脳室・脳溝のCSFが十分に消えない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>CSFが局所的に高信号、脳室近傍で偽病変様。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>TI/TRの不一致、B1/B0不均一、流れによるinflow、体動や拍動。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>TI / TR</span><span class='chip'>Shim</span><span class='chip'>Flow compensation / sat band</span><span class='chip'>RF Drive / B1</span><span class='chip'>体動</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>TI <b>再確認</b></span></td><td>null pointが対象条件に合うか確認</td><td class='trade'>contrast変化</td></tr><tr><td><span class='param check'>Shim <b>最適化</b></span></td><td>周波数ばらつきを減らす</td><td class='trade'>撮像範囲との兼ね合い</td></tr><tr><td><span class='param check'>Flow compensation <b>必要時ON</b></span></td><td>CSF flow由来の位相ずれを軽減</td><td class='trade'>TE延長の可能性</td></tr><tr><td><span class='param check'>Sat band <b>追加/調整</b></span></td><td>流入信号を抑える</td><td class='trade'>不要な信号低下</td></tr><tr><td><span class='param check'>RF Drive / B1 <b>確認</b></span></td><td>3Tのflip angle不均一を疑う</td><td class='trade'>施設設定優先</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>IRではMz(TI)=M0(1−2e^(−TI/T1))に近い挙動を利用してCSFをnullにします。実効T1、反転効率、局所B1、流入がずれると完全なnullになりません。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Auto系の設定を使っている場合も「自動だから正しい」ではなく、最終TI/TRとB1/shim結果を確認します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>CSF高信号を見てすぐ病変と判断せず、対側・T2・DWI・位置依存性を確認します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 03</span><span class='case-title'>T2/FSEでCSF pulsation ghostが脳幹・小脳に重なる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>血管・CSF由来のghostが位相方向へ反復。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>動くspinがgradientで位相を獲得し、TRごとに位相が一定しない。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Flow compensation</span><span class='chip'>Sat band</span><span class='chip'>ETL / Echo spacing</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghostを病変から逃がす</td><td class='trade'>別方向へ移動</td></tr><tr><td><span class='param check'>Flow compensation <b>ON/方向確認</b></span></td><td>一定速度成分の一次モーメントを補償</td><td class='trade'>TE↑・gradient負荷</td></tr><tr><td><span class='param check'>Sat band <b>追加</b></span></td><td>流入血液・CSFの寄与低減</td><td class='trade'>coverage注意</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>echo train中の位相変動を抑える</td><td class='trade'>BW/SNR trade-off</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>Flow compensationはgradientの一次モーメントM1=∫tG(t)dtを0へ近づけ、一定速度vによる位相φ=γvM1を小さくします。加速度運動や乱流まで完全に消すわけではありません。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Flow Compensation Directionが選べる画面では、artifactの向きと対象血流方向を考えて「ONかどうか」だけでなく方向も確認します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>Flow compensationを常時ONにするとTE延長など別の代償が出ることがあります。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 04</span><span class='case-title'>3D T1/FLAIRが長すぎるが、薄切は維持したい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>5〜7分級で体動が増え、再撮像リスク。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>高matrix、広いcoverage、高いZRes、低い加速率。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase FOV</span><span class='chip'>Phase/Z matrix</span><span class='chip'>ZRes</span><span class='chip'>ARC / HyperSense</span><span class='chip'>NEX</span><span class='chip'>AIR Recon DL</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>Phase FOV <b>↓</b></span></td><td>不要なphase coverageを削る</td><td class='trade'>wrapリスク</td></tr><tr><td><span class='param down'>ZRes <b>↓ 少量</b></span></td><td>kz収集を減らす</td><td class='trade'>実効z分解能↓</td></tr><tr><td><span class='param up'>ARC / HyperSense <b>↑</b></span></td><td>undersamplingで時間短縮</td><td class='trade'>過度な加速で残差artifact</td></tr><tr><td><span class='param down'>NEX <b>↓</b></span></td><td>平均回数を減らす</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>AIR Recon DL <b>適用/strength確認</b></span></td><td>ノイズ・ringing低減を画質余裕へ</td><td class='trade'>取得分解能そのものではない</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>3Dでは「表示slice thickness」だけでなくkz sampling（ZRes）が実効z分解能と時間を左右します。表示voxelと取得k-space分解能を分けて考えます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>HyperSense（compressed sensing）とARC（parallel imaging）は原理が異なります。係数を単純乗算して実時間短縮率とは考えません。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>最初にin-plane matrixを大きく落とすより、不要coverage・Phase FOV・ZRes・加速の順で「診断に不要な情報」を削る方が合理的です。</div>
+      </div>
+    </article>
+    </section>
+    <section id='neck' class='region section-card'>
+      <div class='region-title'><div><h2>2. 頸部軟部・頸椎</h2><p>嚥下、歯科金属、脂肪抑制ムラ、C7/T1のSNR、CSF pulsation</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、頸部軟部で嚥下・呼吸・拍動・歯科金属、下頸部の脂肪抑制ムラ、頸椎でCSF pulsationとC7/T1のSNR低下が主要課題とされています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 05</span><span class='case-title'>頸部T2/造影T1で嚥下ghostが病変に重なる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>咽頭・喉頭からphase方向へ反復ghost。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>長い撮像中の嚥下がTRごとに不規則な位相差を作る。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Scan time</span><span class='chip'>PROPELLER</span><span class='chip'>NEX</span><span class='chip'>Phase matrix / FOV</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghostを左右/前後の安全な方向へ逃がす</td><td class='trade'>別方向へghost</td></tr><tr><td><span class='param down'>Phase matrix <b>↓</b></span></td><td>撮像時間短縮</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param up'>ARC / HyperSense <b>↑</b></span></td><td>息・嚥下を我慢する時間を短縮</td><td class='trade'>SNR/再構成負荷</td></tr><tr><td><span class='param check'>PROPELLER <b>適応時</b></span></td><td>radial中心oversamplingでmotion耐性</td><td class='trade'>時間/見え方変化</td></tr><tr><td><span class='param check'>NEX <b>見直し</b></span></td><td>不要平均を減らす</td><td class='trade'>SNR↓</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>motion ghostは主にphase方向に現れます。まず「artifactを消す」より「病変から逃がす」のが即効性のある操作です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>GE PROPELLERはradial blade状にk-space中心を繰り返し通るため、嚥下・振戦などに耐性があります。ただし万能ではなくthrough-plane motionは残ります。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>motionが原因なのにmatrixを上げて高分解能化すると、撮像時間が伸びて悪化することがあります。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 06</span><span class='case-title'>下頸部・鎖骨上窩の脂肪抑制がまだら</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>片側だけ脂肪が残る、肩近傍でwater/fat contrastが不均一。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>3TでのB0/B1不均一、off-center、肩によるloading。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim volume</span><span class='chip'>Center frequency</span><span class='chip'>RF Drive / B1</span><span class='chip'>FatSat方式</span><span class='chip'>FOV / isocenter</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Shim <b>局所最適化</b></span></td><td>fat-water周波数分離の前提となるB0均一性改善</td><td class='trade'>他領域とのバランス</td></tr><tr><td><span class='param check'>Center frequency <b>再確認</b></span></td><td>fat sat pulseの中心ずれを補正</td><td class='trade'>全体設定に影響</td></tr><tr><td><span class='param check'>RF Drive <b>確認/最適化</b></span></td><td>実効flip angle不均一対策</td><td class='trade'>装置・施設設定依存</td></tr><tr><td><span class='param check'>Dixon <b>切替候補</b></span></td><td>周波数選択CHESSよりB0不均一へ頑健</td><td class='trade'>時間/再構成条件</td></tr><tr><td><span class='param check'>FOV / centering <b>調整</b></span></td><td>対象を磁場・RFの均一領域へ</td><td class='trade'>coverageとの兼ね合い</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>CHESSはfat resonanceへ選択RFを当てるため、B0がずれると「fatの位置」が場所ごとにずれます。Dixonは複数echoの位相差からwater/fatを分離するため、別の強みがあります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>3T HeroではRF/B1関連のdrive modeやcalibration結果も「画面下の補助情報」ではなく画質因子として見ます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>脂肪抑制不良をNEX↑で解決しようとしても、本質的な均一性は改善しません。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 07</span><span class='case-title'>C7/T1だけSNRが低く、脊髄が見づらい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>上位頸椎は良いが、肩付近で暗い・ノイズ。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>コイル感度、深部化、大きい肩、B1、FOV/voxel。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Coil positioning</span><span class='chip'>PURE</span><span class='chip'>FOV / matrix</span><span class='chip'>Slice thickness</span><span class='chip'>BW</span><span class='chip'>NEX</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>FOV <b>必要最小</b></span></td><td>pixelを小さくしすぎない範囲でcoverage確保</td><td class='trade'>wrap</td></tr><tr><td><span class='param down'>Matrix <b>↓ 少量</b></span></td><td>voxel体積を確保</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param up'>Slice thickness <b>↑ 少量</b></span></td><td>voxel volume↑</td><td class='trade'>partial volume↑</td></tr><tr><td><span class='param down'>BW <b>↓ 可能範囲</b></span></td><td>noise bandwidth↓でSNR改善</td><td class='trade'>chemical shift/TE↑</td></tr><tr><td><span class='param up'>NEX <b>↑ 最後</b></span></td><td>SNR∝√NEX</td><td class='trade'>時間↑</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>SNRは概念的にvoxel volumeに比例し、√NEXに比例、√BWに反比例します。まず「voxelをどこまで小さくし過ぎたか」を確認します。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>PUREは受信感度むらを補正する機能で、深部に存在しないSNRを新しく作る機能ではありません。コイル配置が先です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>PUREをONにしただけでノイズ問題が解決したと判断しないでください。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 08</span><span class='case-title'>頸髄内に1断面だけ偽高信号が出る</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>Sagittalの脊髄内に線状/局所高信号、Axialと整合しない。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>CSF pulsation、flow ghost、partial volume。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Flow compensation</span><span class='chip'>Sat band</span><span class='chip'>Slice / gap</span><span class='chip'>Axial整合</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghost経路を脊髄から外す</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>Flow compensation <b>検討</b></span></td><td>一定速度flowのdephase低減</td><td class='trade'>TE延長</td></tr><tr><td><span class='param check'>Sat band <b>前後に追加</b></span></td><td>流入・血流信号を減らす</td><td class='trade'>配置注意</td></tr><tr><td><span class='param check'>Slice / gap <b>見直し</b></span></td><td>partial volumeを減らす</td><td class='trade'>SNR/時間</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>偽高信号が「1断面だけ」なら、真の髄内病変よりもflow・partial volumeの可能性を先に点検します。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>GE画面ではFlow Compensation Directionまで確認し、単にチェックが付いているかだけで終わらせないのがポイントです。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>Sagittalだけを再撮像する前にAxialとの位置整合性を確認します。</div>
+      </div>
+    </article>
+    </section>
+    <section id='spine' class='region section-card'>
+      <div class='region-title'><div><h2>3. 胸椎・腰椎</h2><p>大動脈/腸管ghost、細い胸髄、術後金属、foraminal coverage</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、胸椎の心拍・呼吸・大動脈ghost、腰椎の大動脈/腸管motion、狭窄時の薄切とSNRのバランス、術後金属で高BW・薄切・FSE/STIRが挙げられています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 09</span><span class='case-title'>胸髄に大動脈・心拍ghostが重なる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>脊髄上に縞状のghostが重なり髄内高信号と紛らわしい。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>前方の大血管の周期運動がphase encode方向へ伝播。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Anterior sat</span><span class='chip'>Flow compensation</span><span class='chip'>ETL / scan time</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghostを脊髄から左右方向などへ逃がす</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>Sat band <b>前方へ</b></span></td><td>大動脈・胸壁由来信号を抑制</td><td class='trade'>配置に注意</td></tr><tr><td><span class='param check'>Flow compensation <b>選択的にON</b></span></td><td>flowの一次位相を補償</td><td class='trade'>TE↑</td></tr><tr><td><span class='param up'>ETL <b>↑ 少量</b></span></td><td>時間短縮</td><td class='trade'>T2 blur↑</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>ghostの「向き」が原因推定に直結します。phase方向に反復するなら、まずPhase directionを見ます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>PROPELLERが利用可能なT2系ではmotion耐性という別アプローチもあります。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>FOVを広げてSNRを稼ぐと胸髄のin-plane分解能が落ちるため、ghost対策とSNR対策を分けて考えます。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 10</span><span class='case-title'>胸髄が細く、病変らしき高信号がぼやける</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>cordの境界が甘い、微小病変がpartial volume。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>FOV大、matrix不足、slice厚、ETL blur。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>FOV</span><span class='chip'>Matrix</span><span class='chip'>Slice thickness</span><span class='chip'>ETL</span><span class='chip'>Echo spacing</span><span class='chip'>AIR Recon DL</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>FOV <b>↓</b></span></td><td>同matrixでpixel size↓</td><td class='trade'>wrap/SNR↓</td></tr><tr><td><span class='param up'>Matrix <b>↑</b></span></td><td>kmax↑で分解能↑</td><td class='trade'>SNR↓・時間↑</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>z方向partial volume↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>ETL <b>↓</b></span></td><td>T2 decayによるblur↓</td><td class='trade'>時間↑</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>echo train duration↓</td><td class='trade'>BW/SNR trade-off</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>FSE blurは「echo trainの後半ほど高周波k-spaceがT2 decayで弱くなる」ことが一因です。ETLだけでなくecho spacingも見ます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIR Recon DLはノイズ/ringing低減を利用して、matrix↑やslice↓に振った際の見かけの画質を支援できますが、取得情報を無限に増やすものではありません。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>狭い病変の確認でNEX↑だけを選ぶと時間は増えるのに分解能は変わりません。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 11</span><span class='case-title'>腰椎Axialで椎間孔外側がFOVから切れる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>central canalは見えるが、extraforaminal領域が欠ける。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>Phase FOVを攻めすぎ、stack配置が狭い。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>FOV / Phase FOV</span><span class='chip'>No Phase Wrap</span><span class='chip'>Slice stack angle</span><span class='chip'>Localizer</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>Phase FOV <b>↑</b></span></td><td>外側coverage確保</td><td class='trade'>時間↑</td></tr><tr><td><span class='param check'>No Phase Wrap <b>必要時ON</b></span></td><td>折り返し抑制</td><td class='trade'>時間/データ量↑</td></tr><tr><td><span class='param up'>FOV <b>↑ 少量</b></span></td><td>外側病変を含める</td><td class='trade'>分解能↓ if matrix固定</td></tr><tr><td><span class='param up'>Matrix <b>併せて↑</b></span></td><td>FOV↑時のpixel維持</td><td class='trade'>SNR/時間</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>Phase FOV低下は時間短縮に効きますが、FOV外信号のaliasingやcoverage不足と交換条件です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>「短時間化のためのPhase FOV縮小」が臨床目的（extraforaminal lesion）と衝突する典型例です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>プロトコルのPhase FOVを固定値として守るより、症状と病変位置でcoverageを優先します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 12</span><span class='case-title'>術後金属で椎体・神経根が消える</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>signal void、pile-up、geometric distortion。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>金属近傍の非常に大きいB0勾配。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>BW</span><span class='chip'>Slice thickness</span><span class='chip'>Frequency direction</span><span class='chip'>STIR/Dixon</span><span class='chip'>SEMAC/MAVRIC系 availability</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>BW <b>↑</b></span></td><td>周波数ずれによるpixel displacement↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>through-plane dephasing/partial volume↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>Frequency direction <b>変更</b></span></td><td>in-plane metal artifactの方向を逃がす</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>STIR <b>選択</b></span></td><td>spectral fat satよりB0ずれに頑健</td><td class='trade'>T1低下/造影後制約</td></tr><tr><td><span class='param check'>SEMAC/MAVRIC <b>利用可能なら</b></span></td><td>slice encoding等でmetal artifact低減</td><td class='trade'>時間↑</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>chemical shiftやmetal artifactの「位置ずれ」は周波数ずれΔfをpixel bandwidthで割った量に依存するため、BW↑が直接効きます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>装置/ライセンスで利用可能なmetal artifact reduction機能が異なるため、Heroの実装状況を施設で確認してください。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>BW↑のSNR低下を恐れて低BWのままでは、金属近傍の解剖がそもそも正しい位置にありません。</div>
+      </div>
+    </article>
+    </section>
+    <section id='cardiac' class='region section-card'>
+      <div class='region-title'><div><h2>4. 心臓（CMR）</h2><p>3T bSSFP banding、息止め、同期、LGE null、SAR</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、3Tでのmagnetohydrodynamic effect、息止め位相の再現、bSSFP banding、LGEのTI再設定、不整脈対策が重点です。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 13</span><span class='case-title'>3T bSSFP cineに黒いbandingが入る</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>心筋/血液内に帯状の低信号。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>off-resonanceがbSSFPのstop-bandへ入る。3TではB0ずれがHzで大きくなる。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim</span><span class='chip'>Center frequency</span><span class='chip'>TR</span><span class='chip'>BW</span><span class='chip'>Frequency scout / phase cycling</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Shim <b>最適化</b></span></td><td>off-resonance幅を狭める</td><td class='trade'>局所最適化</td></tr><tr><td><span class='param check'>Center frequency <b>微調整</b></span></td><td>band位置を移動</td><td class='trade'>全体に影響</td></tr><tr><td><span class='param down'>TR <b>↓</b></span></td><td>bSSFPのband間隔≈1/TRを広げる</td><td class='trade'>gradient負荷</td></tr><tr><td><span class='param up'>BW <b>↑</b></span></td><td>readout短縮しTR短縮を助ける</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>Phase cycling <b>利用時変更</b></span></td><td>band位置を変える</td><td class='trade'>再撮像</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>bSSFPの周波数応答は周期的で、band間隔は概ね1/TRです。TRを短くするとoff-resonanceに対する許容幅が広がります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>3Tは高SNRですがbSSFPは1.5TよりB0/B1影響を受けやすいため、SNRだけでなくshim/TRを先に見ます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>bandingをcontrast不足と誤認してFAだけ上げるとSAR増加につながります。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 14</span><span class='case-title'>息止めが続かずcine / perfusionがずれる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>slice間の位置ずれ、呼吸ghost、phaseごとのmisregistration。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>breath-hold時間が患者能力を超えている。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase matrix</span><span class='chip'>Views per segment</span><span class='chip'>ARC / HyperSense</span><span class='chip'>NEX</span><span class='chip'>Coverage</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>Phase matrix <b>↓</b></span></td><td>1 breath-holdを短縮</td><td class='trade'>in-plane分解能↓</td></tr><tr><td><span class='param up'>ARC / HyperSense <b>↑</b></span></td><td>phase encode数を削減</td><td class='trade'>SNR/再構成artifact</td></tr><tr><td><span class='param check'>NEX <b>最小化</b></span></td><td>不要平均を削る</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>Coverage <b>必要範囲へ</b></span></td><td>不要sliceを削る</td><td class='trade'>coverage不足注意</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>心臓では「最高分解能を1回失敗」より「再現性のある息止めを毎回成功」の方が診断上重要なことがあります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIR Recon DLを「画質を良くするだけ」でなく、短時間化へ振った条件のnoise marginとして使う発想が有効です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>患者に無理な20秒息止めを繰り返すより、条件側を下げて再現性を上げます。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 15</span><span class='case-title'>LGEで正常心筋が黒くならない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>心筋全体が灰色、高信号部とのコントラストが弱い。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>TI不適切、造影後時間経過でT1が変化。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>TI scout</span><span class='chip'>TI</span><span class='chip'>PSIR</span><span class='chip'>心拍数</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>TI <b>再設定</b></span></td><td>正常心筋のMz≈0へ</td><td class='trade'>時間経過で再調整</td></tr><tr><td><span class='param check'>PSIR <b>利用</b></span></td><td>TIずれに対する頑健性を上げる</td><td class='trade'>sequence特性を理解</td></tr><tr><td><span class='param check'>Trigger delay <b>確認</b></span></td><td>同じ心時相へ</td><td class='trade'>RR依存</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>IRのnullはMz(TI)=0を利用します。造影剤washoutにより心筋T1が変化するので、検査後半では最適TIも動きます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Auto/PSIRを使っても、画像上で正常心筋のnullが成立しているかを技師が確認します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>最初のTI scout値を検査最後まで固定しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 16</span><span class='case-title'>SAR制限でFSE/IR系が延びる・設定できない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>scan time増加、systemがTR/FA制約。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>3T、短TR、高FA、refocusing trainでRF power deposition増加。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Refocus angle</span><span class='chip'>TR</span><span class='chip'>Flip angle</span><span class='chip'>ETL</span><span class='chip'>B1+rms / SAR</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>Refocus angle <b>↓</b></span></td><td>RF powerを大きく削減</td><td class='trade'>echo pathway/contrast変化</td></tr><tr><td><span class='param up'>TR <b>↑</b></span></td><td>平均RF power↓</td><td class='trade'>時間↑/contrast変化</td></tr><tr><td><span class='param down'>Flip angle <b>↓</b></span></td><td>RF power↓</td><td class='trade'>signal/contrast↓</td></tr><tr><td><span class='param check'>ETL <b>調整</b></span></td><td>RF pulse数と時間のbalance</td><td class='trade'>blur/時間</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>SARは条件依存ですがRF amplitudeやduty cycleに強く依存し、3Tでは同等条件で制約が厳しくなりやすいです。B1+rmsもMR Conditional条件で重要な別指標です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Hero画面下のSAR/B1+rmsを「安全表示」として常に見る癖をつけ、画質調整と安全制約を同時に考えます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>SARを下げる目的で何を変えたかを忘れると、contrastや時間が意図せず変わります。</div>
+      </div>
+    </article>
+    </section>
+    <section id='breast' class='region section-card'>
+      <div class='region-title'><div><h2>5. 乳房MRI</h2><p>DWI歪み、脂肪抑制、DCE時間分解能、subtraction motion</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、DWIのEPI distortion、3TでのB0/B1による脂肪抑制ムラ、DCEの空間/時間分解能両立、造影前後の体動によるsubtraction artifactが重要です。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 17</span><span class='case-title'>乳房DWIの外側が歪む／ADC位置がDCEと合わない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>乳房輪郭の伸縮、乳頭/胸壁の位置ずれ。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>EPI + off-center + air-tissue interfaceによるB0不均一。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim</span><span class='chip'>BW</span><span class='chip'>ARC</span><span class='chip'>Phase direction</span><span class='chip'>FOV</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Shim <b>両側乳房を適切に</b></span></td><td>B0均一化</td><td class='trade'>広範囲で難しい</td></tr><tr><td><span class='param up'>BW <b>↑</b></span></td><td>pixel shift↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>ARC <b>↑</b></span></td><td>EPI train短縮</td><td class='trade'>SNR/g-factor</td></tr><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>歪み方向を評価しやすく</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>FOV <b>適正化</b></span></td><td>不要な空気領域を減らす</td><td class='trade'>coverage注意</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>乳房は左右がoff-centerになりやすく、3TではB0/B1の両方が問題になります。DWIは「高信号」よりまず形態画像との位置一致を確認します。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIR Recon DLはDWIのnoise marginには寄与しますが、B0由来の幾何学的ずれを直接直す設定ではありません。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>ADC値だけを見て、ROIが解剖学的にずれていることを見逃さない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 18</span><span class='case-title'>DCEで脂肪抑制が左右不均一</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>片側乳房の脂肪が高信号に残りsubtractionも不安定。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>B0/B1不均一、RF loading、off-center。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim</span><span class='chip'>RF Drive / B1 calibration</span><span class='chip'>Dixon/FS方式</span><span class='chip'>Centering</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Shim <b>最適化</b></span></td><td>spectral FSの前提を改善</td><td class='trade'>両側均一化が課題</td></tr><tr><td><span class='param check'>RF Drive <b>確認</b></span></td><td>flip angle均一性を改善</td><td class='trade'>装置設定依存</td></tr><tr><td><span class='param check'>Dixon <b>候補</b></span></td><td>広いFOVでwater/fat separation</td><td class='trade'>echo/recon条件</td></tr><tr><td><span class='param check'>Centering <b>再確認</b></span></td><td>両側を均一領域へ近づける</td><td class='trade'>体位制約</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>B0不均一はfat resonanceの場所ずれ、B1不均一はRF flip angleの場所ずれを起こします。両者は別物です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>PUREはreceive sensitivity補正で、B1 transmit不均一そのものを解決する機能ではありません。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>PUREとRF Driveを同じ「均一化機能」として混同しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 19</span><span class='case-title'>DCEの時間分解能を上げたいが形態も落としたくない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>早期相を逃す、または高分解能化で1phaseが長い。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>3D matrix/coverageと時間分解能の競合。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase FOV</span><span class='chip'>Phase matrix</span><span class='chip'>ZRes</span><span class='chip'>ARC/HyperSense</span><span class='chip'>NEX</span><span class='chip'>Temporal phases</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase FOV <b>必要最小</b></span></td><td>phase encode削減</td><td class='trade'>wrap</td></tr><tr><td><span class='param down'>Phase matrix <b>↓ 少量</b></span></td><td>phase time短縮</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param down'>ZRes <b>↓ 少量</b></span></td><td>kz sampling削減</td><td class='trade'>z実効分解能↓</td></tr><tr><td><span class='param up'>HyperSense/ARC <b>↑</b></span></td><td>3Dを短縮</td><td class='trade'>residual artifact</td></tr><tr><td><span class='param check'>NEX <b>1を基本確認</b></span></td><td>不要平均を排除</td><td class='trade'>SNR↓</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>DCEは「空間分解能・時間分解能・SNR」の三角形です。3TのSNR余裕を、どの頂点へ配分するかが技師の設計になります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>HyperSenseはcompressed sensing、ARCはparallel imaging。異なるundersamplingを組み合わせる場合は、実際の時間と画質をプロトコル単位で検証します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>表示上のacceleration factorだけで「○倍高速」と判断しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 20</span><span class='case-title'>Subtractionで乳房全体に白黒の縁が出る</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>造影域ではなく輪郭全体にmisregistration。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>pre/post間の体動・呼吸位相・胸壁位置変化。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>患者固定</span><span class='chip'>Scan time</span><span class='chip'>Pre/Post geometry</span><span class='chip'>Motion correction availability</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Scan time <b>短縮</b></span></td><td>体動確率を下げる</td><td class='trade'>分解能/SNR trade-off</td></tr><tr><td><span class='param check'>Geometry <b>完全一致</b></span></td><td>subtractionの前提を守る</td><td class='trade'>条件変更禁止</td></tr><tr><td><span class='param up'>ARC/HyperSense <b>必要時↑</b></span></td><td>各phase短縮</td><td class='trade'>artifact</td></tr><tr><td><span class='param check'>Motion correction <b>利用可能時</b></span></td><td>再構成補正</td><td class='trade'>万能ではない</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>Subtractionは同じvoxel同士を引き算するため、数mmの位置ずれでも輪郭に大きな差分が出ます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>console parameterを動かす前に、pre/postのFOV・slice・matrix・orientationが同一かを確認するのが最優先です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>造影後だけFOVやslice厚を変えない。</div>
+      </div>
+    </article>
+    </section>
+    <section id='abdomen' class='region section-card'>
+      <div class='region-title'><div><h2>6. 腹部（肝・膵胆道・腎副腎）</h2><p>息止め、左葉心拍動、DWI、MRCP navigator、B1 shading</p></div><span class='region-badge'>6 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、肝ダイナミックの呼気息止め、左葉心拍動、3Tのdielectric shading、MRCPの呼吸パターン、腎副腎の呼吸位相ずれが挙げられています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 21</span><span class='case-title'>肝ダイナミックの息止めが長くて動脈相が崩れる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>arterial phaseだけmotion、位相ごとの肝位置ずれ。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>3D volumeのphase/kz encode量が患者の息止め能力を超える。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase FOV</span><span class='chip'>Phase matrix</span><span class='chip'>ZRes</span><span class='chip'>ARC/HyperSense</span><span class='chip'>NEX</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>Phase FOV <b>↓</b></span></td><td>phase line削減</td><td class='trade'>wrap</td></tr><tr><td><span class='param down'>Phase matrix <b>↓</b></span></td><td>短時間化</td><td class='trade'>in-plane分解能↓</td></tr><tr><td><span class='param down'>ZRes <b>↓ 少量</b></span></td><td>kz line削減</td><td class='trade'>z分解能↓</td></tr><tr><td><span class='param up'>HyperSense/ARC <b>↑</b></span></td><td>undersampling</td><td class='trade'>residual artifact</td></tr><tr><td><span class='param check'>NEX <b>最小</b></span></td><td>平均削減</td><td class='trade'>SNR↓</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>3D GREの時間はphase×partition×TRに強く依存します。息止め時間を短くしたいなら、frequency matrixよりphase/kz側を見るのが効率的です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>HeroのAIR Recon DLでSNR余裕を得られる場合、scan time短縮へ配分する設計が可能です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>患者に無理な息止めを要求して再撮像を繰り返すより、1phaseを確実に成功する時間へ落とします。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 22</span><span class='case-title'>肝左葉だけ拍動でぼける／ghostが出る</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>左葉が心拍に同期したblur/ghost。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>心臓の周期運動が近接肝へ伝播。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Sat band</span><span class='chip'>PROPELLER/T2 option</span><span class='chip'>Breath-hold</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghostを左葉から逃がす</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>Sat band <b>必要時</b></span></td><td>心臓/前腹壁由来信号低減</td><td class='trade'>配置注意</td></tr><tr><td><span class='param check'>PROPELLER <b>T2系で検討</b></span></td><td>motion耐性</td><td class='trade'>時間/contrast特性</td></tr><tr><td><span class='param check'>Scan time <b>短縮</b></span></td><td>motion exposure↓</td><td class='trade'>分解能/SNR</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>周期運動を完全に消せないときは、artifactの方向をROIから逃がすのが最も堅い対策です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>GE PROPELLERは呼吸/生理的motionへの耐性が公式に説明されています。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>左葉だけ悪いのに全体のNEXを増やすと時間だけ増えることがあります。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 23</span><span class='case-title'>3T腹部で中央が暗い（dielectric shading）</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>腹部中心～片側が広く低信号、脂肪抑制も不均一。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>B1 transmit不均一・standing wave/dielectric effect。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>RF Drive / B1 calibration</span><span class='chip'>Prescan</span><span class='chip'>Patient centering</span><span class='chip'>Dixon</span><span class='chip'>PUREの役割区別</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>RF Drive <b>最適化</b></span></td><td>実効FA均一化を狙う</td><td class='trade'>装置依存</td></tr><tr><td><span class='param check'>Prescan <b>再実行検討</b></span></td><td>RF/中心周波数等のcalibration</td><td class='trade'>時間</td></tr><tr><td><span class='param check'>Centering <b>改善</b></span></td><td>RF場の均一領域へ</td><td class='trade'>体位制約</td></tr><tr><td><span class='param check'>Dixon <b>利用</b></span></td><td>脂肪抑制の頑健性を上げる</td><td class='trade'>再構成</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>B1 transmit不均一では同じ設定FAでも場所ごとに実効FAが変わり、signal/contrastにむらが出ます。receive側のPUREとは原因が異なります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>3TではRF Drive ModeやB1関連calibrationを「画質に効く操作」として理解します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>PUREだけでB1 shadingを直そうとしない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 24</span><span class='case-title'>腹部DWIの歪みが大きい／ガス近傍が崩れる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>肝辺縁・膵・骨盤側で形態ずれ、signal pile-up。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>EPIと局所B0勾配。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Shim</span><span class='chip'>BW</span><span class='chip'>ARC</span><span class='chip'>Echo spacing</span><span class='chip'>Phase direction</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>BW <b>↑</b></span></td><td>pixel displacement↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>ARC <b>↑</b></span></td><td>EPI train↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>off-resonance累積↓</td><td class='trade'>BW/gradient trade-off</td></tr><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>歪みをROIから逃がす</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>Shim <b>局所最適</b></span></td><td>B0差↓</td><td class='trade'>広範囲課題</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>前立腺や頭蓋底と同じく、EPI distortionは「局所off-resonance × 読み出し時間」の問題です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIR Recon DLはノイズ低減を介して高BW/加速へ振りやすくしますが、幾何学的歪み補正そのものとは別です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>ADC mapの数値だけで、解剖位置が一致していないROIを評価しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 25</span><span class='case-title'>3D MRCPで呼吸同期が進まず時間が長い</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>navigator efficiency低下、呼吸不規則でblurring。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>navigator windowが狭すぎる、呼吸パターン不安定。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Navigator window</span><span class='chip'>Trigger/delay</span><span class='chip'>Respiratory pattern</span><span class='chip'>Matrix/ZRes</span><span class='chip'>Acceleration</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Navigator window <b>適度に広げる</b></span></td><td>受理率↑・時間↓</td><td class='trade'>motion許容量↑</td></tr><tr><td><span class='param down'>Matrix/ZRes <b>↓ 少量</b></span></td><td>受理されたcycle数を減らす</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param up'>HyperSense <b>↑</b></span></td><td>3D encode削減</td><td class='trade'>recon artifact</td></tr><tr><td><span class='param check'>Resp coaching <b>実施</b></span></td><td>規則的呼吸へ</td><td class='trade'>患者依存</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>狭いacceptance windowは位置再現性を上げますが、呼吸不規則患者では採用率が下がり時間が伸びます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Navigatorの値は「小さいほど良い」ではなく、motion toleranceとefficiencyのtrade-offです。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>MIPだけで評価せずsource imageを確認します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 26</span><span class='case-title'>副腎in/opposedで呼吸位相がずれて比較しにくい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>inとopposedで臓器位置が異なりpixel-wise comparisonが困難。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>別breath-holdの位相差、息止め指示不統一。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Breath-hold instruction</span><span class='chip'>Scan time</span><span class='chip'>Geometry</span><span class='chip'>TE pair</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Scan time <b>短縮</b></span></td><td>breath-hold再現性↑</td><td class='trade'>SNR/分解能</td></tr><tr><td><span class='param check'>Geometry <b>固定</b></span></td><td>比較前提を揃える</td><td class='trade'>条件変更禁止</td></tr><tr><td><span class='param check'>Instruction <b>統一</b></span></td><td>同じ呼気位を再現</td><td class='trade'>患者依存</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>chemical shift imagingは信号差を見るため、位置が変わるとpartial volume差を脂肪成分と誤認しやすくなります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>同一breath-hold内でin/opposedを取得できる方式なら、呼吸位置ずれを抑えられる利点があります。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>呼気と吸気の混在を「病変の信号差」と解釈しない。</div>
+      </div>
+    </article>
+    </section>
+    <section id='pelvis' class='region section-card'>
+      <div class='region-title'><div><h2>7. 骨盤（婦人科・前立腺）</h2><p>直腸ガスDWI歪み、臓器斜位、DCE、腸管motion</p></div><span class='region-badge'>4 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、婦人科で臓器軸に合わせたoblique T2、直腸ガスによるDWI歪み、前立腺でT2/DWI/DCEの位置整合性が重視されています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 27</span><span class='case-title'>前立腺DWIが直腸ガスで大きく歪む</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>PZ輪郭がT2と合わない、後方がつぶれる。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>rectal gasによる局所B0勾配 + EPI。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Patient preparation</span><span class='chip'>Shim</span><span class='chip'>BW</span><span class='chip'>ARC</span><span class='chip'>Echo spacing</span><span class='chip'>Phase direction</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Shim <b>前立腺中心</b></span></td><td>local B0 uniformity↑</td><td class='trade'>広範囲は不利</td></tr><tr><td><span class='param up'>BW <b>↑</b></span></td><td>pixel shift↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>ARC <b>↑</b></span></td><td>EPI train↓</td><td class='trade'>SNR/g-factor</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>distortion↓</td><td class='trade'>BW/gradient</td></tr><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>歪みを左右/前後へ制御</td><td class='trade'>方向trade-off</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>直腸ガスが作るB0 gradientはコンソールだけで完全には消せません。患者準備とEPI readout短縮の両方が必要です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Heroの高SNRを「DWIの高BW・高加速」に配分するのは3Tの合理的な使い方です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>DWI/ADCだけを見ず、T2と位置一致を確認します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 28</span><span class='case-title'>子宮頸癌/体癌でoblique断面がずれて浸潤評価しにくい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>頸管・内膜に直交せず、壁厚や浸潤がpartial volume。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>装置座標で断面を切っている、localizer不足。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Plane angulation</span><span class='chip'>FOV</span><span class='chip'>Slice thickness</span><span class='chip'>Matrix</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Plane angulation <b>解剖軸へ</b></span></td><td>partial volume低減</td><td class='trade'>coverage再確認</td></tr><tr><td><span class='param down'>FOV <b>↓ 適切に</b></span></td><td>pixel size↓</td><td class='trade'>wrap/SNR</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>壁層のpartial volume↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>Matrix <b>↑</b></span></td><td>in-plane分解能↑</td><td class='trade'>SNR/時間</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>「parameterを動かす」前に、断面が解剖へ直交しているかが分解能以上に重要です。斜位不良は高matrixでも救えません。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIRx等の自動断面機能がある場合も、病変で解剖が変形していれば手動確認が必要です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>身体軸Axialをそのままorgan-oriented axialとして扱わない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 29</span><span class='case-title'>骨盤T2で腸管motion ghostが子宮/前立腺に重なる</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>前後方向のghost、辺縁blur。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>蠕動 + 長いFSE train。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase direction</span><span class='chip'>Sat band</span><span class='chip'>PROPELLER</span><span class='chip'>ETL</span><span class='chip'>Scan time</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase direction <b>変更</b></span></td><td>ghostをROIから逃がす</td><td class='trade'>別方向へ</td></tr><tr><td><span class='param check'>Sat band <b>前方/後方</b></span></td><td>腸管信号低減</td><td class='trade'>配置注意</td></tr><tr><td><span class='param check'>PROPELLER <b>適応時</b></span></td><td>motion耐性</td><td class='trade'>見え方/時間</td></tr><tr><td><span class='param up'>ETL <b>↑ 少量</b></span></td><td>時間短縮</td><td class='trade'>blur↑</td></tr><tr><td><span class='param check'>HyperSense/ARC <b>利用可能なら</b></span></td><td>時間短縮</td><td class='trade'>artifact</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>蠕動そのものをconsoleで止められないため、「方向を逃がす」「撮像を短くする」「motion robust acquisition」の3層で考えます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>PROPELLERは骨盤T2でも利用例があり、自由呼吸・motionへの耐性がGEから示されています。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>ETLを上げ過ぎるとT2 blurで壁構造が甘くなるため、時間短縮と分解能を分けて評価します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 30</span><span class='case-title'>前立腺DCEの時間分解能と高分解能が両立しない</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>1phaseが長い／pixelが粗い。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>3D volume encode量とSNRの競合。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase FOV</span><span class='chip'>Matrix</span><span class='chip'>ZRes</span><span class='chip'>ARC/HyperSense</span><span class='chip'>AIR Recon DL</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Phase FOV <b>必要最小</b></span></td><td>phase line↓</td><td class='trade'>wrap</td></tr><tr><td><span class='param check'>Matrix <b>最小限調整</b></span></td><td>時間↓</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param check'>ZRes <b>調整</b></span></td><td>partition↓</td><td class='trade'>z分解能↓</td></tr><tr><td><span class='param up'>ARC/HyperSense <b>↑</b></span></td><td>時間↓</td><td class='trade'>artifact</td></tr><tr><td><span class='param check'>AIR Recon DL <b>活用</b></span></td><td>noise margin</td><td class='trade'>取得情報とは別</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>DCEでは短いphase間隔が必要なので、3TのSNRを「空間分解能」だけに使わず「時間分解能」へ配分します。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>console上のvoxel表示だけでなく、ZResや加速率、actual scan timeを同時に見ます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>T2/DWI/DCEのorientationをばらばらにしない。</div>
+      </div>
+    </article>
+    </section>
+    <section id='msk' class='region section-card'>
+      <div class='region-title'><div><h2>8. 四肢関節（肩・肘・手・股・膝・足）</h2><p>小FOV、高matrix、脂肪抑制、magic angle、金属</p></div><span class='region-badge'>5 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、専用/小FOVコイル、解剖走行へ合わせた断面、PD FS中心、金属近傍でSTIR/Dixon・高BW、肩のmagic angle、小関節の高matrixが共通原則です。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 31</span><span class='case-title'>肩PD FSで脂肪抑制が不均一</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>上腕骨頭・肩峰周囲で脂肪が残る。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>肩はisocenterから外れやすくB0/B1が不均一。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Centering</span><span class='chip'>Shim</span><span class='chip'>FatSat方式</span><span class='chip'>RF Drive</span><span class='chip'>FOV</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Centering <b>改善</b></span></td><td>均一領域へ近づける</td><td class='trade'>体位制約</td></tr><tr><td><span class='param check'>Shim <b>肩中心</b></span></td><td>B0均一化</td><td class='trade'>局所最適</td></tr><tr><td><span class='param check'>Dixon/STIR <b>切替</b></span></td><td>spectral FS不良へ対処</td><td class='trade'>contrast/時間</td></tr><tr><td><span class='param check'>RF Drive <b>確認</b></span></td><td>B1均一性</td><td class='trade'>装置依存</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>肩は空気・骨・軟部組織境界とoff-centerが重なるため、CHESSだけで均一化しにくい典型部位です。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>PUREはreceive均一化、Dixon/STIRは脂肪抑制、RF Driveはtransmit側。役割を分けます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>FatSatムラをNEX↑で解決しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 32</span><span class='case-title'>腱が高信号で断裂に見える（magic angle）</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>腱が55°近傍で短TE画像上高信号。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>短TEでdipolar interactionの角度依存性が見える。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>TE</span><span class='chip'>Plane / tendon angle</span><span class='chip'>T2-weighted確認</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>TE <b>↑</b></span></td><td>magic angle contributionを減らす</td><td class='trade'>SNR/contrast変化</td></tr><tr><td><span class='param check'>Plane <b>追加/変更</b></span></td><td>腱走行と角度を変え再現性確認</td><td class='trade'>時間↑</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>magic angleは「artifactを消す装置機能」ではなく、組織物理と方向依存性です。短TEで目立ち、長TEでは弱くなります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>consoleではTEと断面角度を「病変鑑別パラメータ」として使います。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>PD短TEの高信号だけで腱断裂と判断しない。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 33</span><span class='case-title'>手関節/足関節で靱帯をもっと細かく見たい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>TFCCや小靱帯が1〜2pixelしかない。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>FOVが大きい、matrix不足、slice厚。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>FOV</span><span class='chip'>Matrix</span><span class='chip'>Slice thickness</span><span class='chip'>BW</span><span class='chip'>NEX</span><span class='chip'>AIR Recon DL</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>FOV <b>↓</b></span></td><td>pixel size↓</td><td class='trade'>wrap/SNR↓</td></tr><tr><td><span class='param up'>Matrix <b>↑</b></span></td><td>kmax↑</td><td class='trade'>SNR/時間</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>partial volume↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>BW <b>↓ 可能範囲</b></span></td><td>SNR↑</td><td class='trade'>chemical shift/TE</td></tr><tr><td><span class='param up'>NEX <b>↑ 必要時</b></span></td><td>SNR↑√NEX</td><td class='trade'>時間↑</td></tr><tr><td><span class='param check'>AIR Recon DL <b>活用</b></span></td><td>noise/ringing低減</td><td class='trade'>取得分解能とは別</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>小関節では3T SNRを「薄切＋小FOV＋高matrix」へ配分しやすい一方、SNRが急に足りなくなる境界を見極めます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Hero公式でも手関節など上肢でAIR Recon DLの高分解能例が提示されています。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>FOV↓とmatrix↑とslice↓を同時に極端に行うと、voxel volumeが急減します。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 34</span><span class='case-title'>膝FSEがぼやけて半月板辺縁が甘い</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>SNRはあるがsharpnessが低い。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>ETL長大、echo spacing長い、T2 decay。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>ETL</span><span class='chip'>Echo spacing</span><span class='chip'>BW</span><span class='chip'>Matrix</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>ETL <b>↓</b></span></td><td>T2 blur↓</td><td class='trade'>時間↑</td></tr><tr><td><span class='param down'>Echo spacing <b>↓</b></span></td><td>echo train duration↓</td><td class='trade'>BW/SNR trade-off</td></tr><tr><td><span class='param up'>BW <b>↑</b></span></td><td>ESP短縮に寄与</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param up'>Matrix <b>必要時↑</b></span></td><td>分解能↑</td><td class='trade'>SNR/時間</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>FSEでは中心k-spaceと周辺k-spaceが異なるechoで埋まるため、echo train中の信号減衰がpoint spread functionを広げます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>Auto Refocus Angleやvariable FAが関与する場合、ETLだけでなくrefocus trainの挙動も考えます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>「ぼやけ＝matrix不足」と決めつけない。ETL/ESP由来のblurはmatrix↑だけでは直りません。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 35</span><span class='case-title'>人工股関節/膝周囲でmetal artifactが強い</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>void、歪み、脂肪抑制不良。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>金属による巨大なB0変化。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>BW</span><span class='chip'>Slice thickness</span><span class='chip'>STIR/Dixon</span><span class='chip'>Frequency direction</span><span class='chip'>Metal reduction option</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>BW <b>↑</b></span></td><td>pixel displacement↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>through-plane artifact↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>STIR <b>選択</b></span></td><td>spectral FSより頑健</td><td class='trade'>T1低下/造影後制約</td></tr><tr><td><span class='param check'>Frequency direction <b>変更</b></span></td><td>artifact方向を逃がす</td><td class='trade'>別方向</td></tr><tr><td><span class='param check'>SEMAC/MAVRIC <b>利用可なら</b></span></td><td>metal artifact低減</td><td class='trade'>時間↑</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>金属artifactは単なるnoiseではなく空間的な周波数ずれ/勾配なので、BWやencoding方向が効きます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>1.5Tが有利なケースもあり、3Tで無理に同じprotocolを使うのではなく装置選択も含めます。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>AI再構成だけで金属による幾何学的歪みを解決できると考えない。</div>
+      </div>
+    </article>
+    </section>
+    <section id='special' class='region section-card'>
+      <div class='region-title'><div><h2>9. 全身MRI・内耳・下垂体</h2><p>multi-station、頭蓋底susceptibility、微小病変とdynamic timing</p></div><span class='region-badge'>3 scenarios</span></div>
+      <div class='source-note'><b>添付の部位別資料から拾った臨床課題：</b>添付資料では、全身MRIのstation overlapと脂肪抑制/ADC一貫性、内耳の頭蓋底susceptibility、下垂体dynamicの造影初期タイミングが重要とされています。</div>
+      
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 36</span><span class='case-title'>全身MRIでstation境界の明るさが違う</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>stationごとにsignal/脂肪抑制が不連続。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>coil sensitivity、B0/B1、center位置、prescan差。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Overlap</span><span class='chip'>PURE</span><span class='chip'>Prescan</span><span class='chip'>Dixon</span><span class='chip'>FOV/centering</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param check'>Overlap <b>十分確保</b></span></td><td>境界の欠落防止</td><td class='trade'>時間/coverage</td></tr><tr><td><span class='param check'>PURE <b>確認</b></span></td><td>receive sensitivity補正</td><td class='trade'>SNR生成ではない</td></tr><tr><td><span class='param check'>Prescan <b>stationごと確認</b></span></td><td>calibration不整合を減らす</td><td class='trade'>時間</td></tr><tr><td><span class='param check'>Dixon <b>利用</b></span></td><td>FS均一性改善</td><td class='trade'>recon条件</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>multi-stationでは「1 station内の最適画質」だけでなくstation間の一貫性が診断性を決めます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>AIR Coil/receive感度とPUREの役割を理解し、境界が補正失敗か本当の病変かを区別します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>PET-like MIPだけで判断しない。原画像/ADC/形態像へ戻る。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 37</span><span class='case-title'>内耳3Dで頭蓋底のsignal lossが強い</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>IAC/迷路周囲にsusceptibilityによる欠損。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>骨・空気境界、長TE、低BW。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>BW</span><span class='chip'>TE</span><span class='chip'>FOV</span><span class='chip'>Shim</span><span class='chip'>3D geometry</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param up'>BW <b>↑</b></span></td><td>susceptibility-induced displacement↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param down'>TE <b>↓</b></span></td><td>dephasing時間↓</td><td class='trade'>contrast変化</td></tr><tr><td><span class='param check'>Shim <b>局所最適</b></span></td><td>B0差↓</td><td class='trade'>範囲とのtrade-off</td></tr><tr><td><span class='param check'>FOV <b>小さく適切</b></span></td><td>高分解能</td><td class='trade'>wrap/SNR</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>susceptibilityによるphase dispersionはTEとともに増えるため、短TE化はsignal loss抑制に直接効きます。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>3Tの高SNRをBW↑・薄切へ配分し、頭蓋底の歪みを抑えながら微小神経を描出します。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>低BWでSNRだけを稼ぐと頭蓋底では位置精度を失うことがあります。</div>
+      </div>
+    </article>
+    <article class='case-card'>
+      <button class='case-head' aria-expanded='false'>
+        <span class='case-num'>CASE 38</span><span class='case-title'>下垂体dynamicでmicroadenomaの初期差が捉えにくい</span><span class='chev'>＋</span>
+      </button>
+      <div class='case-body'>
+        <div class='grid2 topgrid'>
+          <div class='mini symptom'><b>見え方</b><p>最初のpostが遅い、sliceが厚く小病変が埋もれる。</p></div>
+          <div class='mini cause'><b>原因仮説</b><p>temporal resolution不足とpartial volume。</p></div>
+        </div>
+        <div class='firstlook'><b>まずコンソールで見る</b><span class='chip'>Phase matrix</span><span class='chip'>Slice thickness</span><span class='chip'>Coverage</span><span class='chip'>Acceleration</span><span class='chip'>Timing</span></div>
+        <table class='action-table'><thead><tr><th>パラメータ</th><th>なぜ動かすか</th><th>代償</th></tr></thead><tbody><tr><td><span class='param down'>Phase matrix <b>↓ 適度</b></span></td><td>time/phase↓</td><td class='trade'>分解能↓</td></tr><tr><td><span class='param down'>Slice thickness <b>↓</b></span></td><td>partial volume↓</td><td class='trade'>SNR↓</td></tr><tr><td><span class='param check'>Coverage <b>必要範囲へ限定</b></span></td><td>時間↓</td><td class='trade'>範囲注意</td></tr><tr><td><span class='param up'>ARC/HyperSense <b>↑</b></span></td><td>時間↓</td><td class='trade'>artifact</td></tr></tbody></table>
+        <div class='grid2'>
+          <div class='theory'><b>理論につなげる</b><p>microadenoma dynamicは「最初の数十秒」と「数mm病変」の両方が重要なので、時間/空間分解能の二目的最適化になります。</p></div>
+          <div class='ge-tip'><b>GE / Heroでの見方</b><p>3TのSNRとAIR Recon DLを使い、薄切のSNR低下を許容しつつphase時間を短くする設計が可能です。</p></div>
+        </div>
+        <div class='dont'><b>やりがちな誤り：</b>広すぎるcoverageでphase時間を犠牲にしない。</div>
+      </div>
+    </article>
+    </section>
+
+<section class='section-card'>
+ <h2>10. 部位を超えて使える「最終チェック」</h2>
+ <div class='grid3'>
+  <div><h3>Coverage</h3><ul><li>目的臓器・病変は完全にFOV内か</li><li>Phase FOV縮小で外側を切っていないか</li><li>3D slab端のwrapはないか</li></ul></div>
+  <div><h3>Image validity</h3><ul><li>DWIとADC、形態像の位置は一致するか</li><li>ghost/歪み方向から原因を説明できるか</li><li>FatSat不良を病変と誤認していないか</li></ul></div>
+  <div><h3>Console logic</h3><ul><li>何を改善するために何を変えたか</li><li>その代償（SNR/時間/分解能/SAR）を説明できるか</li><li>Auto/AI補正の前後で根本失敗が残っていないか</li></ul></div>
+ </div>
+ <div class='notice'><b>教育のゴール：</b>「この部位はこのシーケンス」と暗記するのではなく、<b>①臨床目的 → ②起こりやすい失敗 → ③原因の物理 → ④console parameter → ⑤得るもの/失うもの</b>を一続きで説明できること。</div>
+</section>
+
+<section class='section-card footerrefs'>
+ <h2>11. 参考資料</h2>
+ <p><b>臨床部位の土台：</b>ユーザー提供「部位別・MRI標準撮像シーケンス一覧 ― 診療放射線技師向け実務版」。本資料の各部位の撮像目的・注意点・断面設定はこの資料の整理を土台にしています。</p>
+ <p><b>コンソール基礎編：</b><a href='https://drive.google.com/file/d/1SPWgrRCUkF8-nJ0NAYYF34VxpiUS5_-2/view?usp=drivesdk' target='_blank'>SIGNA Hero 3T コンソール徹底理解ガイド（前編）</a></p>
+ <ol>
+  <li><a href='https://www.gehealthcare.com/ja-jp/products/magnetic-resonance-imaging/3-0t/signa-hero' target='_blank'>GE HealthCare Japan — SIGNA Hero</a>：AIR Recon DL、3T Heroの公式製品情報。</li>
+  <li><a href='https://www.gehealthcare.com/en/products/magnetic-resonance-imaging/signa-mr-vision/effortless-imaging-ai-mri-solutions/air-recon-dl' target='_blank'>GE HealthCare — AIR Recon DL</a>：noise/ringing低減、2D/3D/PROPELLERでの使用例。</li>
+  <li><a href='https://www.gehealthcare.com/en/products/magnetic-resonance-imaging/applications/propeller' target='_blank'>GE HealthCare — PROPELLER</a>：radial k-spaceとmotion robustness。</li>
+  <li><a href='https://www.gehealthcare.com/-/jssmedia/files/us/non-gated/mri/hypersense-booklet.pdf' target='_blank'>GE HealthCare — HyperSense booklet</a>：compressed sensingとARCの位置づけ。</li>
+  <li><a href='https://pmc.ncbi.nlm.nih.gov/articles/PMC6443571/' target='_blank'>Clinical and Technical Considerations for High Quality Breast MRI at 3 Tesla</a>：3TのB0/B1不均一、susceptibility、SARの解説。</li>
+ </ol>
+ <p style='color:var(--muted)'>作成：2026年9月 / 対象：GE SIGNA Hero 3.0Tを含むMRI臨床実務教育。装置世代・ソフトウェア・オプションにより表示名や利用可能機能は異なります。</p>
+</section>
+</main>
+<script>
+const quickData=[{region:'頭部',problem:'後頭蓋窩DWIが歪む',action:'BW↑ / ARC↑ / Echo spacing↓ / Shim / Phase方向変更',note:'SNR低下との交換。AIR Recon DLはnoise marginに使う。'},{region:'頭部',problem:'FLAIRのCSFが消えない',action:'TI/TR確認 / Shim / Flow compensation / Sat band / B1確認',note:'流れとIR null不成立を分けて考える。'},{region:'頸部',problem:'嚥下ghost',action:'Phase方向変更 / 短時間化 / PROPELLER / 加速',note:'まずghostを病変から逃がす。'},{region:'頸部',problem:'脂肪抑制がまだら',action:'Shim / center frequency / RF Drive / Dixon',note:'PUREはreceive補正で別物。'},{region:'脊椎',problem:'CSF・大動脈ghost',action:'Phase方向 / Flow compensation / Sat band',note:'方向変更は即効性が高い。'},{region:'脊椎',problem:'術後金属',action:'BW↑ / Slice↓ / STIR / Frequency方向 / metal reduction',note:'SNRより位置精度を優先する場面。'},{region:'心臓',problem:'bSSFP banding',action:'Shim / center frequency / TR↓ / BW↑ / phase cycling',note:'3Tはoff-resonanceに敏感。'},{region:'心臓',problem:'息止めが長い',action:'Phase matrix↓ / acceleration↑ / NEX↓ / coverage最適化',note:'再現性のある短い息止めを優先。'},{region:'乳房',problem:'DWIが歪む',action:'Shim / BW↑ / ARC↑ / Phase方向',note:'ADCと形態像の位置一致を確認。'},{region:'乳房',problem:'脂肪抑制ムラ',action:'Shim / RF Drive / Dixon / centering',note:'B0とB1を分ける。'},{region:'腹部',problem:'息止めが長い',action:'Phase FOV↓ / Phase matrix↓ / ZRes↓ / HyperSense/ARC↑',note:'3Dはphase/kz側を削る。'},{region:'腹部',problem:'MRCP同期が遅い',action:'Navigator window調整 / ZRes/Matrix見直し / HyperSense',note:'window狭すぎはefficiency低下。'},{region:'骨盤',problem:'前立腺DWIが歪む',action:'直腸ガス対策 / Shim / BW↑ / ARC↑ / ESP↓',note:'consoleだけでは完全解決しない。'},{region:'MSK',problem:'小靱帯が見えない',action:'FOV↓ / Matrix↑ / Slice↓ / BW/NEXバランス / AIR Recon DL',note:'voxelを同時に小さくし過ぎない。'},{region:'MSK',problem:'FSEがぼやける',action:'ETL↓ / Echo spacing↓ / BW↑',note:'matrix不足とは限らない。'},{region:'全身',problem:'station境界が不均一',action:'Overlap / PURE / Prescan / Dixon',note:'station間一貫性を確認。'}];
+const qr=document.getElementById('qRegion'), qp=document.getElementById('qProblem'), qo=document.getElementById('qResult');
+const regs=[...new Set(quickData.map(x=>x.region))];
+qr.innerHTML=regs.map(x=>`<option>${x}</option>`).join('');
+function fillProblems(){const d=quickData.filter(x=>x.region===qr.value);qp.innerHTML=d.map(x=>`<option>${x.problem}</option>`).join('');showQuick();}
+function showQuick(){const x=quickData.find(d=>d.region===qr.value&&d.problem===qp.value); if(!x)return;qo.innerHTML=`<div style='font-size:12px;color:#607086'>最初に触る候補</div><div class='qaction'>${x.action}</div><div style='margin-top:5px'>${x.note}</div>`;}
+qr.addEventListener('change',fillProblems);qp.addEventListener('change',showQuick);fillProblems();
+
+document.querySelectorAll('.case-head').forEach(b=>b.addEventListener('click',()=>{b.setAttribute('aria-expanded',b.getAttribute('aria-expanded')!=='true')}));
+
+const ids=['fov','mat','pfov','sl','bw','nex','acc']; ids.forEach(id=>document.getElementById(id).addEventListener('input',updateLab));
+function updateLab(){
+ const fov=+document.getElementById('fov').value, mat=+document.getElementById('mat').value, pfov=+document.getElementById('pfov').value, sl=+document.getElementById('sl').value, bw=+document.getElementById('bw').value, nex=+document.getElementById('nex').value, acc=+document.getElementById('acc').value;
+ document.getElementById('fovV').textContent=fov+' mm';document.getElementById('matV').textContent=mat;document.getElementById('pfovV').textContent=pfov.toFixed(2);document.getElementById('slV').textContent=sl.toFixed(1)+' mm';document.getElementById('bwV').textContent=bw.toFixed(2)+' kHz';document.getElementById('nexV').textContent=nex.toFixed(1);document.getElementById('accV').textContent=acc.toFixed(2);
+ const pix=fov/mat, ppix=(fov*pfov)/(mat*pfov), vox=pix*ppix*sl;
+ const basePix=240/320, baseV=basePix*basePix*3, bwRatio=bw/31.25;
+ const snr=(vox/baseV)*Math.sqrt(nex)/(Math.sqrt(bwRatio)*Math.sqrt(acc/2));
+ const time=(pfov*nex/acc)/(0.8*1/2);
+ document.getElementById('pixOut').textContent=pix.toFixed(2)+' mm';document.getElementById('voxOut').textContent=(vox/baseV).toFixed(2)+'×';document.getElementById('snrOut').textContent=snr.toFixed(2)+'×';document.getElementById('timeOut').textContent=time.toFixed(2)+'×';
+}
+updateLab();
+
+const pb=document.getElementById('phaseBtn'), ps=document.getElementById('phaseStage');pb.addEventListener('click',()=>{ps.classList.toggle('x');pb.textContent=ps.classList.contains('x')?'Phase: 横 → 縦へ変更':'Phase: 縦 → 横へ変更';});
+const sh=document.getElementById('shim'), ss=document.getElementById('shimStage'), sv=document.getElementById('shimV');function updShim(){const v=+sh.value;const spread=90-v*.65;ss.style.background=`linear-gradient(90deg,hsl(${28+v*.25},70%,65%),hsl(200,35%,${86+v*.05}%) 50%,hsl(${205-v*.15},42%,68%))`;ss.style.filter=`saturate(${1.45-v/180})`;sv.textContent=v+'%';}sh.addEventListener('input',updShim);updShim();
+</script>
+</body></html>
